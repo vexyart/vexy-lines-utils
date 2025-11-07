@@ -97,7 +97,7 @@ class SmartMenuTrigger:
         end tell
         '''
         try:
-            result = subprocess.run(["osascript", "-e", script], check=False, capture_output=True, text=True, timeout=5)
+            result = subprocess.run(["osascript", "-e", script], check=False, capture_output=True, text=True, timeout=5)  # noqa: S603, S607
             return result.returncode == 0
         except Exception as e:
             logger.debug(f"AppleScript failed: {e}")

@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import subprocess
 from pathlib import Path
 
@@ -76,42 +77,37 @@ class VexyLinesCLI:
 
         # Test PyXA
         try:
-            import PyXA
-
-            logger.success("✅ PyXA available")
-        except ImportError:
+            if importlib.util.find_spec("PyXA") is not None:
+                logger.success("✅ PyXA available")
+            else:
+                logger.warning("❌ PyXA not available")
+        except (ImportError, ValueError):
             logger.warning("❌ PyXA not available")
 
         # Test AppleScript
         try:
-            result = subprocess.run(["osascript", "-e", 'return "test"'], check=False, capture_output=True)
+            result = subprocess.run(["osascript", "-e", 'return "test"'], check=False, capture_output=True)  # noqa: S607
             if result.returncode == 0:
                 logger.success("✅ AppleScript available")
             else:
                 logger.warning("❌ AppleScript failed")
-        except:
+        except Exception:
             logger.warning("❌ AppleScript not available")
 
         # Test keyboard libraries
-        try:
-            import pyautogui
-
+        if importlib.util.find_spec("pyautogui") is not None:
             logger.success("✅ pyautogui available")
-        except ImportError:
+        else:
             logger.warning("❌ pyautogui not available")
 
-        try:
-            import pyperclip
-
+        if importlib.util.find_spec("pyperclip") is not None:
             logger.success("✅ pyperclip available")
-        except ImportError:
+        else:
             logger.warning("❌ pyperclip not available")
 
-        try:
-            import keyboard
-
+        if importlib.util.find_spec("keyboard") is not None:
             logger.success("✅ keyboard library available")
-        except ImportError:
+        else:
             logger.warning("⚠️  keyboard library not available (better than pyautogui for keyboard input)")
 
         # Test accessibility permissions

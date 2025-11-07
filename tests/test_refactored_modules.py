@@ -10,7 +10,7 @@ from unittest.mock import MagicMock
 import pytest
 
 # Test automation module imports
-from vexy_lines_utils.automation import (
+from vexy_lines_utils.automation import (  # noqa: F401
     ApplicationBridge,
     PyXABridge,
     UIActions,
@@ -18,7 +18,7 @@ from vexy_lines_utils.automation import (
 )
 
 # Test CLI imports
-from vexy_lines_utils.cli import VexyLinesCLI, main
+from vexy_lines_utils.cli import VexyLinesCLI, main  # noqa: F401
 
 # Test core module imports
 from vexy_lines_utils.core import (
@@ -31,20 +31,20 @@ from vexy_lines_utils.core import (
 from vexy_lines_utils.core.config import DialogStrategy, MenuStrategy
 
 # Test exporters module imports
-from vexy_lines_utils.exporters import (
+from vexy_lines_utils.exporters import (  # noqa: F401
     BaseExporter,
     EnhancedVexyLinesExporter,
     VexyLinesExporter,
 )
 
 # Test strategies module imports
-from vexy_lines_utils.strategies import (
+from vexy_lines_utils.strategies import (  # noqa: F401
     SmartDialogHandler,
     SmartMenuTrigger,
 )
 
 # Test utils module imports
-from vexy_lines_utils.utils import (
+from vexy_lines_utils.utils import (  # noqa: F401
     InterruptHandler,
     find_lines_files,
     speak,
@@ -217,15 +217,15 @@ class TestCLI:
         cli = VexyLinesCLI()
 
         # Test timeout multiplier validation
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="timeout_multiplier"):
             cli.export("test", timeout_multiplier=0.01)  # Too low
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="timeout_multiplier"):
             cli.export("test", timeout_multiplier=100)  # Too high
 
         # Test max_retries validation
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="max_retries"):
             cli.export("test", max_retries=-1)  # Negative
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="max_retries"):
             cli.export("test", max_retries=20)  # Too high

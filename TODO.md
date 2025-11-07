@@ -29,12 +29,12 @@ this_file: TODO.md
 
 ## Phase 4: Additional Quality & Robustness Improvements
 
-### Task 1: Add Export Summary Statistics
-- [ ] Add total export time tracking to ExportStats
-- [ ] Calculate and log average time per file
-- [ ] Add skipped file count to statistics
+### Task 1: Add Export Summary Statistics ✅ MOSTLY COMPLETE
+- [x] Add total export time tracking to ExportStats
+- [x] Calculate and log average time per file
+- [x] Add skipped file count to statistics
 - [ ] Include PDF validation failure count separately
-- [ ] Add test for enhanced statistics tracking
+- [x] Add test for enhanced statistics tracking
 
 ### Task 2: Improve Error Message Clarity
 - [ ] Add specific suggestions to timeout errors (check permissions, app state, etc.)
@@ -49,3 +49,28 @@ this_file: TODO.md
 - [ ] Verify write permissions in target directories
 - [ ] Report potential issues that would cause failures in real run
 - [ ] Add test for dry-run validation checks
+
+---
+
+## Phase 5: Post-Bug-Fix Quality Improvements
+
+### Task 1: Separate PDF Validation Failures in Statistics
+- [ ] Add `validation_failures` list to ExportStats for PDF validation failures
+- [ ] Distinguish between export failures and validation failures in stats
+- [ ] Update `human_summary()` to report validation failures separately
+- [ ] Add tests for validation failure tracking
+- [ ] Ensure backward compatibility in `as_dict()` output
+
+### Task 2: Add Configuration Validation
+- [ ] Validate timeout_multiplier range at config initialization
+- [ ] Validate max_retries bounds at config initialization
+- [ ] Add helpful error messages for invalid configuration
+- [ ] Validate menu/dialog patterns are non-empty
+- [ ] Add tests for configuration validation edge cases
+
+### Task 3: Enhance Logging for Batch Operations
+- [ ] Add progress indicator (e.g., "Processing 3/10 files...")
+- [ ] Log time remaining estimate based on average speed
+- [ ] Add summary log at the end with total time and success rate
+- [ ] Improve debug logging with timing information for each step
+- [ ] Add tests to verify logging output structure

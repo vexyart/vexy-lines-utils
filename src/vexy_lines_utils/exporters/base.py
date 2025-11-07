@@ -97,6 +97,12 @@ class BaseExporter(ABC):
                 stats.record_success(file_path, elapsed=elapsed)
             except FileValidationError as exc:
                 stats.record_failure(file_path, f"Validation failed: {exc}")
+            except AutomationError as exc:
+                # Separate PDF validation failures from other automation errors
+                if exc.error_code == "INVALID_PDF":
+                    stats.record_validation_failure(file_path, str(exc))
+                else:
+                    stats.record_failure(file_path, str(exc))
             except Exception as exc:
                 stats.record_failure(file_path, str(exc))
         return stats
@@ -151,6 +157,7 @@ class BaseExporter(ABC):
         if result.returncode != 0:
             msg = f"Failed to open {file_path}: {result.stderr.strip()}"
             raise AutomationError(msg, "OPEN_FAILED")
+
         self.watcher.wait_for_contains(
             needle=file_path.stem,
             present=True,
@@ -159,12 +166,38 @@ class BaseExporter(ABC):
         time.sleep(self.config.post_action_delay)
 
     def _close_document(self) -> None:
-        """Close the current document."""
-        menu_name, item_name = self.config.close_menu
-        if not self.bridge.click_menu_item(menu_name, item_name):
-            msg = "Failed to close the document"
-            raise AutomationError(msg)
-        time.sleep(self.config.post_action_delay)
+        """Close the current document if it has unsaved changes.
+
+        After successful export, check if window title has '*' (unsaved changes).
+        If yes, close with Cmd+W and handle the unsaved changes dialog.
+        If no, skip closing to avoid unnecessary operations.
+        """
+        # Get current window titles
+        titles = self.watcher.get_current_state()
+
+        # Check if there's an asterisk indicating unsaved changes
+        if "*" in titles:
+            logger.debug("Detected unsaved changes marker (*) in window title, closing document...")
+
+            # Close with Cmd+W
+            self._ui.hotkey("command", "w")
+            time.sleep(0.5)  # Give time for dialog to appear
+
+            # Check if unsaved changes dialog appeared
+            titles_after_close = self.watcher.get_current_state()
+            unsaved_patterns = ["Unsaved Changes", "Warning", "Save"]
+
+            if any(pattern.lower() in titles_after_close.lower() for pattern in unsaved_patterns):
+                logger.debug("Unsaved changes dialog appeared, clicking Discard with Tab Tab Enter...")
+                # Navigate to Discard button: Tab Tab Enter
+                self._ui.press("tab")  # Save (default) -> Cancel
+                time.sleep(0.2)
+                self._ui.press("tab")  # Cancel -> Discard
+                time.sleep(0.2)
+                self._ui.press("enter")  # Click Discard
+                time.sleep(self.config.post_action_delay)
+        else:
+            logger.debug("No unsaved changes marker in window title, skipping close...")
 
     def _verify_export(self, pdf_path: Path) -> None:
         """Verify that PDF export completed successfully and is valid."""

@@ -17,7 +17,7 @@ class InterruptHandler:
         self.interrupted = False
         self.original_handler = signal.signal(signal.SIGINT, self._handle_interrupt)
 
-    def _handle_interrupt(self, sig, frame):
+    def _handle_interrupt(self, _sig, _frame):
         if not self.interrupted:
             self.interrupted = True
             logger.warning("\n⚠️  Interrupt received. Finishing current file...")

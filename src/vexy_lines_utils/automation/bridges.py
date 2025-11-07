@@ -106,7 +106,7 @@ class AppleScriptBridge:
         """Launch the application using AppleScript."""
         script = f'tell application "{self.config.app_name}" to activate'
         try:
-            subprocess.run(["osascript", "-e", script], capture_output=True, text=True, timeout=5, check=True)
+            subprocess.run(["osascript", "-e", script], capture_output=True, text=True, timeout=5, check=True)  # noqa: S603, S607
         except (subprocess.TimeoutExpired, subprocess.SubprocessError) as e:
             msg = f"Failed to launch {self.config.app_name}: {e}"
             raise AutomationError(msg) from e
@@ -125,7 +125,7 @@ class AppleScriptBridge:
         end tell
         '''
         try:
-            result = subprocess.run(["osascript", "-e", script], check=False, capture_output=True, text=True, timeout=2)
+            result = subprocess.run(["osascript", "-e", script], check=False, capture_output=True, text=True, timeout=2)  # noqa: S603, S607
             if result.returncode == 0 and result.stdout:
                 # Parse comma-separated list
                 titles = result.stdout.strip().split(", ")
@@ -146,7 +146,7 @@ class AppleScriptBridge:
         end tell
         '''
         try:
-            result = subprocess.run(["osascript", "-e", script], check=False, capture_output=True, text=True, timeout=5)
+            result = subprocess.run(["osascript", "-e", script], check=False, capture_output=True, text=True, timeout=5)  # noqa: S603, S607
             return result.returncode == 0
         except Exception as e:
             logger.error(f"AppleScript menu click failed: {e}")

@@ -116,7 +116,11 @@ class SmartDialogHandler:
 
         try:
             result = subprocess.run(
-                ["osascript", "-e", script], check=False, capture_output=True, text=True, timeout=10
+                ["osascript", "-e", script],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=10,
             )
             return result.returncode == 0
         except Exception as e:

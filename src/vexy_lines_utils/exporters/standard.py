@@ -66,7 +66,7 @@ class VexyLinesExporter(BaseExporter):
             if not self.bridge.click_menu_item(menu_name, item_name):
                 logger.error(f"Menu click failed for {menu_name} > {item_name}")
                 msg = "Failed to open Export dialog via menu or keyboard"
-                raise AutomationError(msg, "MENU_CLICK_FAILED")
+                raise AutomationError(msg, "MENU_CLICK_FAILED") from None
 
             # Wait for dialog after menu click
             self.watcher.wait_for_contains(

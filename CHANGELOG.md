@@ -6,6 +6,11 @@ this_file: CHANGELOG.md
 
 ## [1.0.3] - 2025-11-07
 
+### Critical Bug Fixes
+- **Fixed AttributeError** in `EnhancedVexyLinesExporter` initialization caused by read-only property override
+- **Smart unsaved changes handling**: Automatically detects `*` in window title after export and handles "Unsaved Changes" dialog with proper Tab navigation to Discard button
+- **Zero ruff warnings**: Fixed all 38 linting issues including security, code quality, and style warnings
+
 ### Major Refactoring: Modular Architecture
 - **Complete restructuring** from 2 monolithic files (~1,162 lines) into 15+ focused modules
 - **New module organization:**

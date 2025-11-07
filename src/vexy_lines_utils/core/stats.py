@@ -22,6 +22,7 @@ class ExportStats:
     success: int = 0
     skipped: int = 0
     failures: list[tuple[str, str]] = field(default_factory=list)
+    validation_failures: list[tuple[str, str]] = field(default_factory=list)
     dry_run: bool = False
     start_time: float = field(default_factory=time.monotonic)
     file_times: list[float] = field(default_factory=list)
@@ -46,6 +47,12 @@ class ExportStats:
         self.failures.append((str(path), reason))
         logger.error(f"{path.name} failed: {reason}")
 
+    def record_validation_failure(self, path: Path, reason: str) -> None:
+        """Record a PDF validation failure."""
+        self.processed += 1
+        self.validation_failures.append((str(path), reason))
+        logger.error(f"{path.name} validation failed: {reason}")
+
     def get_total_time(self) -> float:
         """Get total elapsed time since stats tracking started."""
         return time.monotonic() - self.start_time
@@ -64,6 +71,8 @@ class ExportStats:
             "skipped": self.skipped,
             "failed": len(self.failures),
             "failures": list(self.failures),
+            "validation_failed": len(self.validation_failures),
+            "validation_failures": list(self.validation_failures),
             "dry_run": self.dry_run,
             "total_time": round(self.get_total_time(), 2),
             "average_time": round(self.get_average_time(), 2) if self.file_times else None,
@@ -75,6 +84,10 @@ class ExportStats:
         summary = f"{state}{self.success}/{self.processed} exports succeeded"
         if self.skipped > 0:
             summary += f" ({self.skipped} skipped)"
+        if self.failures:
+            summary += f", {len(self.failures)} failed"
+        if self.validation_failures:
+            summary += f", {len(self.validation_failures)} validation failed"
         if not self.dry_run and self.file_times:
             avg_time = self.get_average_time()
             summary += f", avg {avg_time:.1f}s per file"

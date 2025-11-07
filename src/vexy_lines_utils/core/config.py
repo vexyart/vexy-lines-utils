@@ -44,6 +44,28 @@ class AutomationConfig:
     timeout_multiplier: float = 1.0  # Scale all timeouts for slower systems
     max_retries: int = 3  # Maximum retry attempts for transient failures
 
+    def __post_init__(self):
+        """Validate configuration after initialization."""
+        if not 0.1 <= self.timeout_multiplier <= 10.0:
+            msg = f"timeout_multiplier must be between 0.1 and 10.0, got {self.timeout_multiplier}"
+            raise ValueError(msg)
+
+        if not 1 <= self.max_retries <= 10:
+            msg = f"max_retries must be between 1 and 10, got {self.max_retries}"
+            raise ValueError(msg)
+
+        if not self.app_name.strip():
+            msg = "app_name cannot be empty"
+            raise ValueError(msg)
+
+        if not self.export_window_title.strip():
+            msg = "export_window_title cannot be empty"
+            raise ValueError(msg)
+
+        if not self.save_window_title.strip():
+            msg = "save_window_title cannot be empty"
+            raise ValueError(msg)
+
     def scale_timeout(self, base_timeout: float) -> float:
         """Apply timeout multiplier to a base timeout value."""
         return base_timeout * self.timeout_multiplier
@@ -81,6 +103,26 @@ class EnhancedAutomationConfig(AutomationConfig):
     # Window title patterns (more flexible matching)
     export_window_patterns: list[str] = field(default_factory=lambda: ["Export", "export", "Save As", "Save as"])
     save_window_patterns: list[str] = field(default_factory=lambda: ["Save", "save", "Export", "export"])
+
+    def __post_init__(self):
+        """Validate enhanced configuration."""
+        super().__post_init__()  # Call parent validation first
+
+        if not self.menu_strategies:
+            msg = "menu_strategies cannot be empty"
+            raise ValueError(msg)
+
+        if not self.dialog_strategies:
+            msg = "dialog_strategies cannot be empty"
+            raise ValueError(msg)
+
+        if not self.export_window_patterns:
+            msg = "export_window_patterns cannot be empty"
+            raise ValueError(msg)
+
+        if not self.save_window_patterns:
+            msg = "save_window_patterns cannot be empty"
+            raise ValueError(msg)
 
     # Retry configuration
     retry_backoff: float = 2.0  # Exponential backoff base

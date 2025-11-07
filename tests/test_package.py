@@ -243,7 +243,7 @@ def test_export_stats_timing() -> None:
     from pathlib import Path
 
     stats = ExportStats()
-    test_path = Path("/tmp/test.lines")
+    test_path = Path("/tmp/test.lines")  # noqa: S108
 
     # Record successes with timing
     stats.record_success(test_path, elapsed=1.5)
@@ -266,7 +266,7 @@ def test_export_stats_skipped() -> None:
     from pathlib import Path
 
     stats = ExportStats()
-    test_path = Path("/tmp/test.lines")
+    test_path = Path("/tmp/test.lines")  # noqa: S108
 
     stats.record_skipped(test_path)
     stats.record_success(test_path)
@@ -289,7 +289,7 @@ def test_export_stats_human_summary() -> None:
     from pathlib import Path
 
     stats = ExportStats()
-    test_path = Path("/tmp/test.lines")
+    test_path = Path("/tmp/test.lines")  # noqa: S108
 
     # With skipped files
     stats.record_skipped(test_path)
@@ -304,3 +304,36 @@ def test_export_stats_human_summary() -> None:
     stats2.record_success(test_path)
     summary2 = stats2.human_summary()
     assert "dry-run" in summary2
+
+
+def test_export_stats_validation_failures() -> None:
+    """Test that ExportStats tracks validation failures separately."""
+    from pathlib import Path
+
+    stats = ExportStats()
+    test_path = Path("/tmp/test.lines")  # noqa: S108
+
+    # Record different types of failures
+    stats.record_success(test_path, elapsed=1.0)
+    stats.record_failure(test_path, "Export failed")
+    stats.record_validation_failure(test_path, "PDF validation failed")
+
+    # Check counts
+    assert stats.success == 1
+    assert len(stats.failures) == 1
+    assert len(stats.validation_failures) == 1
+    assert stats.processed == 3
+
+    # Check dict output
+    data = stats.as_dict()
+    assert data["success"] == 1
+    assert data["failed"] == 1
+    assert data["validation_failed"] == 1
+    assert len(data["failures"]) == 1
+    assert len(data["validation_failures"]) == 1
+
+    # Check human summary
+    summary = stats.human_summary()
+    assert "1/3 exports succeeded" in summary
+    assert "1 failed" in summary
+    assert "1 validation failed" in summary

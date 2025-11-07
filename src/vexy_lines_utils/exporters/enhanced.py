@@ -36,11 +36,6 @@ class EnhancedVexyLinesExporter(BaseExporter):
         self.dialog_handler = SmartDialogHandler(config)
 
     @property
-    def config(self) -> EnhancedAutomationConfig:
-        """Get the enhanced configuration."""
-        return super().config  # type: ignore
-
-    @property
     def bridge(self) -> ApplicationBridge:
         if self._bridge is None:
             if self.dry_run:

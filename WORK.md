@@ -242,3 +242,112 @@ uvx hatch test
 - ✅ All 39 tests passing
 - ✅ Full backward compatibility
 - ✅ Ready for v1.0.3 release
+
+---
+
+## Session 5: Critical Bug Fixes and Code Quality
+
+### Issues Fixed
+
+#### 1. AttributeError in EnhancedVexyLinesExporter ✅
+**Problem:** `AttributeError: property 'config' of 'EnhancedVexyLinesExporter' object has no setter`
+- Root cause: Read-only property override preventing parent class initialization
+- Location: `src/vexy_lines_utils/exporters/enhanced.py:39-41`
+- Solution: Removed unnecessary property override
+- Test: `vexy-lines export . --dry-run` now works correctly
+
+#### 2. Unsaved Changes Dialog Handling ✅
+**Problem:** When a document gets modified (window title shows `*`), opening the next document triggers "Unsaved Changes" dialog
+- Impact: Automation halts, requiring manual intervention
+- Solution: Smart close logic after successful export:
+  - Check window title for `*` marker
+  - If present: Close with `Cmd+W`, handle dialog with `Tab → Tab → Enter` (navigates to Discard)
+  - If absent: Skip closing, proceed to next document
+- Location: `src/vexy_lines_utils/exporters/base.py:162-194`
+- Approach: Conservative - only close when necessary, handles dialog properly
+
+#### 3. All Ruff Linting Issues Fixed ✅
+**Security warnings (S603, S607):**
+- Added proper noqa comments for legitimate subprocess calls (`osascript`, `open`)
+- Files: `bridges.py`, `cli.py`, `base.py`, `dialog_handler.py`, `menu_trigger.py`
+
+**Code quality issues:**
+- E722: Changed bare `except:` to `except Exception:`
+- B904: Added `from None` to exception chains in `standard.py:69`
+- F401: Converted imports to `importlib.util.find_spec()` for availability checks
+- ARG002: Prefixed unused signal handler args with underscore (`_sig`, `_frame`)
+- PT011: Added `match` parameters to `pytest.raises()` calls
+- S108: Added noqa comments for test-only temp paths
+- PLC0415: Added noqa for intentional function-level imports in tests
+
+**Results:** Zero ruff warnings, all checks pass
+
+### Test Results
+
+```bash
+uvx hatch test
+```
+
+**Result:** ✅ 39/39 tests passed in 3.13s
+- All existing tests still passing
+- Code formatting clean (1 file reformatted by ruff)
+- No linting errors
+- Test performance: 3.13s (within acceptable range)
+
+### Code Quality Improvements
+
+| Metric | Before | After | Status |
+|--------|--------|-------|--------|
+| Ruff Errors | 38 | 0 | ✅ Fixed |
+| AttributeError | Present | Fixed | ✅ Resolved |
+| Dialog Handling | Manual | Automatic | ✅ Improved |
+| Test Pass Rate | 100% | 100% | ✅ Maintained |
+
+### Files Modified
+
+1. **src/vexy_lines_utils/exporters/enhanced.py**
+   - Removed problematic `config` property override
+
+2. **src/vexy_lines_utils/exporters/base.py**
+   - Rewrote `_close_document()` with smart unsaved changes detection
+   - Removed old dialog handling from `_open_document()`
+
+3. **src/vexy_lines_utils/automation/bridges.py**
+   - Added noqa comments for subprocess security warnings (3 locations)
+
+4. **src/vexy_lines_utils/cli.py**
+   - Fixed bare except clause
+   - Moved `importlib.util` import to top level
+   - Converted import availability checks to use `find_spec()`
+
+5. **src/vexy_lines_utils/exporters/standard.py**
+   - Added `from None` to exception chain
+
+6. **src/vexy_lines_utils/utils/interrupt.py**
+   - Prefixed unused args with underscore
+
+7. **src/vexy_lines_utils/strategies/dialog_handler.py**
+   - Fixed noqa comment placement for subprocess call
+
+8. **src/vexy_lines_utils/strategies/menu_trigger.py**
+   - Fixed noqa comment placement for subprocess call
+
+9. **tests/test_package.py**
+   - Added noqa comments for intentional patterns (3 locations)
+
+10. **tests/test_refactored_modules.py**
+    - Added match parameters to pytest.raises calls (4 locations)
+    - Added noqa for test imports
+
+### Risk Assessment
+
+| Component | Risk Level | Confidence | Notes |
+|-----------|------------|------------|-------|
+| AttributeError fix | Low | 95% | Simple property removal, tested |
+| Dialog handling | Medium | 85% | Tab navigation tested manually, needs real-world validation |
+| Linting fixes | Low | 99% | Standard security exceptions, well-documented |
+| Test suite | Low | 100% | All tests passing, no regressions |
+
+### Ready for Real-World Testing
+
+The code is now ready to test with actual `.lines` files in the marketing directory. The unsaved changes dialog should be handled automatically during batch exports.

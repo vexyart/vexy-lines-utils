@@ -44,6 +44,8 @@ Project Structure:
 │   ├── 📄 test_package.py
 │   └── 📄 test_refactored_modules.py
 ├── 📄 .gitignore
+├── 📄 12
+├── 📄 =12.0
 ├── 📄 AGENTS.md
 ├── 📄 build.sh
 ├── 📄 CHANGELOG.md
@@ -948,6 +950,20 @@ repos:
 </document>
 
 <document index="6">
+<source>12</source>
+<document_content>
+
+</document_content>
+</document>
+
+<document index="7">
+<source>=12.0</source>
+<document_content>
+
+</document_content>
+</document>
+
+<document index="8">
 <source>AGENTS.md</source>
 <document_content>
 # Development guidelines
@@ -1299,7 +1315,7 @@ When you write prose (like documentation or marketing or even your own commentar
 </document_content>
 </document>
 
-<document index="7">
+<document index="9">
 <source>CHANGELOG.md</source>
 <document_content>
 ---
@@ -1471,7 +1487,7 @@ this_file: CHANGELOG.md
 </document_content>
 </document>
 
-<document index="8">
+<document index="10">
 <source>CLAUDE.md</source>
 <document_content>
 # Development guidelines
@@ -1823,7 +1839,7 @@ When you write prose (like documentation or marketing or even your own commentar
 </document_content>
 </document>
 
-<document index="9">
+<document index="11">
 <source>DEPENDENCIES.md</source>
 <document_content>
 ---
@@ -1902,7 +1918,7 @@ The original `vexy-lines2pdf.py` script used **tenacity** for retry decorators, 
 </document_content>
 </document>
 
-<document index="10">
+<document index="12">
 <source>GEMINI.md</source>
 <document_content>
 # Development guidelines
@@ -2254,7 +2270,7 @@ When you write prose (like documentation or marketing or even your own commentar
 </document_content>
 </document>
 
-<document index="11">
+<document index="13">
 <source>LICENSE</source>
 <document_content>
 MIT License
@@ -2281,7 +2297,7 @@ SOFTWARE.
 </document_content>
 </document>
 
-<document index="12">
+<document index="14">
 <source>LLXPRT.md</source>
 <document_content>
 # Development guidelines
@@ -2633,14 +2649,14 @@ When you write prose (like documentation or marketing or even your own commentar
 </document_content>
 </document>
 
-<document index="13">
+<document index="15">
 <source>PLAN.md</source>
 <document_content>
 
 </document_content>
 </document>
 
-<document index="14">
+<document index="16">
 <source>QWEN.md</source>
 <document_content>
 # Development guidelines
@@ -2992,7 +3008,7 @@ When you write prose (like documentation or marketing or even your own commentar
 </document_content>
 </document>
 
-<document index="15">
+<document index="17">
 <source>README.md</source>
 <document_content>
 ---
@@ -3286,7 +3302,7 @@ Based on the original `vexy-lines2pdf.py` automation script. The package structu
 </document_content>
 </document>
 
-<document index="16">
+<document index="18">
 <source>REFACTORING_SUMMARY.md</source>
 <document_content>
 # Refactoring Summary: vexy_lines_utils
@@ -3417,7 +3433,7 @@ The modular structure makes it easy to add:
 </document_content>
 </document>
 
-<document index="17">
+<document index="19">
 <source>TODO.md</source>
 <document_content>
 ---
@@ -3488,7 +3504,7 @@ this_file: TODO.md
 </document_content>
 </document>
 
-<document index="18">
+<document index="20">
 <source>WORK.md</source>
 <document_content>
 ---
@@ -3636,7 +3652,7 @@ All existing tests pass without modification, demonstrating:
 </document_content>
 </document>
 
-<document index="19">
+<document index="21">
 <source>build.sh</source>
 <document_content>
 #!/usr/bin/env bash
@@ -3659,18 +3675,18 @@ uvx codetoprompt --compress --output "./llms.txt" --respect-gitignore --cxml --e
 gitnextver .;
 uvx hatch build;
 uv publish;
-uv pip install --system --upgrade -e .
+#uv pip install --system --upgrade -e .
 </document_content>
 </document>
 
-<document index="20">
+<document index="22">
 <source>docs/automation-setup.md</source>
 <document_content>
 
 </document_content>
 </document>
 
-<document index="21">
+<document index="23">
 <source>package.toml</source>
 <document_content>
 # Package configuration
@@ -3687,7 +3703,7 @@ github_actions = true   # Add GitHub Actions workflows
 </document_content>
 </document>
 
-<document index="22">
+<document index="24">
 <source>pyproject.toml</source>
 <document_content>
 # this_file: pyproject.toml
@@ -4681,7 +4697,7 @@ def _set_filename_simple((self, pdf_name: str)) -> None:
     """Set just the filename in the save dialog."""
 
 
-<document index="23">
+<document index="25">
 <source>src/vexy_lines_utils/py.typed</source>
 <document_content>
 # this_file: src/vexy_lines_utils/py.typed

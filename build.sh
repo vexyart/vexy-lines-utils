@@ -18,4 +18,4 @@ uvx codetoprompt --compress --output "./llms.txt" --respect-gitignore --cxml --e
 gitnextver .;
 uvx hatch build;
 uv publish;
-uv pip install --system --upgrade -e .
+#uv pip install --system --upgrade -e .

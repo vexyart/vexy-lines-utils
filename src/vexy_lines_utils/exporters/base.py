@@ -1,0 +1,182 @@
+#!/usr/bin/env python3
+# this_file: src/vexy_lines_utils/exporters/base.py
+"""Base exporter class with common functionality."""
+
+from __future__ import annotations
+
+import subprocess
+import time
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
+
+from loguru import logger
+
+from vexy_lines_utils.automation.ui_actions import UIActions
+from vexy_lines_utils.automation.window_watcher import WindowWatcher
+from vexy_lines_utils.core.config import AutomationConfig
+from vexy_lines_utils.core.errors import AutomationError, FileValidationError
+from vexy_lines_utils.core.stats import ExportStats
+from vexy_lines_utils.utils.file_utils import find_lines_files, validate_lines_file, validate_pdf
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+
+class BaseExporter(ABC):
+    """Base class for Vexy Lines exporters."""
+
+    def __init__(
+        self,
+        *,
+        config: AutomationConfig | None = None,
+        ui_actions: UIActions | None = None,
+        dry_run: bool = False,
+    ):
+        self.config = config or AutomationConfig()
+        self.dry_run = dry_run
+        self._ui = ui_actions or UIActions(dry_run=dry_run)
+        self._watcher: WindowWatcher | None = None
+
+    @property
+    @abstractmethod
+    def bridge(self):
+        """Get the application bridge."""
+        ...
+
+    @property
+    def watcher(self) -> WindowWatcher:
+        """Get the window watcher."""
+        if self._watcher is None:
+            self._watcher = WindowWatcher(
+                title_provider=self.bridge.window_titles,
+                poll_interval=self.config.poll_interval,
+            )
+        return self._watcher
+
+    def export(self, target: Path, *, verbose: bool = False) -> ExportStats:
+        """Export .lines documents found under target to PDF.
+
+        Args:
+            target: Path to .lines file or directory to search
+            verbose: Show detailed progress messages
+
+        Returns:
+            Export statistics
+        """
+        path = target.expanduser().resolve()
+        logger.info(f"Scanning {path}")
+        files = find_lines_files(path)
+        if not files:
+            msg = f"No .lines files found at {path}"
+            raise AutomationError(msg, "NO_FILES")
+
+        stats = ExportStats(dry_run=self.dry_run)
+        for file_path in files:
+            file_start = time.monotonic()
+            try:
+                if verbose:
+                    logger.info(f"Processing {file_path}")
+
+                # Check if PDF already exists
+                pdf_path = file_path.with_suffix(".pdf")
+                if pdf_path.exists():
+                    stats.record_skipped(file_path)
+                    continue
+
+                # Validate file before processing
+                if not self.dry_run:
+                    validate_lines_file(file_path)
+
+                if self.dry_run:
+                    stats.record_success(file_path)
+                    continue
+
+                # Try with retries for transient failures
+                self._process_file_with_retry(file_path)
+                elapsed = time.monotonic() - file_start
+                stats.record_success(file_path, elapsed=elapsed)
+            except FileValidationError as exc:
+                stats.record_failure(file_path, f"Validation failed: {exc}")
+            except Exception as exc:
+                stats.record_failure(file_path, str(exc))
+        return stats
+
+    def _process_file_with_retry(self, file_path: Path) -> None:
+        """Process file with retry logic for transient failures."""
+        last_error = None
+        for attempt in range(self.config.max_retries):
+            try:
+                if attempt > 0:
+                    logger.info(f"Retry attempt {attempt + 1}/{self.config.max_retries} for {file_path.name}")
+                    # Log current UI state for diagnostics
+                    if self._watcher:
+                        ui_state = self._watcher.get_current_state()
+                        logger.debug(f"Current UI state before retry: {ui_state}")
+                    # Exponential backoff: 2, 4, 8 seconds...
+                    time.sleep(2**attempt)
+
+                self._process_file(file_path)
+                return  # Success!
+
+            except AutomationError as e:
+                last_error = e
+                # Don't retry certain errors
+                if e.error_code in ["FILE_INVALID", "NO_FILES"]:
+                    raise
+                # Log detailed error information
+                logger.warning(f"Attempt {attempt + 1} failed with error code {e.error_code}: {e}")
+                if self._watcher and attempt < self.config.max_retries - 1:
+                    ui_state = self._watcher.get_current_state()
+                    logger.debug(f"UI state after failure: {ui_state}")
+
+        # All retries exhausted
+        if last_error:
+            raise last_error
+        msg = f"Failed after {self.config.max_retries} attempts"
+        raise AutomationError(msg, "MAX_RETRIES")
+
+    @abstractmethod
+    def _process_file(self, file_path: Path) -> None:
+        """Process a single file (implementation-specific)."""
+        ...
+
+    def _open_document(self, file_path: Path) -> None:
+        """Open a document in Vexy Lines."""
+        result = subprocess.run(
+            ["open", "-a", self.config.app_name, str(file_path)],  # noqa: S607
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            msg = f"Failed to open {file_path}: {result.stderr.strip()}"
+            raise AutomationError(msg, "OPEN_FAILED")
+        self.watcher.wait_for_contains(
+            needle=file_path.stem,
+            present=True,
+            timeout=self.config.scale_timeout(self.config.wait_for_file),
+        )
+        time.sleep(self.config.post_action_delay)
+
+    def _close_document(self) -> None:
+        """Close the current document."""
+        menu_name, item_name = self.config.close_menu
+        if not self.bridge.click_menu_item(menu_name, item_name):
+            msg = "Failed to close the document"
+            raise AutomationError(msg)
+        time.sleep(self.config.post_action_delay)
+
+    def _verify_export(self, pdf_path: Path) -> None:
+        """Verify that PDF export completed successfully and is valid."""
+        deadline = time.monotonic() + self.config.wait_for_dialog
+        while time.monotonic() < deadline:
+            if pdf_path.exists() and pdf_path.stat().st_size > 0:
+                # File exists and has content, now validate it
+                if validate_pdf(pdf_path):
+                    return  # Export successful and valid
+                # If validation fails, treat as export failure
+                msg = f"Export completed but PDF validation failed for {pdf_path.name}"
+                raise AutomationError(msg, "INVALID_PDF")
+            time.sleep(self.config.poll_interval)
+        msg = f"Export did not finish for {pdf_path.name}"
+        raise AutomationError(msg, "EXPORT_TIMEOUT")

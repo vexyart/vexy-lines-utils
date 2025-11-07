@@ -6,6 +6,8 @@ Project Structure:
 │       └── 📄 release.yml
 ├── 📁 docs
 │   └── 📄 automation-setup.md
+├── 📁 external
+│   └── 📁 refactor
 ├── 📁 src
 │   └── 📁 vexy_lines_utils
 │       ├── 📁 automation
@@ -915,6 +917,8 @@ Thumbs.db
 __version__.py
 _private
 VERSION.txt
+
+external
 </document_content>
 </document>
 

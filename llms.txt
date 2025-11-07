@@ -1,0 +1,2535 @@
+Project Structure:
+📁 vexy-lines-utils
+├── 📁 .github
+│   └── 📁 workflows
+│       ├── 📄 push.yml
+│       └── 📄 release.yml
+├── 📁 docs
+│   └── 📄 automation-setup.md
+├── 📁 src
+│   └── 📁 vexy_lines_utils
+│       ├── 📄 __init__.py
+│       ├── 📄 py.typed
+│       └── 📄 vexy_lines_utils.py
+├── 📁 tests
+│   ├── 📁 fixtures
+│   │   └── 📄 mock_pyxa.py
+│   ├── 📄 conftest.py
+│   └── 📄 test_package.py
+├── 📄 .gitignore
+├── 📄 build.sh
+├── 📄 CHANGELOG.md
+├── 📄 CLAUDE.md
+├── 📄 DEPENDENCIES.md
+├── 📄 LICENSE
+├── 📄 package.toml
+├── 📄 PLAN.md
+├── 📄 pyproject.toml
+├── 📄 README.md
+├── 📄 TODO.md
+└── 📄 WORK.md
+
+
+<documents>
+<document index="1">
+<source>.cursorrules</source>
+<document_content>
+# Development guidelines
+
+## Foundation: Challenge your first instinct with chain-of-thought
+
+Before you generate any response, assume your first instinct is wrong. Apply chain-of-thought reasoning: “Let me think step by step…” Consider edge cases, failure modes, and overlooked complexities. Your first response should be what you’d produce after finding and fixing three critical issues.
+
+### CoT reasoning template
+
+- Problem analysis: What exactly are we solving and why?
+- Constraints: What limitations must we respect?
+- Solution options: What are 2–3 viable approaches with trade-offs?
+- Edge cases: What could go wrong and how do we handle it?
+- Test strategy: How will we verify this works correctly?
+
+## No sycophancy, accuracy first
+
+- If your confidence is below 90%, use search tools. Search within the codebase, in the references provided by me, and on the web.
+- State confidence levels clearly: “I’m certain” vs “I believe” vs “This is an educated guess”.
+- Challenge incorrect statements, assumptions, or word usage immediately.
+- Facts matter more than feelings: accuracy is non-negotiable.
+- Never just agree to be agreeable: every response should add value.
+- When user ideas conflict with best practices or standards, explain why.
+- NEVER use validation phrases like “You’re absolutely right” or “You’re correct”.
+- Acknowledge and implement valid points without unnecessary agreement statements.
+
+## Complete execution
+
+- Complete all parts of multi-part requests.
+- Match output format to input format (code box for code box).
+- Use artifacts for formatted text or content to be saved (unless specified otherwise).
+- Apply maximum thinking time for thoroughness.
+
+## Absolute priority: never overcomplicate, always verify
+
+- Stop and assess: Before writing any code, ask “Has this been done before”?
+- Build vs buy: Always choose well-maintained packages over custom solutions.
+- Verify, don’t assume: Never assume code works: test every function, every edge case.
+- Complexity kills: Every line of custom code is technical debt.
+- Lean and focused: If it’s not core functionality, it doesn’t belong.
+- Ruthless deletion: Remove features, don’t add them.
+- Test or it doesn’t exist: Untested code is broken code.
+
+## Verification workflow: mandatory
+
+1. Implement minimal code: Just enough to pass the test.
+2. Write a test: Define what success looks like.
+3. Run the test: `uvx hatch test`.
+4. Test edge cases: Empty inputs, none, negative numbers, huge inputs.
+5. Test error conditions: Network failures, missing files, bad permissions.
+6. Document test results: Add to `CHANGELOG.md` what was tested and results.
+
+## Before writing any code
+
+1. Search for existing packages: Check npm, pypi, github for solutions.
+2. Evaluate packages: >200 stars, recent updates, good documentation.
+3. Test the package: write a small proof-of-concept first.
+4. Use the package: don’t reinvent what exists.
+5. Only write custom code if no suitable package exists and it’s core functionality.
+
+## Never assume: always verify
+
+- Function behavior: read the actual source code, don’t trust documentation alone.
+- API responses: log and inspect actual responses, don’t assume structure.
+- File operations: Check file exists, check permissions, handle failures.
+- Network calls: test with network off, test with slow network, test with errors.
+- Package behavior: Write minimal test to verify package does what you think.
+- Error messages: trigger the error intentionally to see actual message.
+- Performance: measure actual time/memory, don’t guess.
+
+## Test-first development
+
+- Test-first development: Write the test before the implementation.
+- Delete first, add second: Can we remove code instead?
+- One file when possible: Could this fit in a single file?
+- Iterate gradually, avoiding major changes.
+- Focus on minimal viable increments and ship early.
+- Minimize confirmations and checks.
+- Preserve existing code/structure unless necessary.
+- Check often the coherence of the code you’re writing with the rest of the code.
+- Analyze code line-by-line.
+
+## Complexity detection triggers: rethink your approach immediately
+
+- Writing a utility function that feels “general purpose”.
+- Creating abstractions “for future flexibility”.
+- Adding error handling for errors that never happen.
+- Building configuration systems for configurations.
+- Writing custom parsers, validators, or formatters.
+- Implementing caching, retry logic, or state management from scratch.
+- Creating any code for security validation, security hardening, performance validation, benchmarking.
+- More than 3 levels of indentation.
+- Functions longer than 20 lines.
+- Files longer than 200 lines.
+
+## Before starting any work
+
+- Always read `WORK.md` in the main project folder for work progress, and `CHANGELOG.md` for past changes notes.
+- Read `README.md` to understand the project.
+- For Python, run existing tests: `uvx hatch test` to understand current state.
+- Step back and think heavily step by step about the task.
+- Consider alternatives and carefully choose the best option.
+- Check for existing solutions in the codebase before starting.
+
+## Project documentation to maintain
+
+- `README.md` :  purpose and functionality (keep under 200 lines).
+- `CHANGELOG.md` :  past change release notes (accumulative).
+- `PLAN.md` :  detailed future goals, clear plan that discusses specifics.
+- `TODO.md` :  flat simplified itemized `- []`-prefixed representation of `PLAN.md`.
+- `WORK.md` :  work progress updates including test results.
+- `DEPENDENCIES.md` :  list of packages used and why each was chosen.
+
+## Code quality standards
+
+- Use constants over magic numbers.
+- Write explanatory docstrings/comments that explain what and why.
+- Explain where and how the code is used/referred to elsewhere.
+- Handle failures gracefully with retries, fallbacks, user guidance.
+- Address edge cases, validate assumptions, catch errors early.
+- Let the computer do the work, minimize user decisions. If you identify a bug or a problem, plan its fix and then execute its fix. Don’t just “identify”.
+- Reduce cognitive load, beautify code.
+- Modularize repeated logic into concise, single-purpose functions.
+- Favor flat over nested structures.
+- Every function must have a test.
+
+## Testing standards
+
+- Unit tests: Every function gets at least one test.
+- Edge cases: Test empty, none, negative, huge inputs.
+- Error cases: Test what happens when things fail.
+- Integration: Test that components work together.
+- Smoke test: One test that runs the whole program.
+- Test naming: `test_function_name_when_condition_then_result`.
+- Assert messages: Always include helpful messages in assertions.
+- Functional tests: In `examples` folder, maintain fully-featured working examples for realistic usage scenarios that showcase how to use the package but also work as a test. 
+- Add `./test.sh` script to run all test including the functional tests.
+
+## Tool usage
+
+- Use `tree` CLI app if available to verify file locations.
+- Run `dir="." uvx codetoprompt: compress: output "$dir/llms.txt" --respect-gitignore: cxml: exclude "*.svg,.specstory,*.md,*.txt, ref, testdata,*.lock,*.svg" "$dir"` to get a condensed snapshot of the codebase into `llms.txt`.
+- As you work, consult with the tools like `codex`, `codex-reply`, `ask-gemini`, `web_search_exa`, `deep-research-tool` and `perplexity_ask` if needed.
+
+## File path tracking
+
+- Mandatory: In every source file, maintain a `this_file` record showing the path relative to project root.
+- Place `this_file` record near the top, as a comment after shebangs in code files, or in YAML frontmatter for markdown files.
+- Update paths when moving files.
+- Omit leading `./`.
+- Check `this_file` to confirm you’re editing the right file.
+
+
+## For Python
+
+- If we need a new Python project, run `uv venv --python 3.12 --clear; uv init; uv add fire rich pytest pytest-cov; uv sync`.
+- Check existing code with `.venv` folder to scan and consult dependency source code.
+- `uvx hatch test` :  run tests verbosely, stop on first failure.
+- `python --c "import package; print (package.__version__)"` :  verify package installation.
+- `uvx mypy file.py` :  type checking.
+- PEP 8: Use consistent formatting and naming, clear descriptive names.
+- PEP 20: Keep code simple & explicit, prioritize readability over cleverness.
+- PEP 257: Write docstrings.
+- Use type hints in their simplest form (list, dict, | for unions).
+- Use f-strings and structural pattern matching where appropriate.
+- Write modern code with `pathlib`.
+- Always add `--verbose` mode loguru-based debug logging.
+- Use `uv add`.
+- Use `uv pip install` instead of `pip install`.
+- Always use type hints: they catch bugs and document code.
+- Use dataclasses or Pydantic for data structures.
+
+### Package-first Python
+
+- Always use uv for package management.
+- Before any custom code: `uv add [package]`.
+- Common packages to always use:
+  - `httpx` for HTTP requests.
+  - `pydantic` for data validation.
+  - `rich` for terminal output.
+  - `fire` for CLI interfaces.
+  - `loguru` for logging.
+  - `pytest` for testing.
+
+### Python CLI scripts
+
+For CLI Python scripts, use `fire` & `rich`, and start with:
+
+```python
+#!/usr/bin/env-S uv run
+# /// script
+# dependencies = [“pkg1”, “pkg2”]
+# ///
+# this_file: path_to_current_file
+```
+
+## Post-work activities
+
+### Critical reflection
+
+- After completing a step, say “Wait, but” and do additional careful critical reasoning.
+- Go back, think & reflect, revise & improve what you’ve done.
+- Run all tests to ensure nothing broke.
+- Check test coverage: aim for 80% minimum.
+- Don’t invent functionality freely.
+- Stick to the goal of “minimal viable next version”.
+
+### Documentation updates
+
+- Update `WORK.md` with what you’ve done, test results, and what needs to be done next.
+- Document all changes in `CHANGELOG.md`.
+- Update `TODO.md` and `PLAN.md` accordingly.
+- Update `DEPENDENCIES.md` if packages were added/removed.
+
+## Special commands
+
+### /plan command: transform requirements into detailed plans
+
+When I say `/plan [requirement]`, you must think hard and:
+
+1. Research first: Search for existing solutions.
+   - Use `perplexity_ask` to find similar projects.
+   - Search pypi/npm for relevant packages.
+   - Check if this has been solved before.
+2. Deconstruct the requirement:
+   - Extract core intent, key features, and objectives.
+   - Identify technical requirements and constraints.
+   - Map what’s explicitly stated vs. what’s implied.
+   - Determine success criteria.
+   - Define test scenarios.
+3. Diagnose the project needs:
+   - Audit for missing specifications.
+   - Check technical feasibility.
+   - Assess complexity and dependencies.
+   - Identify potential challenges.
+   - List packages that solve parts of the problem.
+4. Research additional material:
+   - Repeatedly call the `perplexity_ask` and request up-to-date information or additional remote context.
+   - Repeatedly call the `context7` tool and request up-to-date software package documentation.
+   - Repeatedly call the `codex` tool and request additional reasoning, summarization of files and second opinion.
+5. Develop the plan structure:
+   - Break down into logical phases/milestones.
+   - Create hierarchical task decomposition.
+   - Assign priorities and dependencies.
+   - Add implementation details and technical specs.
+   - Include edge cases and error handling.
+   - Define testing and validation steps.
+   - Specify which packages to use for each component.
+6. Deliver to `PLAN.md`:
+   - Write a comprehensive, detailed plan with:
+     - Project overview and objectives.
+     - Technical architecture decisions.
+     - Phase-by-phase breakdown.
+     - Specific implementation steps.
+     - Testing and validation criteria.
+     - Package dependencies and why each was chosen.
+     - Future considerations.
+   - Simultaneously create/update `TODO.md` with the flat itemized `- []` representation of the plan.
+
+Break complex requirements into atomic, actionable tasks. Identify and document task dependencies. Include potential blockers and mitigation strategies. Start with MVP, then layer improvements. Include specific technologies, patterns, and approaches.
+
+### /report command
+
+1. Read `./TODO.md` and `./PLAN.md` files.
+2. Analyze recent changes.
+3. Run tests.
+4. Document changes in `./CHANGELOG.md`.
+5. Remove completed items from `./TODO.md` and `./PLAN.md`.
+
+#### /work command
+
+1. Read `./TODO.md` and `./PLAN.md` files, think hard and reflect.
+2. Write down the immediate items in this iteration into `./work.md`.
+3. Write tests for the items first.
+4. Work on these items.
+5. Think, contemplate, research, reflect, refine, revise.
+6. Be careful, curious, vigilant, energetic.
+7. Verify your changes with tests and think aloud.
+8. Consult, research, reflect.
+9. Periodically remove completed items from `./work.md`.
+10. Tick off completed items from `./todo.md` and `./plan.md`.
+11. Update `./work.md` with improvement tasks.
+12. Execute `/report`.
+13. Continue to the next item.
+
+#### /test command: run comprehensive tests
+
+When I say `/test`, you must run
+
+```bash
+fd -e py -x uvx autoflake -i {}; fd -e py -x uvx pyupgrade --py312-plus {}; fd -e py -x uvx ruff check --output-format=github --fix --unsafe-fixes {}; fd -e py -x uvx ruff format --respect-gitignore --target-version py312 {}; uvx hatch test;
+```
+
+and document all results in `WORK.md`.
+
+## Anti-enterprise bloat guidelines
+
+CRITICAL: The fundamental mistake is treating simple utilities as enterprise systems. 
+
+- Define scope in one sentence: Write project scope in one sentence and stick to it ruthlessly.
+- Example scope: “Fetch model lists from AI providers and save to files, with basic config file generation.”
+- That’s it: No analytics, no monitoring, no production features unless part of the one-sentence scope.
+
+### RED LIST: NEVER ADD these unless requested
+
+- NEVER ADD Analytics/metrics collection systems.
+- NEVER ADD Performance monitoring and profiling.
+- NEVER ADD Production error handling frameworks.
+- NEVER ADD Security hardening beyond basic input validation.
+- NEVER ADD Health monitoring and diagnostics.
+- NEVER ADD Circuit breakers and retry strategies.
+- NEVER ADD Sophisticated caching systems.
+- NEVER ADD Graceful degradation patterns.
+- NEVER ADD Advanced logging frameworks.
+- NEVER ADD Configuration validation systems.
+- NEVER ADD Backup and recovery mechanisms.
+- NEVER ADD System health monitoring.
+- NEVER ADD Performance benchmarking suites.
+
+### GREEN LIST: what is appropriate
+
+- Basic error handling (try/catch, show error).
+- Simple retry (3 attempts maximum).
+- Basic logging (e.g. loguru logger).
+- Input validation (check required fields).
+- Help text and usage examples.
+- Configuration files (TOML preferred).
+- Basic tests for core functionality.
+
+## Prose
+
+When you write prose (like documentation or marketing or even your own commentary): 
+
+- The first line sells the second line: Your opening must earn attention for what follows. This applies to scripts, novels, and headlines. No throat-clearing allowed.
+- Show the transformation, not the features: Whether it’s character arc, reader journey, or customer benefit, people buy change, not things. Make them see their better self.
+- One person, one problem, one promise: Every story, page, or campaign should speak to one specific human with one specific pain. Specificity is universal; generality is forgettable.
+- Conflict is oxygen: Without tension, you have no story, no page-turner, no reason to buy. What’s at stake? What happens if they don’t act? Make it matter.
+- Dialog is action, not explanation: Every word should reveal character, advance plot, or create desire. If someone’s explaining, you’re failing. Subtext is everything.
+- Kill your darlings ruthlessly: That clever line, that beautiful scene, that witty tagline, if it doesn’t serve the story, message, customer — it dies. Your audience’s time is sacred!
+- Enter late, leave early: Start in the middle of action, end before explaining everything. Works for scenes, chapters, and sales copy. Trust your audience to fill gaps.
+- Remove fluff, bloat and corpo jargon.
+- Avoid hype words like “revolutionary”. 
+- Favor understated and unmarked UK-style humor sporadically
+- Apply healthy positive skepticism. 
+- Make every word count. 
+
+---
+</document_content>
+</document>
+
+<document index="2">
+<source>.github/workflows/push.yml</source>
+<document_content>
+name: Build & Test
+
+on:
+  push:
+    branches: [main]
+    tags-ignore: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Ruff lint
+        uses: astral-sh/ruff-action@v3
+        with:
+          version: "latest"
+          args: "check --output-format=github"
+
+      - name: Run Ruff Format
+        uses: astral-sh/ruff-action@v3
+        with:
+          version: "latest"
+          args: "format --check --respect-gitignore"
+
+  test:
+    name: Run Tests
+    needs: quality
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+        os: [ubuntu-latest]
+      fail-fast: true
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+          cache-suffix: ${{ matrix.os }}-${{ matrix.python-version }}
+
+      - name: Install test dependencies
+        run: |
+          uv pip install --system --upgrade pip
+          uv pip install --system ".[test]"
+
+      - name: Run tests with Pytest
+        run: uv run pytest -n auto --maxfail=1 --disable-warnings --cov-report=xml --cov-config=pyproject.toml --cov=src/vexy_lines_utils --cov=tests tests/
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.python-version }}-${{ matrix.os }}
+          path: coverage.xml
+
+  build:
+    name: Build Distribution
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          python-version: "3.12"
+          enable-cache: true
+
+      - name: Install build tools
+        run: uv pip install build hatchling hatch-vcs
+
+      - name: Build distributions
+        run: uv run python -m build --outdir dist
+
+      - name: Upload distribution artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-files
+          path: dist/
+          retention-days: 5 
+</document_content>
+</document>
+
+<document index="3">
+<source>.github/workflows/release.yml</source>
+<document_content>
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    name: Release to PyPI
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/vexy-lines-utils
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          python-version: "3.12"
+          enable-cache: true
+
+      - name: Install build tools
+        run: uv pip install build hatchling hatch-vcs
+
+      - name: Build distributions
+        run: uv run python -m build --outdir dist
+
+      - name: Verify distribution files
+        run: |
+          ls -la dist/
+          test -n "$(find dist -name '*.whl')" || (echo "Wheel file missing" && exit 1)
+          test -n "$(find dist -name '*.tar.gz')" || (echo "Source distribution missing" && exit 1)
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+</document_content>
+</document>
+
+<document index="4">
+<source>.gitignore</source>
+<document_content>
+*_autogen/
+.DS_Store
+__version__.py
+__pycache__/
+_Chutzpah*
+_deps
+_NCrunch_*
+_pkginfo.txt
+_Pvt_Extensions
+_ReSharper*/
+_TeamCity*
+_UpgradeReport_Files/
+!?*.[Cc]ache/
+!.axoCover/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!**/[Pp]ackages/build/
+!Directory.Build.rsp
+.*crunch*.local.xml
+.axoCover/*
+.builds
+.cr/personal
+.fake/
+.history/
+.ionide/
+.localhistory/
+.mfractor/
+.ntvs_analysis.dat
+.paket/paket.exe
+.sass-cache/
+.vs/
+.vscode
+.vscode/*
+.vshistory/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+[Bb]in/
+[Bb]uild[Ll]og.*
+[Dd]ebug/
+[Dd]ebugPS/
+[Dd]ebugPublic/
+[Ee]xpress/
+[Ll]og/
+[Ll]ogs/
+[Oo]bj/
+[Rr]elease/
+[Rr]eleasePS/
+[Rr]eleases/
+[Tt]est[Rr]esult*/
+[Ww][Ii][Nn]32/
+*_h.h
+*_i.c
+*_p.c
+*_wpftmp.csproj
+*- [Bb]ackup ([0-9]).rdl
+*- [Bb]ackup ([0-9][0-9]).rdl
+*- [Bb]ackup.rdl
+*.[Cc]ache
+*.[Pp]ublish.xml
+*.[Rr]e[Ss]harper
+*.a
+*.app
+*.appx
+*.appxbundle
+*.appxupload
+*.aps
+*.azurePubxml
+*.bim_*.settings
+*.bim.layout
+*.binlog
+*.btm.cs
+*.btp.cs
+*.build.csdef
+*.cab
+*.cachefile
+*.code-workspace
+*.coverage
+*.coveragexml
+*.d
+*.dbmdl
+*.dbproj.schemaview
+*.dll
+*.dotCover
+*.DotSettings.user
+*.dsp
+*.dsw
+*.dylib
+*.e2e
+*.exe
+*.gch
+*.GhostDoc.xml
+*.gpState
+*.ilk
+*.iobj
+*.ipdb
+*.jfm
+*.jmconfig
+*.la
+*.lai
+*.ldf
+*.lib
+*.lo
+*.log
+*.mdf
+*.meta
+*.mm.*
+*.mod
+*.msi
+*.msix
+*.msm
+*.msp
+*.ncb
+*.ndf
+*.nuget.props
+*.nuget.targets
+*.nupkg
+*.nvuser
+*.o
+*.obj
+*.odx.cs
+*.opendb
+*.opensdf
+*.opt
+*.out
+*.pch
+*.pdb
+*.pfx
+*.pgc
+*.pgd
+*.pidb
+*.plg
+*.psess
+*.publishproj
+*.publishsettings
+*.pubxml
+*.pyc
+*.rdl.data
+*.rptproj.bak
+*.rptproj.rsuser
+*.rsp
+*.rsuser
+*.sap
+*.sbr
+*.scc
+*.sdf
+*.sln.docstates
+*.sln.iml
+*.slo
+*.smod
+*.snupkg
+*.so
+*.suo
+*.svclog
+*.tlb
+*.tlh
+*.tli
+*.tlog
+*.tmp
+*.tmp_proj
+*.tss
+*.user
+*.userosscache
+*.userprefs
+*.vbp
+*.vbw
+*.VC.db
+*.VC.VC.opendb
+*.VisualState.xml
+*.vsp
+*.vspscc
+*.vspx
+*.vssscc
+*.xsd.cs
+**/[Pp]ackages/*
+**/*.DesktopClient/GeneratedArtifacts
+**/*.DesktopClient/ModelManifest.xml
+**/*.HTMLClient/GeneratedArtifacts
+**/*.Server/GeneratedArtifacts
+**/*.Server/ModelManifest.xml
+*~
+~$*
+$tf/
+AppPackages/
+artifacts/
+ASALocalRun/
+AutoTest.Net/
+Backup*/
+BenchmarkDotNet.Artifacts/
+bld/
+BundleArtifacts/
+ClientBin/
+cmake_install.cmake
+CMakeCache.txt
+CMakeFiles
+CMakeLists.txt.user
+CMakeScripts
+CMakeUserPresets.json
+compile_commands.json
+coverage*.info
+coverage*.json
+coverage*.xml
+csx/
+CTestTestfile.cmake
+dlldata.c
+DocProject/buildhelp/
+DocProject/Help/*.hhc
+DocProject/Help/*.hhk
+DocProject/Help/*.hhp
+DocProject/Help/*.HxC
+DocProject/Help/*.HxT
+DocProject/Help/html
+DocProject/Help/Html2
+ecf/
+FakesAssemblies/
+FodyWeavers.xsd
+Generated_Code/
+Generated\ Files/
+healthchecksdb
+install_manifest.txt
+ipch/
+Makefile
+MigrationBackup/
+mono_crash.*
+nCrunchTemp_*
+node_modules/
+nunit-*.xml
+OpenCover/
+orleans.codegen.cs
+Package.StoreAssociation.xml
+paket-files/
+project.fragment.lock.json
+project.lock.json
+publish/
+PublishScripts/
+rcf/
+ScaffoldingReadMe.txt
+ServiceFabricBackup/
+StyleCopReport.xml
+Testing
+TestResult.xml
+UpgradeLog*.htm
+UpgradeLog*.XML
+x64/
+x86/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Distribution / packaging
+!dist/.gitkeep
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+.ruff_cache/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific
+__version__.py
+_private
+VERSION.txt
+</document_content>
+</document>
+
+<document index="5">
+<source>.pre-commit-config.yaml</source>
+<document_content>
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.3.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+        args: [--respect-gitignore]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+      - id: debug-statements
+      - id: check-case-conflict
+      - id: mixed-line-ending
+        args: [--fix=lf] 
+</document_content>
+</document>
+
+<document index="6">
+<source>CHANGELOG.md</source>
+<document_content>
+---
+this_file: CHANGELOG.md
+---
+
+# Changelog
+
+## [Unreleased] - 2025-11-07
+
+### Added
+- Comprehensive documentation of Vexy Lines application in README.md, including detailed explanation of all 12 fill algorithms
+- Enhanced pyproject.toml with detailed classifiers, keywords, and inline documentation
+- DEPENDENCIES.md with thorough explanation of each package choice and usage
+- Python API documentation and examples in README
+- Troubleshooting section with common issues and solutions
+- Development workflow documentation and project structure guide
+
+### Changed
+- Expanded README.md from basic usage to comprehensive guide including:
+  - Detailed Vexy Lines feature overview (12 fill types, layer system, mesh warping)
+  - System requirements and installation instructions
+  - Advanced usage examples and workflows
+  - Python API documentation
+  - Extensive troubleshooting guide
+- Updated pyproject.toml metadata with more descriptive project information
+- Enhanced package description to better communicate functionality
+
+### Removed
+- Deleted old/ folder containing legacy scripts (vexy-lines2pdf.py, vlbatch.md, vlum-*.md)
+- Removed backup files (pyproject.toml.bak, vexy_lines_utils.py.backup)
+- Cleaned up AI agent instruction files (AGENTS.md, GEMINI.md, LLXPRT.md, QWEN.md, AGENT.md)
+- Removed macOS .DS_Store files
+
+### Technical
+- All 7 unit tests passing successfully
+- Package structure follows modern Python standards
+- Fire CLI implementation fully functional with dry-run mode
+- PyXA bridge for macOS automation operational
+- Window watcher state machine tested and working
+
+## 2025-11-07
+
+- replaced the placeholder module with a Fire-based CLI that automates Vexy Lines exports via PyXA and pyautogui, including dry-run support and structured logging
+- added unit tests for discovery, window watching, stats tracking, and the dry-run exporter plus a pytest `conftest` to expose the `src` layout
+- refreshed `pyproject.toml` dependencies/script entry, created proper package exports, and rewrote the README with detailed usage notes and background information
+- recorded `uvx hatch test` run (7 tests passed) to validate the new functionality
+</document_content>
+</document>
+
+<document index="7">
+<source>CLAUDE.md</source>
+<document_content>
+# Development guidelines
+
+## Foundation: Challenge your first instinct with chain-of-thought
+
+Before you generate any response, assume your first instinct is wrong. Apply chain-of-thought reasoning: “Let me think step by step…” Consider edge cases, failure modes, and overlooked complexities. Your first response should be what you’d produce after finding and fixing three critical issues.
+
+### CoT reasoning template
+
+- Problem analysis: What exactly are we solving and why?
+- Constraints: What limitations must we respect?
+- Solution options: What are 2–3 viable approaches with trade-offs?
+- Edge cases: What could go wrong and how do we handle it?
+- Test strategy: How will we verify this works correctly?
+
+## No sycophancy, accuracy first
+
+- If your confidence is below 90%, use search tools. Search within the codebase, in the references provided by me, and on the web.
+- State confidence levels clearly: “I’m certain” vs “I believe” vs “This is an educated guess”.
+- Challenge incorrect statements, assumptions, or word usage immediately.
+- Facts matter more than feelings: accuracy is non-negotiable.
+- Never just agree to be agreeable: every response should add value.
+- When user ideas conflict with best practices or standards, explain why.
+- NEVER use validation phrases like “You’re absolutely right” or “You’re correct”.
+- Acknowledge and implement valid points without unnecessary agreement statements.
+
+## Complete execution
+
+- Complete all parts of multi-part requests.
+- Match output format to input format (code box for code box).
+- Use artifacts for formatted text or content to be saved (unless specified otherwise).
+- Apply maximum thinking time for thoroughness.
+
+## Absolute priority: never overcomplicate, always verify
+
+- Stop and assess: Before writing any code, ask “Has this been done before”?
+- Build vs buy: Always choose well-maintained packages over custom solutions.
+- Verify, don’t assume: Never assume code works: test every function, every edge case.
+- Complexity kills: Every line of custom code is technical debt.
+- Lean and focused: If it’s not core functionality, it doesn’t belong.
+- Ruthless deletion: Remove features, don’t add them.
+- Test or it doesn’t exist: Untested code is broken code.
+
+## Verification workflow: mandatory
+
+1. Implement minimal code: Just enough to pass the test.
+2. Write a test: Define what success looks like.
+3. Run the test: `uvx hatch test`.
+4. Test edge cases: Empty inputs, none, negative numbers, huge inputs.
+5. Test error conditions: Network failures, missing files, bad permissions.
+6. Document test results: Add to `CHANGELOG.md` what was tested and results.
+
+## Before writing any code
+
+1. Search for existing packages: Check npm, pypi, github for solutions.
+2. Evaluate packages: >200 stars, recent updates, good documentation.
+3. Test the package: write a small proof-of-concept first.
+4. Use the package: don’t reinvent what exists.
+5. Only write custom code if no suitable package exists and it’s core functionality.
+
+## Never assume: always verify
+
+- Function behavior: read the actual source code, don’t trust documentation alone.
+- API responses: log and inspect actual responses, don’t assume structure.
+- File operations: Check file exists, check permissions, handle failures.
+- Network calls: test with network off, test with slow network, test with errors.
+- Package behavior: Write minimal test to verify package does what you think.
+- Error messages: trigger the error intentionally to see actual message.
+- Performance: measure actual time/memory, don’t guess.
+
+## Test-first development
+
+- Test-first development: Write the test before the implementation.
+- Delete first, add second: Can we remove code instead?
+- One file when possible: Could this fit in a single file?
+- Iterate gradually, avoiding major changes.
+- Focus on minimal viable increments and ship early.
+- Minimize confirmations and checks.
+- Preserve existing code/structure unless necessary.
+- Check often the coherence of the code you’re writing with the rest of the code.
+- Analyze code line-by-line.
+
+## Complexity detection triggers: rethink your approach immediately
+
+- Writing a utility function that feels “general purpose”.
+- Creating abstractions “for future flexibility”.
+- Adding error handling for errors that never happen.
+- Building configuration systems for configurations.
+- Writing custom parsers, validators, or formatters.
+- Implementing caching, retry logic, or state management from scratch.
+- Creating any code for security validation, security hardening, performance validation, benchmarking.
+- More than 3 levels of indentation.
+- Functions longer than 20 lines.
+- Files longer than 200 lines.
+
+## Before starting any work
+
+- Always read `WORK.md` in the main project folder for work progress, and `CHANGELOG.md` for past changes notes.
+- Read `README.md` to understand the project.
+- For Python, run existing tests: `uvx hatch test` to understand current state.
+- Step back and think heavily step by step about the task.
+- Consider alternatives and carefully choose the best option.
+- Check for existing solutions in the codebase before starting.
+
+## Project documentation to maintain
+
+- `README.md` :  purpose and functionality (keep under 200 lines).
+- `CHANGELOG.md` :  past change release notes (accumulative).
+- `PLAN.md` :  detailed future goals, clear plan that discusses specifics.
+- `TODO.md` :  flat simplified itemized `- []`-prefixed representation of `PLAN.md`.
+- `WORK.md` :  work progress updates including test results.
+- `DEPENDENCIES.md` :  list of packages used and why each was chosen.
+
+## Code quality standards
+
+- Use constants over magic numbers.
+- Write explanatory docstrings/comments that explain what and why.
+- Explain where and how the code is used/referred to elsewhere.
+- Handle failures gracefully with retries, fallbacks, user guidance.
+- Address edge cases, validate assumptions, catch errors early.
+- Let the computer do the work, minimize user decisions. If you identify a bug or a problem, plan its fix and then execute its fix. Don’t just “identify”.
+- Reduce cognitive load, beautify code.
+- Modularize repeated logic into concise, single-purpose functions.
+- Favor flat over nested structures.
+- Every function must have a test.
+
+## Testing standards
+
+- Unit tests: Every function gets at least one test.
+- Edge cases: Test empty, none, negative, huge inputs.
+- Error cases: Test what happens when things fail.
+- Integration: Test that components work together.
+- Smoke test: One test that runs the whole program.
+- Test naming: `test_function_name_when_condition_then_result`.
+- Assert messages: Always include helpful messages in assertions.
+- Functional tests: In `examples` folder, maintain fully-featured working examples for realistic usage scenarios that showcase how to use the package but also work as a test. 
+- Add `./test.sh` script to run all test including the functional tests.
+
+## Tool usage
+
+- Use `tree` CLI app if available to verify file locations.
+- Run `dir="." uvx codetoprompt: compress: output "$dir/llms.txt" --respect-gitignore: cxml: exclude "*.svg,.specstory,*.md,*.txt, ref, testdata,*.lock,*.svg" "$dir"` to get a condensed snapshot of the codebase into `llms.txt`.
+- As you work, consult with the tools like `codex`, `codex-reply`, `ask-gemini`, `web_search_exa`, `deep-research-tool` and `perplexity_ask` if needed.
+
+## File path tracking
+
+- Mandatory: In every source file, maintain a `this_file` record showing the path relative to project root.
+- Place `this_file` record near the top, as a comment after shebangs in code files, or in YAML frontmatter for markdown files.
+- Update paths when moving files.
+- Omit leading `./`.
+- Check `this_file` to confirm you’re editing the right file.
+
+
+## For Python
+
+- If we need a new Python project, run `uv venv --python 3.12 --clear; uv init; uv add fire rich pytest pytest-cov; uv sync`.
+- Check existing code with `.venv` folder to scan and consult dependency source code.
+- `uvx hatch test` :  run tests verbosely, stop on first failure.
+- `python --c "import package; print (package.__version__)"` :  verify package installation.
+- `uvx mypy file.py` :  type checking.
+- PEP 8: Use consistent formatting and naming, clear descriptive names.
+- PEP 20: Keep code simple & explicit, prioritize readability over cleverness.
+- PEP 257: Write docstrings.
+- Use type hints in their simplest form (list, dict, | for unions).
+- Use f-strings and structural pattern matching where appropriate.
+- Write modern code with `pathlib`.
+- Always add `--verbose` mode loguru-based debug logging.
+- Use `uv add`.
+- Use `uv pip install` instead of `pip install`.
+- Always use type hints: they catch bugs and document code.
+- Use dataclasses or Pydantic for data structures.
+
+### Package-first Python
+
+- Always use uv for package management.
+- Before any custom code: `uv add [package]`.
+- Common packages to always use:
+  - `httpx` for HTTP requests.
+  - `pydantic` for data validation.
+  - `rich` for terminal output.
+  - `fire` for CLI interfaces.
+  - `loguru` for logging.
+  - `pytest` for testing.
+
+### Python CLI scripts
+
+For CLI Python scripts, use `fire` & `rich`, and start with:
+
+```python
+#!/usr/bin/env-S uv run
+# /// script
+# dependencies = [“pkg1”, “pkg2”]
+# ///
+# this_file: path_to_current_file
+```
+
+## Post-work activities
+
+### Critical reflection
+
+- After completing a step, say “Wait, but” and do additional careful critical reasoning.
+- Go back, think & reflect, revise & improve what you’ve done.
+- Run all tests to ensure nothing broke.
+- Check test coverage: aim for 80% minimum.
+- Don’t invent functionality freely.
+- Stick to the goal of “minimal viable next version”.
+
+### Documentation updates
+
+- Update `WORK.md` with what you’ve done, test results, and what needs to be done next.
+- Document all changes in `CHANGELOG.md`.
+- Update `TODO.md` and `PLAN.md` accordingly.
+- Update `DEPENDENCIES.md` if packages were added/removed.
+
+## Special commands
+
+### /plan command: transform requirements into detailed plans
+
+When I say `/plan [requirement]`, you must think hard and:
+
+1. Research first: Search for existing solutions.
+   - Use `perplexity_ask` to find similar projects.
+   - Search pypi/npm for relevant packages.
+   - Check if this has been solved before.
+2. Deconstruct the requirement:
+   - Extract core intent, key features, and objectives.
+   - Identify technical requirements and constraints.
+   - Map what’s explicitly stated vs. what’s implied.
+   - Determine success criteria.
+   - Define test scenarios.
+3. Diagnose the project needs:
+   - Audit for missing specifications.
+   - Check technical feasibility.
+   - Assess complexity and dependencies.
+   - Identify potential challenges.
+   - List packages that solve parts of the problem.
+4. Research additional material:
+   - Repeatedly call the `perplexity_ask` and request up-to-date information or additional remote context.
+   - Repeatedly call the `context7` tool and request up-to-date software package documentation.
+   - Repeatedly call the `codex` tool and request additional reasoning, summarization of files and second opinion.
+5. Develop the plan structure:
+   - Break down into logical phases/milestones.
+   - Create hierarchical task decomposition.
+   - Assign priorities and dependencies.
+   - Add implementation details and technical specs.
+   - Include edge cases and error handling.
+   - Define testing and validation steps.
+   - Specify which packages to use for each component.
+6. Deliver to `PLAN.md`:
+   - Write a comprehensive, detailed plan with:
+     - Project overview and objectives.
+     - Technical architecture decisions.
+     - Phase-by-phase breakdown.
+     - Specific implementation steps.
+     - Testing and validation criteria.
+     - Package dependencies and why each was chosen.
+     - Future considerations.
+   - Simultaneously create/update `TODO.md` with the flat itemized `- []` representation of the plan.
+
+Break complex requirements into atomic, actionable tasks. Identify and document task dependencies. Include potential blockers and mitigation strategies. Start with MVP, then layer improvements. Include specific technologies, patterns, and approaches.
+
+### /report command
+
+1. Read `./TODO.md` and `./PLAN.md` files.
+2. Analyze recent changes.
+3. Run tests.
+4. Document changes in `./CHANGELOG.md`.
+5. Remove completed items from `./TODO.md` and `./PLAN.md`.
+
+#### /work command
+
+1. Read `./TODO.md` and `./PLAN.md` files, think hard and reflect.
+2. Write down the immediate items in this iteration into `./work.md`.
+3. Write tests for the items first.
+4. Work on these items.
+5. Think, contemplate, research, reflect, refine, revise.
+6. Be careful, curious, vigilant, energetic.
+7. Verify your changes with tests and think aloud.
+8. Consult, research, reflect.
+9. Periodically remove completed items from `./work.md`.
+10. Tick off completed items from `./todo.md` and `./plan.md`.
+11. Update `./work.md` with improvement tasks.
+12. Execute `/report`.
+13. Continue to the next item.
+
+#### /test command: run comprehensive tests
+
+When I say `/test`, you must run
+
+```bash
+fd -e py -x uvx autoflake -i {}; fd -e py -x uvx pyupgrade --py312-plus {}; fd -e py -x uvx ruff check --output-format=github --fix --unsafe-fixes {}; fd -e py -x uvx ruff format --respect-gitignore --target-version py312 {}; uvx hatch test;
+```
+
+and document all results in `WORK.md`.
+
+## Anti-enterprise bloat guidelines
+
+CRITICAL: The fundamental mistake is treating simple utilities as enterprise systems. 
+
+- Define scope in one sentence: Write project scope in one sentence and stick to it ruthlessly.
+- Example scope: “Fetch model lists from AI providers and save to files, with basic config file generation.”
+- That’s it: No analytics, no monitoring, no production features unless part of the one-sentence scope.
+
+### RED LIST: NEVER ADD these unless requested
+
+- NEVER ADD Analytics/metrics collection systems.
+- NEVER ADD Performance monitoring and profiling.
+- NEVER ADD Production error handling frameworks.
+- NEVER ADD Security hardening beyond basic input validation.
+- NEVER ADD Health monitoring and diagnostics.
+- NEVER ADD Circuit breakers and retry strategies.
+- NEVER ADD Sophisticated caching systems.
+- NEVER ADD Graceful degradation patterns.
+- NEVER ADD Advanced logging frameworks.
+- NEVER ADD Configuration validation systems.
+- NEVER ADD Backup and recovery mechanisms.
+- NEVER ADD System health monitoring.
+- NEVER ADD Performance benchmarking suites.
+
+### GREEN LIST: what is appropriate
+
+- Basic error handling (try/catch, show error).
+- Simple retry (3 attempts maximum).
+- Basic logging (e.g. loguru logger).
+- Input validation (check required fields).
+- Help text and usage examples.
+- Configuration files (TOML preferred).
+- Basic tests for core functionality.
+
+## Prose
+
+When you write prose (like documentation or marketing or even your own commentary): 
+
+- The first line sells the second line: Your opening must earn attention for what follows. This applies to scripts, novels, and headlines. No throat-clearing allowed.
+- Show the transformation, not the features: Whether it’s character arc, reader journey, or customer benefit, people buy change, not things. Make them see their better self.
+- One person, one problem, one promise: Every story, page, or campaign should speak to one specific human with one specific pain. Specificity is universal; generality is forgettable.
+- Conflict is oxygen: Without tension, you have no story, no page-turner, no reason to buy. What’s at stake? What happens if they don’t act? Make it matter.
+- Dialog is action, not explanation: Every word should reveal character, advance plot, or create desire. If someone’s explaining, you’re failing. Subtext is everything.
+- Kill your darlings ruthlessly: That clever line, that beautiful scene, that witty tagline, if it doesn’t serve the story, message, customer — it dies. Your audience’s time is sacred!
+- Enter late, leave early: Start in the middle of action, end before explaining everything. Works for scenes, chapters, and sales copy. Trust your audience to fill gaps.
+- Remove fluff, bloat and corpo jargon.
+- Avoid hype words like “revolutionary”. 
+- Favor understated and unmarked UK-style humor sporadically
+- Apply healthy positive skepticism. 
+- Make every word count. 
+
+---
+</document_content>
+</document>
+
+<document index="8">
+<source>DEPENDENCIES.md</source>
+<document_content>
+---
+this_file: DEPENDENCIES.md
+---
+
+# Dependencies
+
+## Runtime Dependencies
+
+### fire (>=0.6.0)
+- **Purpose**: Command-line interface framework
+- **Why chosen**: Google's Fire automatically generates CLIs from Python objects with minimal boilerplate. Maps class methods to shell commands without manual argparse configuration.
+- **Usage**: Powers the `vexy-lines export` command and handles all argument parsing
+
+### loguru (>=0.7.2)
+- **Purpose**: Structured logging with automatic colors
+- **Why chosen**: Zero-config logger that's cleaner than standard logging for CLI tools. Provides clear visual feedback during batch operations with colored output.
+- **Usage**: All status messages, progress tracking, error reporting, and verbose mode output
+
+### mac-pyxa (>=0.3.0)
+- **Purpose**: macOS application automation via AppleScript bridges
+- **Why chosen**: The only Python package providing direct access to macOS application scripting without subprocess calls. Essential for reliable menu automation.
+- **Usage**: Launches Vexy Lines, clicks File menu items (Export/Close), reads window titles for state tracking
+
+### pyautogui-ng (>=0.0.4)
+- **Purpose**: Keyboard and mouse automation
+- **Why chosen**: Fork of pyautogui with better macOS compatibility and active maintenance. Handles GUI interactions that PyXA can't reach (dialog boxes).
+- **Usage**: Navigates save dialogs with keyboard shortcuts (Cmd+Shift+G), types filenames, presses Enter to confirm
+
+### pyperclip (>=1.9.0)
+- **Purpose**: Cross-platform clipboard operations
+- **Why chosen**: Simple and reliable clipboard access. More robust than pyautogui's clipboard functions for path pasting on macOS.
+- **Usage**: Copies folder paths and filenames to clipboard for pasting into save dialogs
+
+## Development Dependencies
+
+### Testing
+- **pytest** (>=8.3.4): Test framework with fixtures and parametrization
+- **pytest-cov** (>=6.0.0): Coverage reporting integration
+- **pytest-xdist** (>=3.6.1): Parallel test execution for faster runs
+- **coverage[toml]** (>=7.6.12): Code coverage measurement
+
+### Code Quality
+- **ruff** (>=0.9.7): Fast all-in-one Python linter/formatter (replaces black, isort, flake8, and more)
+- **mypy** (>=1.15.0): Static type checking for early error detection
+- **pre-commit** (>=4.1.0): Git hook framework for automated checks
+- **pyupgrade** (>=3.19.1): Automatically modernizes Python syntax for newer versions
+- **absolufy-imports** (>=0.3.1): Converts relative imports to absolute for clarity
+
+### Documentation
+- **sphinx** (>=7.2.6): Documentation generator from docstrings
+- **sphinx-rtd-theme** (>=2.0.0): Clean ReadTheDocs theme
+- **sphinx-autodoc-typehints** (>=2.0.0): Automatic type hint documentation
+- **myst-parser** (>=3.0.0): Markdown support in Sphinx docs
+
+## Build System
+
+### hatchling (>=1.27.0)
+- **Purpose**: Modern Python build backend
+- **Why chosen**: PEP 517/518 compliant, simpler than setuptools, actively maintained
+
+### hatch-vcs (>=0.4.0)
+- **Purpose**: Automatic versioning from git tags
+- **Why chosen**: Eliminates manual version bumping, single source of truth in git
+
+## Platform Requirements
+
+- **Python**: 3.10+ (for match statements and modern typing features)
+- **macOS**: 10.14+ (required for PyXA compatibility)
+- **Vexy Lines**: Desktop application must be installed and activated
+
+## Removed Dependencies
+
+The original `vexy-lines2pdf.py` script used **tenacity** for retry decorators, but the refactored version implements custom retry logic via `WindowWatcher` polling, making tenacity unnecessary and reducing dependencies.
+</document_content>
+</document>
+
+<document index="9">
+<source>LICENSE</source>
+<document_content>
+MIT License
+
+Copyright (c) 2025 Fontlab Ltd.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</document_content>
+</document>
+
+<document index="10">
+<source>PLAN.md</source>
+<document_content>
+
+</document_content>
+</document>
+
+<document index="11">
+<source>README.md</source>
+<document_content>
+---
+this_file: README.md
+---
+
+# Vexy Lines Utils
+
+Export Vexy Lines `.lines` documents to crisp PDFs without pointing and clicking. This package provides a command-line interface for batch automation of [Vexy Lines](https://www.vexy.art) on macOS, wrapping the exact workflow described in the original `vexy-lines2pdf.py` script with a Fire-powered CLI.
+
+## About Vexy Lines
+
+Vexy Lines is a creative desktop application that transforms photos, illustrations, AI-generated images and other bitmaps into expressive vector art. It reads the color value of every pixel and intelligently builds vector artwork from it.
+
+### Core Concept
+
+Feed it a portrait, get back an engraving. Drop in a landscape, receive flowing wave patterns. The software offers twelve different ways to interpret your images, each method responding to the light and dark areas of your source image differently. Dark areas generate thick strokes, bright areas create thin ones—or reverse it for dramatic effects.
+
+### The 12 Fill Algorithms
+
+- **Linear**: Classic copper-plate engravings with parallel straight lines
+- **Wave**: Flowing parallel curves that undulate across your image
+- **Radial**: Lines exploding from a center point like sun rays
+- **Circular**: Concentric rings emanating outward
+- **Spiral**: Continuous winding patterns from center to edge
+- **Halftone**: Newspaper-style dots that scale with brightness
+- **Trace**: Clean edge detection that converts boundaries to paths
+- **Wireframe**: 3D-looking dimensional lattices
+- **Scribble**: Hand-drawn energy with organic randomness
+- **Fractal**: Intricate mathematical recursive patterns
+- **Text**: Paint with letters and typography
+- **Handmade**: Draw your own custom strokes for full control
+
+### Professional Features
+
+- **Layer System**: Stack multiple fills, organize with groups, control visibility with masks
+- **Dynamic Color**: Strokes pull actual colors from source images segment by segment
+- **3D Mesh Warping**: Wrap patterns around cylinders, drape over waves, add perspective
+- **Multiple Sources**: Each group can reference different images for complex compositions
+- **Production Export**: SVG, PDF, EPS for infinite scaling; PNG, JPEG for quick sharing
+- **Overlap Control**: Fills can cut through each other creating woven effects
+
+Files save as `.lines` projects that preserve every layer, fill, mask, mesh, and parameter—allowing iterative refinement.
+
+## What This Package Provides
+
+This automation tool helps power users and studios process large batches of Vexy Lines artwork efficiently:
+
+- **Fire CLI**: A `vexy-lines` command implemented with Google's `fire` framework for intuitive command-line usage
+- **Batch Processing**: Recursive discovery and processing of `.lines` files in folders or single-file operations
+- **macOS Automation**: PyXA-powered menu control for **File → Export…** and **File → Close** operations
+- **Smart Dialog Navigation**: `pyautogui-ng` keyboard automation to navigate save dialogs and set proper filenames
+- **Voice Feedback**: Optional macOS text-to-speech announcements for accessibility
+- **Dry-Run Mode**: Preview operations without touching the UI—perfect for CI tests or validating large batches
+- **Robust Error Handling**: Continues processing remaining files even if individual exports fail
+
+## System Requirements
+
+- **macOS 10.14+** (required for PyXA automation framework)
+- **Vexy Lines** desktop application installed
+- **Python 3.10+**
+- **4GB RAM** minimum (same as Vexy Lines)
+
+## Installation
+
+### From PyPI (Recommended)
+
+```bash
+pip install vexy-lines-utils
+```
+
+### From Source
+
+```bash
+git clone https://github.com/vexyart/vexy-lines-utils.git
+cd vexy-lines-utils
+pip install -e .
+```
+
+### Required Permissions
+
+Grant accessibility permissions to your Terminal/IDE for UI automation:
+1. Open **System Preferences** → **Security & Privacy**
+2. Navigate to **Privacy** → **Accessibility**
+3. Add your Terminal app or IDE
+4. Restart Terminal/IDE after granting permissions
+
+## Usage Examples
+
+### Basic Export Operations
+
+```bash
+# Export a single document
+vexy-lines export ~/Art/portrait.lines
+
+# Export everything in a folder (recursive)
+vexy-lines export ~/Projects/posters
+
+# Process specific project with verbose output
+vexy-lines export ~/Clients/BigCorp/logos --verbose
+
+# Preview what would be processed without running
+vexy-lines export ~/batch --dry_run --verbose
+
+# Get voice confirmation when batch completes
+vexy-lines export ~/batch --say_summary
+```
+
+### Advanced Workflows
+
+```bash
+# Process today's work
+vexy-lines export ~/Desktop/vexy-today/ --verbose --say_summary
+
+# Validate large batch before running
+vexy-lines export ~/Archive/2024 --dry_run | grep "processed"
+
+# Export with detailed logging for troubleshooting
+vexy-lines export ~/problem-files/ --verbose 2>&1 | tee export.log
+```
+
+### Command-Line Arguments
+
+**Required:**
+- `target`: Path to a `.lines` file or folder containing them (searched recursively)
+
+**Optional Flags:**
+- `--verbose`: Show detailed progress including each file being processed
+- `--dry_run`: Preview files that would be processed without UI automation
+- `--say_summary`: Announce completion summary via macOS text-to-speech
+
+### Output Format
+
+The command returns a structured dictionary with export statistics:
+
+```json
+{
+  "processed": 10,
+  "success": 9,
+  "failed": 1,
+  "failures": [
+    ["path/to/broken.lines", "Failed to open file"]
+  ],
+  "dry_run": false
+}
+```
+
+## How It Works
+
+1. **Discovery** – `find_lines_files` resolves the target path, supports single files, and sorts recursive directory walks for deterministic runs.
+2. **App bridge** – `PyXABridge` launches/activates Vexy Lines via macOS scripting bridges and exposes a minimal interface (`window_titles`, `click_menu_item`).
+3. **Window watching** – `WindowWatcher` polls the live window list so we wait for the expected document title, the Export dialog, and the Save dialog instead of relying on coarse `sleep()` delays.
+4. **Keyboard automation** – `UIActions` wraps `pyautogui-ng` + `pyperclip` to press Command-Shift-G, paste the folder path, select the filename, and confirm overwrites.
+5. **Verification** – the exporter waits for the Save window to close, then checks that the new PDF exists and is non-empty before moving on.
+
+If any step fails (missing dialog, file cannot open, permissions issue, etc.), the run continues with the next `.lines` document and reports the failure reason in the final summary.
+
+## Python API
+
+For integration into larger workflows:
+
+```python
+from pathlib import Path
+from vexy_lines_utils import VexyLinesExporter, AutomationConfig
+
+# Create custom configuration
+config = AutomationConfig(
+    poll_interval=0.2,        # Window check frequency (seconds)
+    wait_for_app=20.0,        # App launch timeout
+    wait_for_file=20.0,       # File open timeout
+    wait_for_dialog=25.0,     # Dialog appearance timeout
+    post_action_delay=0.4     # Pause after UI actions
+)
+
+# Initialize exporter
+exporter = VexyLinesExporter(config=config)
+
+# Process files
+stats = exporter.export(Path("~/Documents/vexy-projects"))
+
+# Check results
+print(f"Success rate: {stats.success}/{stats.processed}")
+for path, reason in stats.failures:
+    print(f"Failed: {path} - {reason}")
+```
+
+## Development
+
+### Project Structure
+
+```
+vexy-lines-utils/
+├── src/vexy_lines_utils/
+│   ├── __init__.py           # Package exports
+│   ├── vexy_lines_utils.py   # Main implementation
+│   └── py.typed               # PEP 561 type marker
+├── tests/
+│   ├── test_package.py       # Unit tests
+│   └── fixtures/              # Test data
+├── pyproject.toml             # Package configuration
+└── README.md                  # This file
+```
+
+### Development Setup
+
+```bash
+# Clone repository
+git clone https://github.com/vexyart/vexy-lines-utils.git
+cd vexy-lines-utils
+
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install with development dependencies
+pip install -e ".[dev,test]"
+
+# Run tests
+uvx hatch test
+
+# Format code
+uvx hatch fmt
+
+# Type checking
+uvx hatch run lint:typing
+```
+
+### Testing Philosophy
+
+Tests focus on the automation logic rather than UI interaction:
+- Discovery logic for finding `.lines` files
+- Stats tracking and error reporting
+- Window watching state machines
+- Dry-run mode for CI environments
+
+### Contributing
+
+When adding features:
+1. Keep scope focused on `.lines` → PDF export automation
+2. Add unit tests for new functionality
+3. Update this README with new options
+4. Follow existing code style (Ruff-formatted)
+
+## Troubleshooting
+
+### Common Issues
+
+**"PyXA is not available"**
+- Ensure you're on macOS
+- Install with: `pip install mac-pyxa`
+- Check Python architecture matches system
+
+**"Failed to launch Vexy Lines"**
+- Verify Vexy Lines.app is in /Applications
+- Try launching manually first
+- Check for trial/license expiration
+
+**Export dialogs timing out**
+- Increase timeout values in AutomationConfig
+- Check if Vexy Lines has modal dialogs open
+- Verify no system dialogs blocking
+
+**"Accessibility permissions required"**
+- Grant Terminal.app accessibility permissions
+- If using VS Code/PyCharm, grant IDE permissions too
+- Log out and back in after permission changes
+
+**PDFs not appearing**
+- Check source `.lines` files aren't corrupted
+- Verify write permissions in target directory
+- Look for hidden error dialogs in Vexy Lines
+
+## About
+
+**vexy-lines-utils** is developed by [FontLab Ltd.](https://www.fontlab.com), creators of Vexy Lines and industry-standard font editing software.
+
+### Links
+
+- [Vexy Lines Homepage](https://www.vexy.art)
+- [Vexy Lines Documentation](https://help.vexy.art)
+- [FontLab Support](https://support.vexy.art)
+- [Package Issues](https://github.com/vexyart/vexy-lines-utils/issues)
+
+### License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+### Credits
+
+Based on the original `vexy-lines2pdf.py` automation script. The package structure follows modern Python packaging standards with Fire CLI, comprehensive testing, and robust error handling.
+</document_content>
+</document>
+
+<document index="12">
+<source>TODO.md</source>
+<document_content>
+
+</document_content>
+</document>
+
+<document index="13">
+<source>WORK.md</source>
+<document_content>
+
+</document_content>
+</document>
+
+<document index="14">
+<source>build.sh</source>
+<document_content>
+#!/usr/bin/env bash
+DIR="$(dirname "$0")"
+cd "$DIR"
+uvx hatch clean;
+fd -e py -x autoflake -i {};
+fd -e py -x pyupgrade --py312-plus {};
+fd -e py -x ruff check --output-format=github --fix --unsafe-fixes {};
+fd -e py -x ruff format --respect-gitignore --target-version py312 {};
+uvx hatch fmt;
+
+EXCLUDE="*.svg,.specstory,ref,testdata,*.lock,llms.txt"
+if [[ -n "$1" ]]; then
+  EXCLUDE="$EXCLUDE,$1"
+fi
+
+uvx codetoprompt --compress --output "./llms.txt" --respect-gitignore --cxml --exclude "$EXCLUDE" "."
+
+gitnextver .;
+uvx hatch build;
+uv publish;
+uv pip install --system --upgrade -e .
+</document_content>
+</document>
+
+<document index="15">
+<source>docs/automation-setup.md</source>
+<document_content>
+
+</document_content>
+</document>
+
+<document index="16">
+<source>package.toml</source>
+<document_content>
+# Package configuration
+[package]
+include_cli = true        # Include CLI boilerplate
+include_logging = true    # Include logging setup
+use_pydantic = true      # Use Pydantic for data validation
+use_rich = true          # Use Rich for terminal output
+
+[features]
+mkdocs = false           # Enable MkDocs documentation
+vcs = true              # Initialize Git repository
+github_actions = true   # Add GitHub Actions workflows 
+</document_content>
+</document>
+
+<document index="17">
+<source>pyproject.toml</source>
+<document_content>
+# this_file: pyproject.toml
+#==============================================================================
+# VEXY-LINES-UTILS PACKAGE CONFIGURATION
+# This pyproject.toml defines the package metadata, dependencies, build system,
+# and development environment for the vexy-lines-utils package.
+#==============================================================================
+
+#------------------------------------------------------------------------------
+# PROJECT METADATA
+# Core package information used by PyPI and package managers.
+#------------------------------------------------------------------------------
+[project]
+name = 'vexy-lines-utils' # Package name on PyPI
+description = 'Command-line automation for batch exporting Vexy Lines vector art documents to PDF on macOS' # Short description
+readme = 'README.md' # Path to README file
+requires-python = '>=3.10' # Minimum Python version
+keywords = [
+    'vexy-lines',
+    'vector-art',
+    'automation',
+    'pdf-export',
+    'batch-processing',
+    'macos',
+    'cli',
+    'creative-tools',
+] # Keywords for PyPI search
+dynamic = ["version"] # Fields set dynamically at build time
+
+# PyPI classifiers for package categorization
+classifiers = [
+    'Development Status :: 4 - Beta', # Package maturity level
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
+    'Programming Language :: Python :: Implementation :: CPython',
+    'Programming Language :: Python :: Implementation :: PyPy',
+    'Operating System :: MacOS :: MacOS X',
+    'License :: OSI Approved :: MIT License',
+    'Intended Audience :: Developers',
+    'Intended Audience :: End Users/Desktop',
+    'Topic :: Multimedia :: Graphics :: Graphics Conversion',
+    'Topic :: Utilities',
+    'Environment :: Console',
+    'Natural Language :: English',
+]
+
+dependencies = [
+    "fire>=0.6.0",          # CLI framework
+    "loguru>=0.7.2",        # Colorful logging
+    "mac-pyxa>=0.3.0",      # macOS application automation
+    "pyautogui-ng>=0.0.4",  # Keyboard/mouse automation
+    "pyperclip>=1.9.0",     # Clipboard operations
+]
+
+# Author information
+[[project.authors]]
+name = 'Fontlab Ltd.'
+email = 'opensource@vexy.art'
+
+# License information
+[project.license]
+text = 'MIT'
+
+# Project URLs
+[project.urls]
+Documentation = 'https://github.com/vexyart/vexy-lines-utils#readme'
+Issues = 'https://github.com/vexyart/vexy-lines-utils/issues'
+Source = 'https://github.com/vexyart/vexy-lines-utils'
+
+#------------------------------------------------------------------------------
+# OPTIONAL DEPENDENCIES
+# Additional dependencies for optional features, development, and testing.
+#------------------------------------------------------------------------------
+[project.optional-dependencies]
+
+# Development tools
+dev = [
+    'pre-commit>=4.1.0', # Pre-commit hook manager - Keep pre-commit as is, update if newer pre-commit version is required
+    'ruff>=0.9.7', # Linting and formatting - Keep ruff as is, update if newer ruff version is required
+    'mypy>=1.15.0', # Type checking - Keep mypy as is, update if newer mypy version is required
+    'absolufy-imports>=0.3.1', # Convert relative imports to absolute - Keep absolufy-imports as is, update if newer absolufy-imports version is required
+    'pyupgrade>=3.19.1', # Upgrade Python syntax - Keep pyupgrade as is, update if newer pyupgrade version is required
+    'isort>=6.0.1', # Sort imports - Keep isort as is, update if newer isort version is required
+]
+
+# Testing tools and frameworks
+test = [
+    'pytest>=8.3.4', # Testing framework - Keep pytest as is, update if newer pytest version is required
+    'pytest-cov>=6.0.0', # Coverage plugin for pytest - Keep pytest-cov as is, update if newer pytest-cov version is required
+    'pytest-xdist>=3.6.1', # Parallel test execution - Keep pytest-xdist as is, update if newer pytest-xdist version is required
+    'pytest-benchmark[histogram]>=5.1.0', # Benchmarking plugin - Keep pytest-benchmark as is, update if newer pytest-benchmark version is required
+    'pytest-asyncio>=0.25.3', # Async test support - Keep pytest-asyncio as is, update if newer pytest-asyncio version is required
+    'coverage[toml]>=7.6.12',
+]
+
+docs = [
+    "sphinx>=7.2.6",
+    "sphinx-rtd-theme>=2.0.0",
+    "sphinx-autodoc-typehints>=2.0.0",
+    "myst-parser>=3.0.0", # Markdown support in Sphinx
+]
+
+# All optional dependencies combined
+all = [
+]
+
+#------------------------------------------------------------------------------
+# COMMAND-LINE SCRIPTS
+# Entry points for command-line executables installed with the package.
+#------------------------------------------------------------------------------
+[project.scripts]
+vexy-lines = "vexy_lines_utils.vexy_lines_utils:main"
+
+#------------------------------------------------------------------------------
+# BUILD SYSTEM CONFIGURATION
+# Defines the tools required to build the package and the build backend.
+#------------------------------------------------------------------------------
+[build-system]
+# Hatchling is a modern build backend for Python packaging
+# hatch-vcs integrates with version control systems for versioning
+requires = [
+    'hatchling>=1.27.0', # Keep hatchling as is, update if newer hatchling version is required
+    'hatch-vcs>=0.4.0', # Keep hatch-vcs as is, update if newer hatch-vcs version is required
+]
+build-backend = 'hatchling.build' # Specifies Hatchling as the build backend
+
+
+#------------------------------------------------------------------------------
+# HATCH BUILD CONFIGURATION
+# Configures the build process, specifying which packages to include and
+# how to handle versioning.
+#------------------------------------------------------------------------------
+[tool.hatch.build]
+# Include package data files
+include = [
+    "src/vexy_lines_utils/py.typed", # For better type checking support
+    "src/vexy_lines_utils/data/**/*", # Include data files if any
+
+]
+exclude = ["**/__pycache__", "**/.pytest_cache", "**/.mypy_cache"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/vexy_lines_utils"]
+reproducible = true
+
+
+# Version control system hook configuration
+# Automatically updates the version file from git tags
+[tool.hatch.build.hooks.vcs]
+version-file = "src/vexy_lines_utils/__version__.py"
+
+# Version source configuration
+[tool.hatch.version]
+source = 'vcs' # Get version from git tags or other VCS info
+
+# Metadata handling configuration
+[tool.hatch.metadata]
+allow-direct-references = true # Allow direct references in metadata (useful for local dependencies)
+
+
+#------------------------------------------------------------------------------
+# DEVELOPMENT ENVIRONMENTS
+
+[tool.hatch.envs.default]
+features = ['dev', 'test', 'all']
+dependencies = [
+]
+
+# Commands available in the default environment
+[tool.hatch.envs.default.scripts]
+# Run tests with optional arguments
+test = 'pytest {args:tests}'
+# Run tests with coverage reporting
+test-cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=src/vexy_lines_utils --cov=tests {args:tests}"
+# Run type checking
+type-check = "mypy src/vexy_lines_utils tests"
+# Run linting and formatting
+lint = ["ruff check src/vexy_lines_utils tests", "ruff format --respect-gitignore src/vexy_lines_utils tests"]
+# Format and fix style issues
+fmt = ["ruff format --respect-gitignore src/vexy_lines_utils tests", "ruff check --fix src/vexy_lines_utils tests"]
+fix = ["ruff check --fix --unsafe-fixes src/vexy_lines_utils tests", "ruff format --respect-gitignore src/vexy_lines_utils tests"]
+
+# Matrix configuration to test across multiple Python versions
+
+[[tool.hatch.envs.all.matrix]]
+python = ["3.10", "3.11", "3.12"]
+
+#------------------------------------------------------------------------------
+# SPECIALIZED ENVIRONMENTS
+# Additional environments for specific development tasks.
+#------------------------------------------------------------------------------
+
+# Dedicated environment for linting and code quality checks
+[tool.hatch.envs.lint]
+detached = true # Create a separate, isolated environment
+features = ['dev'] # Use dev extras  dependencies 
+
+# Linting environment commands
+[tool.hatch.envs.lint.scripts]
+# Type checking with automatic type installation
+typing = "mypy --install-types --non-interactive {args:src/vexy_lines_utils tests}"
+# Check style and format code
+style = ["ruff check {args:.}", "ruff format --respect-gitignore {args:.}"]
+# Format and fix style issues
+fmt = ["ruff format --respect-gitignore {args:.}", "ruff check --fix {args:.}"]
+fix = ["ruff check --fix --unsafe-fixes {args:.}", "ruff format --respect-gitignore {args:.}"]
+# Run all ops
+all = ["style", "typing", "fix"]
+
+# Dedicated environment for testing
+[tool.hatch.envs.test]
+features = ['test'] # Use test extras as dependencies
+
+# Testing environment commands
+[tool.hatch.envs.test.scripts]
+# Run tests in parallel
+test = "python -m pytest -n auto {args:tests}"
+# Run tests with coverage in parallel
+test-cov = "python -m pytest -n auto --cov-report=term-missing --cov-config=pyproject.toml --cov=src/vexy_lines_utils --cov=tests {args:tests}"
+# Run benchmarks
+bench = "python -m pytest -v -p no:briefcase tests/test_benchmark.py --benchmark-only"
+# Run benchmarks and save results
+bench-save = "python -m pytest -v -p no:briefcase tests/test_benchmark.py --benchmark-only --benchmark-json=benchmark/results.json"
+
+# Documentation environment
+[tool.hatch.envs.docs]
+features = ['docs']
+
+# Documentation environment commands
+[tool.hatch.envs.docs.scripts]
+build = "sphinx-build -b html docs/source docs/build"
+
+# GitHub Actions workflow configuration
+[tool.hatch.envs.ci]
+features = ['test']
+
+
+[tool.hatch.envs.ci.scripts]
+test = "pytest --cov=src/vexy_lines_utils --cov-report=xml"
+
+
+#------------------------------------------------------------------------------
+# CODE QUALITY TOOLS
+# Configuration for linting, formatting, and code quality enforcement.
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# COVERAGE CONFIGURATION
+# Settings for test coverage measurement and reporting.
+#------------------------------------------------------------------------------
+
+# Path mapping for coverage in different environments
+[tool.coverage.paths]
+vexy_lines_utils = ["src/vexy_lines_utils", "*/vexy-lines-utils/src/vexy_lines_utils"]
+tests = ["tests", "*/vexy-lines-utils/tests"]
+
+# Coverage report configuration
+[tool.coverage.report]
+# Lines to exclude from coverage reporting
+exclude_lines = [
+    'no cov', # Custom marker to skip coverage
+    'if __name__ == .__main__.:', # Script execution guard
+    'if TYPE_CHECKING:', # Type checking imports and code
+    'pass', # Empty pass statements
+    'raise NotImplementedError', # Unimplemented method placeholders
+    'raise ImportError', # Import error handling
+    'except ImportError', # Import error handling
+    'except KeyError', # Common error handling
+    'except AttributeError', # Common error handling
+    'except NotImplementedError', # Common error handling
+]
+
+[tool.coverage.run]
+source_pkgs = ["vexy_lines_utils", "tests"]
+branch = true # Measure branch coverage (if/else statements)
+parallel = true # Support parallel test execution
+omit = [
+    "src/vexy_lines_utils/__about__.py",
+]
+
+#------------------------------------------------------------------------------
+# MYPY CONFIGURATION
+# Configuration for type checking with mypy.
+#------------------------------------------------------------------------------
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+#------------------------------------------------------------------------------
+# PYTEST CONFIGURATION
+# Configuration for pytest, including markers, options, and benchmark settings.
+#------------------------------------------------------------------------------
+
+[tool.pytest.ini_options]
+addopts = "-v --durations=10 -p no:briefcase"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+console_output_style = "progress"
+filterwarnings = ["ignore::DeprecationWarning", "ignore::UserWarning"]
+log_cli = true
+log_cli_level = "INFO"
+markers = [
+    "benchmark: marks tests as benchmarks (select with '-m benchmark')",
+    "unit: mark a test as a unit test",
+    "integration: mark a test as an integration test",
+    "permutation: tests for permutation functionality", 
+    "parameter: tests for parameter parsing",
+    "prompt: tests for prompt parsing",
+]
+norecursedirs = [
+    ".*",
+    "build",
+    "dist", 
+    "venv",
+    "__pycache__",
+    "*.egg-info",
+    "_private",
+]
+python_classes = ["Test*"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+testpaths = ["tests"]
+
+[tool.pytest-benchmark]
+min_rounds = 100
+min_time = 0.1
+histogram = true
+storage = "file"
+save-data = true
+compare = [
+    "min",    # Minimum time
+    "max",    # Maximum time
+    "mean",   # Mean time
+    "stddev", # Standard deviation
+    "median", # Median time
+    "iqr",    # Inter-quartile range
+    "ops",    # Operations per second
+    "rounds", # Number of rounds
+]
+
+#------------------------------------------------------------------------------
+# RUFF CONFIGURATION
+# Configuration for Ruff, including linter and formatter settings.
+#------------------------------------------------------------------------------ 
+
+# Ruff linter and formatter configuration
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+
+# Linting rules configuration
+[tool.ruff.lint]
+# Rule sets to enable, organized by category
+select = [
+    # flake8 plugins and extensions
+    'A', # flake8-builtins: checks for shadowed builtins
+    'ARG', # flake8-unused-arguments: checks for unused function arguments
+    'ASYNC', # flake8-async: checks for async/await issues
+    'B', # flake8-bugbear: finds likely bugs and design problems
+    'C', # flake8-comprehensions: helps write better list/dict comprehensions
+    'DTZ', # flake8-datetimez: checks for datetime timezone issues
+    'E', # pycodestyle errors: PEP 8 style guide errors
+    'EM', # flake8-errmsg: checks for better error messages
+    'F', # pyflakes: detects various errors
+    'FBT', # flake8-boolean-trap: checks for boolean traps in function signatures
+    'I', # isort: sorts imports
+    'ICN', # flake8-import-conventions: checks for import conventions
+    'ISC', # flake8-implicit-str-concat: checks for implicit string concatenation
+    'LOG', # flake8-logging: checks for logging issues
+    'N', # pep8-naming: checks naming conventions
+    'PLC', # pylint convention: checks for convention issues
+    'PLE', # pylint error: checks for errors
+    'PLR', # pylint refactor: suggests refactors
+    'PLW', # pylint warning: checks for suspicious code
+    'PT', # flake8-pytest-style: checks pytest-specific style
+    'PTH', # flake8-use-pathlib: checks for stdlib path usage vs pathlib
+    'PYI', # flake8-pyi: checks stub files
+    'RET', # flake8-return: checks return statement consistency
+    'RSE', # flake8-raise: checks raise statements
+    'RUF', # Ruff-specific rules
+    'S', # flake8-bandit: checks for security issues
+    'SIM', # flake8-simplify: checks for code simplification opportunities
+    'T', # flake8-print: checks for print statements
+    'TCH', # flake8-type-checking: helps with type-checking
+    'TID', # flake8-tidy-imports: checks for tidy import statements
+    'UP', # pyupgrade: checks for opportunities to use newer Python features
+    'W', # pycodestyle warnings: PEP 8 style guide warnings
+    'YTT', # flake8-2020: checks for misuse of sys.version or sys.version_info
+
+]
+# Rules to ignore (with reasons)
+ignore = [
+    'B027', # Empty method in abstract base class - sometimes needed for interfaces
+    'C901', # Function is too complex - sometimes complexity is necessary
+    'FBT003', # Boolean positional argument in function definition - sometimes unavoidable
+    'PLR0911', # Too many return statements - sometimes needed for readability
+    'PLR0912', # Too many branches - sometimes needed for complex logic
+    'PLR0913', # Too many arguments - sometimes needed in APIs
+    'PLR0915', # Too many statements - sometimes needed for comprehensive functions
+    'PLR1714', # Consider merging multiple comparisons - sometimes less readable
+    'PLW0603', # Using the global statement - sometimes necessary
+    'PT013', # Pytest explicit test parameter - sometimes clearer
+    'PTH123', # Path traversal - sometimes needed
+    'PYI056', # Calling open() in pyi file - sometimes needed in type stubs
+    'S105', # Possible hardcoded password - often false positives
+    'S106', # Possible hardcoded password - often false positives
+    'S107', # Possible hardcoded password - often false positives
+    'S110', # try-except-pass - sometimes valid for suppressing exceptions
+    'SIM102'
+    # Nested if statements - sometimes more readable than combined conditions
+]
+# Rules that should not be automatically fixed
+unfixable = [
+    'F401', # Don't automatically remove unused imports - may be needed later
+
+]
+# Configure extend-exclude to ignore specific directories
+exclude = [".git", ".venv", "venv", "dist", "build"]
+
+# isort configuration within Ruff
+[tool.ruff.lint.isort]
+known-first-party = ['vexy_lines_utils'] # Treat as first-party imports for sorting
+
+# flake8-tidy-imports configuration within Ruff
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = 'all' # Ban all relative imports for consistency
+
+# Per-file rule exceptions
+[tool.ruff.lint.per-file-ignores]
+# Tests can use magic values, assertions, and relative imports
+'tests/**/*' = [
+    'PLR2004', # Allow magic values in tests for readability
+    'S101', # Allow assertions in tests
+    'TID252'
+    # Allow relative imports in tests for convenience
+]
+</document_content>
+</document>
+
+# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/__init__.py
+# Language: python
+
+from vexy_lines_utils.__version__ import __version__
+from vexy_lines_utils.vexy_lines_utils import (
+    AutomationConfig,
+    ExportStats,
+    VexyLinesCLI,
+    VexyLinesExporter,
+    find_lines_files,
+    main,
+)
+
+
+<document index="18">
+<source>src/vexy_lines_utils/py.typed</source>
+<document_content>
+# this_file: src/vexy_lines_utils/py.typed
+</document_content>
+</document>
+
+# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/vexy_lines_utils.py
+# Language: python
+
+import subprocess
+import time
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import TYPE_CHECKING, Protocol
+import fire
+from loguru import logger
+from collections.abc import Callable, Sequence
+import PyXA
+import pyautogui
+import pyperclip
+
+class AutomationError(R, u, n, t, i, m, e, E, r, r, o, r):
+    """Raised when the automation flow cannot continue."""
+    def __init__((self, message: str, error_code: str = "UNKNOWN")) -> None:
+
+class FileValidationError(A, u, t, o, m, a, t, i, o, n, E, r, r, o, r):
+    """Raised when a .lines file is invalid or corrupted."""
+    def __init__((self, message: str)) -> None:
+
+class AutomationConfig:
+    """Tunables that describe how we talk to Vexy Lines."""
+    def scale_timeout((self, base_timeout: float)) -> float:
+        """Apply timeout multiplier to a base timeout value."""
+
+class ExportStats:
+    """Outcome of a batch operation."""
+    def record_success((self, path: Path)) -> None:
+    def record_failure((self, path: Path, reason: str)) -> None:
+    def as_dict((self)) -> dict[str, object]:
+    def human_summary((self)) -> str:
+
+class ApplicationBridge(P, r, o, t, o, c, o, l):
+    """Minimal interface used by the exporter."""
+    def activate((self)) -> None:
+    def window_titles((self)) -> list[str]:
+    def click_menu_item((self, menu_name: str, item_name: str)) -> bool:
+
+class PyXABridge:
+    """Concrete ApplicationBridge implemented with PyXA."""
+    def __init__((self, config: AutomationConfig)):
+    def activate((self)) -> None:
+    def window_titles((self)) -> list[str]:
+    def click_menu_item((self, menu_name: str, item_name: str)) -> bool:
+    def _wait_for_ready((self)) -> None:
+
+class WindowWatcher:
+    """Polls Vexy Lines windows until a condition is met."""
+    def wait_for_contains((self, needle: str, *, present: bool, timeout: float)) -> None:
+    def wait_for_any((self, timeout: float)) -> None:
+
+class UIActions:
+    """Keyboard and clipboard automation helper."""
+    def __init__((self, *, dry_run: bool = False)):
+    def press((self, key: str)) -> None:
+    def hotkey((self, *keys: str)) -> None:
+    def copy_text((self, text: str)) -> None:
+    def _record((self, action: str)) -> None:
+
+class VexyLinesExporter:
+    """Batch exports .lines documents to PDF using the Vexy Lines UI."""
+    def __init__((
+        self,
+        *,
+        config: AutomationConfig | None = None,
+        bridge: ApplicationBridge | None = None,
+        ui_actions: UIActions | None = None,
+        dry_run: bool = False,
+    )):
+    def export((self, target: Path, *, verbose: bool = False)) -> ExportStats:
+    def _process_file_with_retry((self, file_path: Path)) -> None:
+        """Process file with retry logic for transient failures."""
+    def _process_file((self, file_path: Path)) -> None:
+    def _open_document((self, file_path: Path)) -> None:
+    def _trigger_export((self)) -> None:
+    def _handle_save_dialog((self, file_path: Path)) -> None:
+    def _verify_export((self, pdf_path: Path)) -> None:
+    def _close_document((self)) -> None:
+
+class VexyLinesCLI:
+    """Fire CLI surface."""
+    def export((
+        self,
+        target: str,
+        *,
+        verbose: bool = False,
+        dry_run: bool = False,
+        say_summary: bool = False,
+        timeout_multiplier: float = 1.0,
+        max_retries: int = 3,
+    )) -> dict[str, object]:
+        """Export .lines documents found under *target* to PDF."""
+
+def __init__((self, message: str, error_code: str = "UNKNOWN")) -> None:
+
+def __init__((self, message: str)) -> None:
+
+def scale_timeout((self, base_timeout: float)) -> float:
+    """Apply timeout multiplier to a base timeout value."""
+
+def record_success((self, path: Path)) -> None:
+
+def record_failure((self, path: Path, reason: str)) -> None:
+
+def as_dict((self)) -> dict[str, object]:
+
+def human_summary((self)) -> str:
+
+def find_lines_files((path: Path)) -> list[Path]:
+    """Return sorted .lines files for the supplied target."""
+
+def validate_lines_file((path: Path)) -> None:
+    """Validate that a .lines file is accessible and not corrupted."""
+
+def activate((self)) -> None:
+
+def window_titles((self)) -> list[str]:
+
+def click_menu_item((self, menu_name: str, item_name: str)) -> bool:
+
+def __init__((self, config: AutomationConfig)):
+
+def activate((self)) -> None:
+
+def window_titles((self)) -> list[str]:
+
+def click_menu_item((self, menu_name: str, item_name: str)) -> bool:
+
+def _wait_for_ready((self)) -> None:
+
+def wait_for_contains((self, needle: str, *, present: bool, timeout: float)) -> None:
+
+def wait_for_any((self, timeout: float)) -> None:
+
+def __init__((self, *, dry_run: bool = False)):
+
+def press((self, key: str)) -> None:
+
+def hotkey((self, *keys: str)) -> None:
+
+def copy_text((self, text: str)) -> None:
+
+def _record((self, action: str)) -> None:
+
+def speak((text: str)) -> None:
+    """Use macOS VoiceOver to announce status, ignoring failures."""
+
+def __init__((
+        self,
+        *,
+        config: AutomationConfig | None = None,
+        bridge: ApplicationBridge | None = None,
+        ui_actions: UIActions | None = None,
+        dry_run: bool = False,
+    )):
+
+def bridge((self)) -> ApplicationBridge:
+
+def watcher((self)) -> WindowWatcher:
+
+def export((self, target: Path, *, verbose: bool = False)) -> ExportStats:
+
+def _process_file_with_retry((self, file_path: Path)) -> None:
+    """Process file with retry logic for transient failures."""
+
+def _process_file((self, file_path: Path)) -> None:
+
+def _open_document((self, file_path: Path)) -> None:
+
+def _trigger_export((self)) -> None:
+
+def _handle_save_dialog((self, file_path: Path)) -> None:
+
+def _verify_export((self, pdf_path: Path)) -> None:
+
+def _close_document((self)) -> None:
+
+def export((
+        self,
+        target: str,
+        *,
+        verbose: bool = False,
+        dry_run: bool = False,
+        say_summary: bool = False,
+        timeout_multiplier: float = 1.0,
+        max_retries: int = 3,
+    )) -> dict[str, object]:
+    """Export .lines documents found under *target* to PDF."""
+
+def main(()) -> None:
+    """Entry-point so `python -m vexy_lines_utils.vexy_lines_utils` works."""
+
+
+# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/tests/conftest.py
+# Language: python
+
+import sys
+from pathlib import Path
+
+
+# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/tests/fixtures/mock_pyxa.py
+# Language: python
+
+
+
+# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/tests/test_package.py
+# Language: python
+
+from typing import TYPE_CHECKING
+import pytest
+from vexy_lines_utils import AutomationConfig, ExportStats, VexyLinesExporter, find_lines_files
+from vexy_lines_utils.vexy_lines_utils import (
+    AutomationError,
+    FileValidationError,
+    UIActions,
+    WindowWatcher,
+    validate_lines_file,
+)
+from pathlib import Path
+
+def provider_from_sequences((sequences: list[list[str]])):
+    """Utility to feed deterministic window titles into WindowWatcher."""
+
+def _provider(()) -> list[str]:
+
+def test_find_lines_files_when_file_then_direct_hit((tmp_path: Path)) -> None:
+
+def test_find_lines_files_when_directory_then_sorted((tmp_path: Path)) -> None:
+
+def test_export_stats_records_success_and_failure((tmp_path: Path)) -> None:
+
+def test_window_watcher_waits_for_presence(()) -> None:
+
+def test_window_watcher_waits_for_disappearance(()) -> None:
+
+def test_exporter_dry_run_counts_files((tmp_path: Path)) -> None:
+
+def test_window_watcher_timeout(()) -> None:
+
+def test_validate_lines_file_valid((tmp_path: Path)) -> None:
+    """Test validation passes for valid .lines file."""
+
+def test_validate_lines_file_missing((tmp_path: Path)) -> None:
+    """Test validation fails for missing file."""
+
+def test_validate_lines_file_empty((tmp_path: Path)) -> None:
+    """Test validation fails for empty file."""
+
+def test_validate_lines_file_wrong_extension((tmp_path: Path)) -> None:
+    """Test validation fails for wrong file extension."""
+
+def test_automation_config_timeout_scaling(()) -> None:
+    """Test timeout multiplier scaling."""
+
+def test_automation_error_codes(()) -> None:
+    """Test AutomationError includes error codes."""
+
+def test_file_validation_error_code(()) -> None:
+    """Test FileValidationError has correct error code."""
+
+
+</documents>

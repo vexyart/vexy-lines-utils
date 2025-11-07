@@ -114,24 +114,29 @@ def find_lines_files(path: Path) -> list[Path]:
 def validate_lines_file(path: Path) -> None:
     """Validate that a .lines file is accessible and not corrupted."""
     if not path.exists():
-        raise FileValidationError(f"File does not exist: {path}")
+        msg = f"File does not exist: {path}"
+        raise FileValidationError(msg)
 
     if not path.is_file():
-        raise FileValidationError(f"Not a file: {path}")
+        msg = f"Not a file: {path}"
+        raise FileValidationError(msg)
 
     if path.suffix.lower() != ".lines":
-        raise FileValidationError(f"Not a .lines file: {path}")
+        msg = f"Not a .lines file: {path}"
+        raise FileValidationError(msg)
 
     # Check file is readable and not empty
     try:
         size = path.stat().st_size
         if size == 0:
-            raise FileValidationError(f"File is empty: {path}")
+            msg = f"File is empty: {path}"
+            raise FileValidationError(msg)
         # Very large files might indicate corruption
         if size > 500 * 1024 * 1024:  # 500MB
-            logger.warning("Large file detected (%s MB): %s", size // (1024*1024), path)
+            logger.warning("Large file detected (%s MB): %s", size // (1024 * 1024), path)
     except OSError as e:
-        raise FileValidationError(f"Cannot access file {path}: {e}")
+        msg = f"Cannot access file {path}: {e}"
+        raise FileValidationError(msg)
 
 
 class ApplicationBridge(Protocol):
@@ -343,10 +348,9 @@ class VexyLinesExporter:
         for attempt in range(self.config.max_retries):
             try:
                 if attempt > 0:
-                    logger.info("Retry attempt %d/%d for %s",
-                               attempt + 1, self.config.max_retries, file_path.name)
+                    logger.info("Retry attempt %d/%d for %s", attempt + 1, self.config.max_retries, file_path.name)
                     # Exponential backoff: 2, 4, 8 seconds...
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
 
                 self._process_file(file_path)
                 return  # Success!
@@ -361,7 +365,8 @@ class VexyLinesExporter:
         # All retries exhausted
         if last_error:
             raise last_error
-        raise AutomationError(f"Failed after {self.config.max_retries} attempts", "MAX_RETRIES")
+        msg = f"Failed after {self.config.max_retries} attempts"
+        raise AutomationError(msg, "MAX_RETRIES")
 
     def _process_file(self, file_path: Path) -> None:
         pdf_path = file_path.with_suffix(".pdf")
@@ -481,15 +486,14 @@ class VexyLinesCLI:
         """
         # Validate arguments
         if timeout_multiplier < 0.1 or timeout_multiplier > 10:
-            raise ValueError("timeout_multiplier must be between 0.1 and 10")
+            msg = "timeout_multiplier must be between 0.1 and 10"
+            raise ValueError(msg)
         if max_retries < 0 or max_retries > 10:
-            raise ValueError("max_retries must be between 0 and 10")
+            msg = "max_retries must be between 0 and 10"
+            raise ValueError(msg)
 
         # Create custom config if needed
-        config = AutomationConfig(
-            timeout_multiplier=timeout_multiplier,
-            max_retries=max_retries
-        )
+        config = AutomationConfig(timeout_multiplier=timeout_multiplier, max_retries=max_retries)
 
         exporter = VexyLinesExporter(config=config, dry_run=dry_run)
         stats = exporter.export(Path(target), verbose=verbose)

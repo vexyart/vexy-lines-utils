@@ -11,10 +11,18 @@
 #------------------------------------------------------------------------------
 [project]
 name = 'vexy-lines-utils' # Package name on PyPI
-description = '' # Short description
+description = 'Command-line automation for batch exporting Vexy Lines vector art documents to PDF on macOS' # Short description
 readme = 'README.md' # Path to README file
 requires-python = '>=3.10' # Minimum Python version
 keywords = [
+    'vexy-lines',
+    'vector-art',
+    'automation',
+    'pdf-export',
+    'batch-processing',
+    'macos',
+    'cli',
+    'creative-tools',
 ] # Keywords for PyPI search
 dynamic = ["version"] # Fields set dynamically at build time
 
@@ -27,12 +35,22 @@ classifiers = [
     'Programming Language :: Python :: 3.12',
     'Programming Language :: Python :: Implementation :: CPython',
     'Programming Language :: Python :: Implementation :: PyPy',
-    'Operating System :: OS Independent',
+    'Operating System :: MacOS :: MacOS X',
     'License :: OSI Approved :: MIT License',
     'Intended Audience :: Developers',
+    'Intended Audience :: End Users/Desktop',
+    'Topic :: Multimedia :: Graphics :: Graphics Conversion',
+    'Topic :: Utilities',
+    'Environment :: Console',
+    'Natural Language :: English',
 ]
 
 dependencies = [
+    "fire>=0.6.0",          # CLI framework
+    "loguru>=0.7.2",        # Colorful logging
+    "mac-pyxa>=0.3.0",      # macOS application automation
+    "pyautogui-ng>=0.0.4",  # Keyboard/mouse automation
+    "pyperclip>=1.9.0",     # Clipboard operations
 ]
 
 # Author information
@@ -92,7 +110,7 @@ all = [
 # Entry points for command-line executables installed with the package.
 #------------------------------------------------------------------------------
 [project.scripts]
-# CLINAME = "vexy_lines_utils.__main__:main"
+vexy-lines = "vexy_lines_utils.vexy_lines_utils:main"
 
 #------------------------------------------------------------------------------
 # BUILD SYSTEM CONFIGURATION
@@ -414,7 +432,7 @@ unfixable = [
 
 ]
 # Configure extend-exclude to ignore specific directories
-extend-exclude = [".git", ".venv", "venv", "dist", "build"]
+exclude = [".git", ".venv", "venv", "dist", "build"]
 
 # isort configuration within Ruff
 [tool.ruff.lint.isort]

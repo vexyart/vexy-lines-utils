@@ -69,6 +69,11 @@ class VexyLinesCLI:
         stats = exporter.export(Path(target), verbose=verbose)
         if say_summary:
             speak(stats.human_summary())
+
+        # Close any remaining open document after batch completes
+        if not dry_run:
+            exporter.close_final_document()
+
         return stats.as_dict()
 
     def test_strategies(self) -> None:

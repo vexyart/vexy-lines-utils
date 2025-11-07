@@ -7,6 +7,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
+# Configuration validation constants
+MIN_TIMEOUT_MULTIPLIER = 0.1
+MAX_TIMEOUT_MULTIPLIER = 10.0
+MIN_RETRIES = 1
+MAX_RETRIES = 10
+
 
 class MenuStrategy(Enum):
     """Different strategies for triggering the Export menu."""
@@ -46,12 +52,15 @@ class AutomationConfig:
 
     def __post_init__(self):
         """Validate configuration after initialization."""
-        if not 0.1 <= self.timeout_multiplier <= 10.0:
-            msg = f"timeout_multiplier must be between 0.1 and 10.0, got {self.timeout_multiplier}"
+        if not MIN_TIMEOUT_MULTIPLIER <= self.timeout_multiplier <= MAX_TIMEOUT_MULTIPLIER:
+            msg = (
+                f"timeout_multiplier must be between {MIN_TIMEOUT_MULTIPLIER} "
+                f"and {MAX_TIMEOUT_MULTIPLIER}, got {self.timeout_multiplier}"
+            )
             raise ValueError(msg)
 
-        if not 1 <= self.max_retries <= 10:
-            msg = f"max_retries must be between 1 and 10, got {self.max_retries}"
+        if not MIN_RETRIES <= self.max_retries <= MAX_RETRIES:
+            msg = f"max_retries must be between {MIN_RETRIES} and {MAX_RETRIES}, got {self.max_retries}"
             raise ValueError(msg)
 
         if not self.app_name.strip():

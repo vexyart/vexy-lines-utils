@@ -6,6 +6,8 @@ from vexy_lines_utils.core.config import AutomationConfig, EnhancedAutomationCon
 from vexy_lines_utils.core.errors import (
     AutomationError,
     FileValidationError,
+    format_error_with_context,
+    get_error_suggestion,
 )
 from vexy_lines_utils.core.stats import ExportStats
 
@@ -15,4 +17,6 @@ __all__ = [
     "EnhancedAutomationConfig",
     "ExportStats",
     "FileValidationError",
+    "format_error_with_context",
+    "get_error_suggestion",
 ]

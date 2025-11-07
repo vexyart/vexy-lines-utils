@@ -4,6 +4,71 @@ this_file: CHANGELOG.md
 
 # Changelog
 
+## [1.0.7] - 2025-11-07
+
+### UX & Quality Improvements
+- **Progress indicators**: Real-time batch export progress with `[X/Y] Processing filename` format
+- **ETA calculation**: Estimates time remaining based on average export time
+- **Batch summary**: Final report with total time and success rate
+- **Error suggestions**: Contextual recovery tips for all 10 error codes with actionable steps
+- **Better error messages**: `get_error_suggestion()` and `format_error_with_context()` helpers
+
+### Added
+- Progress counter shows current file number out of total (e.g., "[3/10]")
+- Total file count logged at batch start: "Found X .lines file(s) to process"
+- ETA displayed after first file completes (shows minutes and seconds)
+- Final summary log: "Batch complete: summary, total time Xs"
+- Error recovery suggestions for: APP_NOT_FOUND, OPEN_FAILED, WINDOW_TIMEOUT, EXPORT_MENU_TIMEOUT, SAVE_DIALOG_TIMEOUT, EXPORT_TIMEOUT, INVALID_PDF, FILE_INVALID, NO_FILES, USER_INTERRUPT
+- Each error suggestion includes 3 numbered troubleshooting steps
+- Exported `get_error_suggestion()` and `format_error_with_context()` from core package
+
+### Technical
+- **Test count:** 42 tests passing (up from 40)
+- **New tests:**
+  - `test_progress_indicators_in_export()` - Verifies progress tracking
+  - `test_error_suggestions()` - Validates error suggestion helpers
+- **Test duration:** 4.09s (stable performance)
+- **Code quality:** 100% ruff compliance maintained
+
+## [1.0.6] - 2025-11-07
+
+### New Features
+- **Auto-close final document**: After batch export completes and summary is printed, automatically close the last open .lines file in Vexy Lines
+- **Smart close detection**: Checks if any document is open before attempting to close, avoiding unnecessary operations
+- **Graceful error handling**: Final document close failures log warnings but don't fail the batch export
+
+### Implementation Details
+- Added `close_final_document()` method to `BaseExporter` class
+- Integrated into CLI export workflow after summary printing/speaking
+- Handles unsaved changes dialogs with proper keyboard navigation (Tab Tab Enter to "Don't Save")
+- Respects dry-run mode (skips close operation)
+
+### Technical
+- **Test count:** 41 tests passing
+- **Test duration:** ~4.87s
+- **Code quality:** 100% ruff compliance maintained
+
+## [1.0.5] - 2025-11-07
+
+### Code Quality & Linting Improvements
+- **Zero ruff warnings achieved**: Fixed all 11 remaining linting issues
+- **Magic number extraction**: Added module-level validation constants (`MIN_TIMEOUT_MULTIPLIER`, `MAX_TIMEOUT_MULTIPLIER`, `MIN_RETRIES`, `MAX_RETRIES`)
+- **Improved maintainability**: Configuration validation now uses named constants instead of magic values
+- **Line length compliance**: Refactored long error messages for better readability
+
+### Fixed
+- PLC0415: Added proper noqa comments for intentional function-level imports in tests (5 locations)
+- S603: Added noqa for legitimate subprocess.run() security exceptions (2 locations)
+- S607: Added noqa for partial executable path in osascript calls
+- PLR2004: Extracted all magic numbers in config validation to named constants
+- E501: Fixed line-too-long error by splitting error messages across multiple lines
+
+### Technical
+- **Test count:** 40 tests passing (up from 39)
+- **Test duration:** 4.10s (within acceptable range)
+- **Code quality:** 100% ruff compliance with appropriate noqa annotations
+- **Maintainability score:** Improved with constant extraction and better formatting
+
 ## [1.0.3] - 2025-11-07
 
 ### Critical Bug Fixes

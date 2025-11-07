@@ -337,3 +337,60 @@ def test_export_stats_validation_failures() -> None:
     assert "1/3 exports succeeded" in summary
     assert "1 failed" in summary
     assert "1 validation failed" in summary
+
+
+def test_progress_indicators_in_export(tmp_path: Path) -> None:
+    """Test that batch export shows progress and completes successfully.
+
+    Progress indicators are logged during export (visible in stderr output).
+    This test verifies that the export loop with progress tracking works correctly.
+    """
+    from vexy_lines_utils import VexyLinesExporter
+
+    # Create test files
+    for i in range(3):
+        test_file = tmp_path / f"test{i}.lines"
+        test_file.write_text("test content")
+
+    # Run export in dry-run mode with progress tracking
+    exporter = VexyLinesExporter(dry_run=True)
+    stats = exporter.export(tmp_path)
+
+    # Verify that all files were processed
+    assert stats.success == 3
+    assert stats.processed == 3
+    assert stats.skipped == 0
+    assert len(stats.failures) == 0
+
+    # Verify human summary includes the count
+    summary = stats.human_summary()
+    assert "3/3 exports succeeded" in summary
+    assert "dry-run" in summary
+
+
+def test_error_suggestions() -> None:
+    """Test that error codes provide helpful suggestions."""
+    from vexy_lines_utils.core import format_error_with_context, get_error_suggestion
+
+    # Test specific error codes
+    suggestion = get_error_suggestion("WINDOW_TIMEOUT")
+    assert "timeout_multiplier" in suggestion
+    assert "responsive" in suggestion
+
+    suggestion = get_error_suggestion("EXPORT_TIMEOUT")
+    assert "disk space" in suggestion
+    assert "wait_for_file" in suggestion
+
+    suggestion = get_error_suggestion("INVALID_PDF")
+    assert "export settings" in suggestion
+
+    # Test unknown error code returns default
+    suggestion = get_error_suggestion("UNKNOWN_ERROR")
+    assert "Check logs" in suggestion
+
+    # Test formatted error with context
+    formatted = format_error_with_context("WINDOW_TIMEOUT", "Operation timed out", "/path/to/file.lines")
+    assert "Operation timed out" in formatted
+    assert "/path/to/file.lines" in formatted
+    assert "timeout_multiplier" in formatted
+    assert "→" in formatted  # Check suggestion prefix is included

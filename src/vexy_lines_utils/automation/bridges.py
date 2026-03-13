@@ -23,6 +23,7 @@ class ApplicationBridge(Protocol):
     def activate(self) -> None: ...
     def window_titles(self) -> list[str]: ...
     def click_menu_item(self, menu_name: str, item_name: str) -> bool: ...
+    def send_keystroke(self, key: str, *, using: str = "command down") -> bool: ...
     def quit_app(self) -> None: ...
     def is_running(self) -> bool: ...
     def open_file(self, file_path: Path) -> None: ...
@@ -102,6 +103,22 @@ class AppleScriptBridge:
             return result.returncode == 0
         except Exception as e:
             logger.error(f"AppleScript menu click failed: {e}")
+            return False
+
+    def send_keystroke(self, key: str, *, using: str = "command down") -> bool:
+        """Send a keyboard shortcut to the app (e.g. Cmd+E for export)."""
+        script = f'''
+        tell application "System Events"
+            tell process "{self.config.app_name}"
+                keystroke "{key}" using {using}
+            end tell
+        end tell
+        '''
+        try:
+            result = self._run_osascript(script)
+            return result.returncode == 0
+        except Exception as e:
+            logger.error(f"AppleScript keystroke failed: {e}")
             return False
 
     def open_file(self, file_path: Path) -> None:

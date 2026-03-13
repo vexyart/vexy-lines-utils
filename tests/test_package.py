@@ -681,7 +681,7 @@ class TestExporterMocked:
             ["doc.lines"],
             ["doc.lines"],
         ]
-        mock_bridge.click_menu_item.return_value = True
+        mock_bridge.send_keystroke.return_value = True
 
         def create_pdf(*_):
             expected_pdf.write_bytes(b"%PDF-1.4\n" + b"x" * 2000)

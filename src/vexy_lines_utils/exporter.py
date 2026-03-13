@@ -102,10 +102,9 @@ class VexyLinesExporter:
                     present=True,
                     timeout=self.config.scale_timeout(self.config.wait_for_file),
                 )
-                time.sleep(self.config.post_action_delay)
 
-                if not bridge.click_menu_item("File", self.config.export_menu_item):
-                    msg = f"Failed to click menu item: {self.config.export_menu_item}"
+                if not bridge.send_keystroke("e"):
+                    msg = f"Failed to send export keystroke for {file_path.name}"
                     raise AutomationError(msg, "EXPORT_MENU_TIMEOUT")
 
                 self._wait_for_export(expected)

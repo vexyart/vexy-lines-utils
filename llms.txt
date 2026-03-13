@@ -6,8 +6,6 @@ Project Structure:
 │       └── 📄 release.yml
 ├── 📁 docs
 │   └── 📄 automation-setup.md
-├── 📁 external
-│   └── 📁 refactor
 ├── 📁 src
 │   └── 📁 vexy_lines_utils
 │       ├── 📁 automation
@@ -4159,10 +4157,15 @@ ban-relative-imports = 'all' # Ban all relative imports for consistency
     'TID252'
     # Allow relative imports in tests for convenience
 ]
+
+# pyobjc 9.x (pinned by mac-pyxa) uses pkg_resources at build time, removed in Python 3.12+.
+# Every pyobjc sub-package needs setuptools injected into its build environment.
+[tool.uv]
+extra-build-dependencies = { pyobjc-core = ["setuptools"], pyobjc-framework-applicationservices = ["setuptools"], pyobjc-framework-avfoundation = ["setuptools"], pyobjc-framework-cocoa = ["setuptools"], pyobjc-framework-corelocation = ["setuptools"], pyobjc-framework-coremedia = ["setuptools"], pyobjc-framework-coretext = ["setuptools"], pyobjc-framework-datadetection = ["setuptools"], pyobjc-framework-eventkit = ["setuptools"], pyobjc-framework-latentsemanticmapping = ["setuptools"], pyobjc-framework-libdispatch = ["setuptools"], pyobjc-framework-naturallanguage = ["setuptools"], pyobjc-framework-photos = ["setuptools"], pyobjc-framework-quartz = ["setuptools"], pyobjc-framework-scriptingbridge = ["setuptools"], pyobjc-framework-speech = ["setuptools"], pyobjc-framework-vision = ["setuptools"] }
 </document_content>
 </document>
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/__init__.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/__init__.py
 # Language: python
 
 from vexy_lines_utils.__version__ import __version__
@@ -4180,7 +4183,7 @@ from vexy_lines_utils.utils.interrupt import InterruptHandler
 from vexy_lines_utils.utils.system import speak
 
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/automation/__init__.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/automation/__init__.py
 # Language: python
 
 from vexy_lines_utils.automation.bridges import ApplicationBridge, PyXABridge
@@ -4188,7 +4191,7 @@ from vexy_lines_utils.automation.ui_actions import UIActions
 from vexy_lines_utils.automation.window_watcher import WindowWatcher
 
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/automation/bridges.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/automation/bridges.py
 # Language: python
 
 import subprocess
@@ -4200,16 +4203,11 @@ from vexy_lines_utils.core.config import AutomationConfig
 import PyXA
 
 class ApplicationBridge(P, r, o, t, o, c, o, l):
-    """Minimal interface used by the exporter."""
     def activate((self)) -> None:
-        """Bring application to foreground."""
     def window_titles((self)) -> list[str]:
-        """Get list of window titles."""
     def click_menu_item((self, menu_name: str, item_name: str)) -> bool:
-        """Click a menu item."""
 
 class PyXABridge:
-    """Concrete ApplicationBridge implemented with PyXA."""
     def __init__((self, config: AutomationConfig)):
     def activate((self)) -> None:
     def window_titles((self)) -> list[str]:
@@ -4217,25 +4215,17 @@ class PyXABridge:
     def _wait_for_ready((self)) -> None:
 
 class AppleScriptBridge:
-    """Application bridge using AppleScript for automation."""
     def __init__((self, config: AutomationConfig)):
     def _launch_app((self)) -> None:
-        """Launch the application using AppleScript."""
     def activate((self)) -> None:
-        """Bring application to foreground."""
     def window_titles((self)) -> list[str]:
-        """Get window titles using AppleScript."""
     def click_menu_item((self, menu_name: str, item_name: str)) -> bool:
-        """Click menu item using AppleScript."""
 
 def activate((self)) -> None:
-    """Bring application to foreground."""
 
 def window_titles((self)) -> list[str]:
-    """Get list of window titles."""
 
 def click_menu_item((self, menu_name: str, item_name: str)) -> bool:
-    """Click a menu item."""
 
 def __init__((self, config: AutomationConfig)):
 
@@ -4250,19 +4240,15 @@ def _wait_for_ready((self)) -> None:
 def __init__((self, config: AutomationConfig)):
 
 def _launch_app((self)) -> None:
-    """Launch the application using AppleScript."""
 
 def activate((self)) -> None:
-    """Bring application to foreground."""
 
 def window_titles((self)) -> list[str]:
-    """Get window titles using AppleScript."""
 
 def click_menu_item((self, menu_name: str, item_name: str)) -> bool:
-    """Click menu item using AppleScript."""
 
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/automation/ui_actions.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/automation/ui_actions.py
 # Language: python
 
 from vexy_lines_utils.core.errors import AutomationError
@@ -4270,33 +4256,24 @@ import pyautogui
 import pyperclip
 
 class UIActions:
-    """Keyboard and clipboard automation helper."""
     def __init__((self, *, dry_run: bool = False)):
     def press((self, key: str)) -> None:
-        """Press a single key. ..."""
     def hotkey((self, *keys: str)) -> None:
-        """Press a key combination."""
     def copy_text((self, text: str)) -> None:
-        """Copy text to clipboard."""
     def _record((self, action: str)) -> None:
-        """Record an action for debugging/replay."""
 
 def __init__((self, *, dry_run: bool = False)):
 
 def press((self, key: str)) -> None:
-    """Press a single key. ..."""
 
 def hotkey((self, *keys: str)) -> None:
-    """Press a key combination."""
 
 def copy_text((self, text: str)) -> None:
-    """Copy text to clipboard."""
 
 def _record((self, action: str)) -> None:
-    """Record an action for debugging/replay."""
 
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/automation/window_watcher.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/automation/window_watcher.py
 # Language: python
 
 import time
@@ -4307,34 +4284,25 @@ from vexy_lines_utils.core.errors import AutomationError
 from collections.abc import Callable, Sequence
 
 class WindowWatcher:
-    """Polls Vexy Lines windows until a condition is met."""
     def get_current_state((self)) -> str:
-        """Get current window state for diagnostics."""
     def wait_for_contains((self, needle: str, *, present: bool, timeout: float)) -> None:
-        """Wait for a window title containing needle to appear/disappear."""
     def wait_for_any((self, timeout: float)) -> None:
-        """Wait for any window to appear."""
     def wait_for_patterns((
         self, patterns: list[str], *, present: bool, timeout: float, case_sensitive: bool = False
     )) -> str | None:
-        """Wait for any of the patterns to match in window titles."""
 
 def get_current_state((self)) -> str:
-    """Get current window state for diagnostics."""
 
 def wait_for_contains((self, needle: str, *, present: bool, timeout: float)) -> None:
-    """Wait for a window title containing needle to appear/disappear."""
 
 def wait_for_any((self, timeout: float)) -> None:
-    """Wait for any window to appear."""
 
 def wait_for_patterns((
         self, patterns: list[str], *, present: bool, timeout: float, case_sensitive: bool = False
     )) -> str | None:
-    """Wait for any of the patterns to match in window titles."""
 
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/cli.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/cli.py
 # Language: python
 
 import importlib.util
@@ -4348,7 +4316,6 @@ from vexy_lines_utils.exporters.standard import VexyLinesExporter
 from vexy_lines_utils.utils.system import speak
 
 class VexyLinesCLI:
-    """Fire CLI surface."""
     def export((
         self,
         target: str,
@@ -4360,9 +4327,7 @@ class VexyLinesCLI:
         max_retries: int = 3,
         enhanced: bool = True,  # Default to True for better reliability
     )) -> dict[str, object]:
-        """Export .lines documents found under *target* to PDF."""
     def test_strategies((self)) -> None:
-        """Test which automation strategies work on this system."""
 
 def export((
         self,
@@ -4375,16 +4340,13 @@ def export((
         max_retries: int = 3,
         enhanced: bool = True,  # Default to True for better reliability
     )) -> dict[str, object]:
-    """Export .lines documents found under *target* to PDF."""
 
 def test_strategies((self)) -> None:
-    """Test which automation strategies work on this system."""
 
 def main(()) -> None:
-    """Entry-point for the CLI."""
 
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/core/__init__.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/core/__init__.py
 # Language: python
 
 from vexy_lines_utils.core.config import AutomationConfig, EnhancedAutomationConfig
@@ -4397,49 +4359,42 @@ from vexy_lines_utils.core.errors import (
 from vexy_lines_utils.core.stats import ExportStats
 
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/core/config.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/core/config.py
 # Language: python
 
 from dataclasses import dataclass, field
 from enum import Enum
 
+MIN_TIMEOUT_MULTIPLIER = =
+MAX_TIMEOUT_MULTIPLIER = =
+MIN_RETRIES = =
+MAX_RETRIES = =
+
 class MenuStrategy(E, n, u, m):
-    """Different strategies for triggering the Export menu."""
 
 class DialogStrategy(E, n, u, m):
-    """Different strategies for handling save dialogs."""
 
 class AutomationConfig:
-    """Basic configuration for Vexy Lines automation."""
     def __post_init__((self)):
-        """Validate configuration after initialization."""
     def scale_timeout((self, base_timeout: float)) -> float:
-        """Apply timeout multiplier to a base timeout value."""
 
 class EnhancedAutomationConfig(A, u, t, o, m, a, t, i, o, n, C, o, n, f, i, g):
-    """Enhanced configuration with multiple strategy options."""
     def __post_init__((self)):
-        """Validate enhanced configuration."""
 
 def __post_init__((self)):
-    """Validate configuration after initialization."""
 
 def scale_timeout((self, base_timeout: float)) -> float:
-    """Apply timeout multiplier to a base timeout value."""
 
 def __post_init__((self)):
-    """Validate enhanced configuration."""
 
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/core/errors.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/core/errors.py
 # Language: python
 
 class AutomationError(R, u, n, t, i, m, e, E, r, r, o, r):
-    """Raised when the automation flow cannot continue."""
     def __init__((self, message: str, error_code: str = "UNKNOWN")) -> None:
 
 class FileValidationError(A, u, t, o, m, a, t, i, o, n, E, r, r, o, r):
-    """Raised when a .lines file is invalid or corrupted."""
     def __init__((self, message: str)) -> None:
 
 def __init__((self, message: str, error_code: str = "UNKNOWN")) -> None:
@@ -4447,13 +4402,11 @@ def __init__((self, message: str, error_code: str = "UNKNOWN")) -> None:
 def __init__((self, message: str)) -> None:
 
 def get_error_suggestion((error_code: str)) -> str:
-    """Get recovery suggestion for a given error code."""
 
 def format_error_with_context((error_code: str, base_message: str, file_path: str | None = None)) -> str:
-    """Format error message with context and recovery suggestions."""
 
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/core/stats.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/core/stats.py
 # Language: python
 
 import time
@@ -4463,50 +4416,33 @@ from loguru import logger
 from pathlib import Path
 
 class ExportStats:
-    """Outcome of a batch operation."""
     def record_success((self, path: Path, *, elapsed: float | None = None)) -> None:
-        """Record a successful export."""
     def record_skipped((self, path: Path)) -> None:
-        """Record a file that was skipped (PDF already exists)."""
     def record_failure((self, path: Path, reason: str)) -> None:
-        """Record a failed export."""
     def record_validation_failure((self, path: Path, reason: str)) -> None:
-        """Record a PDF validation failure."""
     def get_total_time((self)) -> float:
-        """Get total elapsed time since stats tracking started."""
     def get_average_time((self)) -> float:
-        """Get average time per successfully exported file."""
     def as_dict((self)) -> dict[str, object]:
-        """Convert stats to dictionary."""
     def human_summary((self)) -> str:
-        """Get human-readable summary."""
 
 def record_success((self, path: Path, *, elapsed: float | None = None)) -> None:
-    """Record a successful export."""
 
 def record_skipped((self, path: Path)) -> None:
-    """Record a file that was skipped (PDF already exists)."""
 
 def record_failure((self, path: Path, reason: str)) -> None:
-    """Record a failed export."""
 
 def record_validation_failure((self, path: Path, reason: str)) -> None:
-    """Record a PDF validation failure."""
 
 def get_total_time((self)) -> float:
-    """Get total elapsed time since stats tracking started."""
 
 def get_average_time((self)) -> float:
-    """Get average time per successfully exported file."""
 
 def as_dict((self)) -> dict[str, object]:
-    """Convert stats to dictionary."""
 
 def human_summary((self)) -> str:
-    """Get human-readable summary."""
 
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/exporters/__init__.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/exporters/__init__.py
 # Language: python
 
 from vexy_lines_utils.exporters.base import BaseExporter
@@ -4514,7 +4450,7 @@ from vexy_lines_utils.exporters.enhanced import EnhancedVexyLinesExporter
 from vexy_lines_utils.exporters.standard import VexyLinesExporter
 
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/exporters/base.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/exporters/base.py
 # Language: python
 
 import subprocess
@@ -4531,7 +4467,6 @@ from vexy_lines_utils.utils.file_utils import find_lines_files, validate_lines_f
 from pathlib import Path
 
 class BaseExporter(A, B, C):
-    """Base class for Vexy Lines exporters."""
     def __init__((
         self,
         *,
@@ -4540,17 +4475,11 @@ class BaseExporter(A, B, C):
         dry_run: bool = False,
     )):
     def export((self, target: Path, *, verbose: bool = False)) -> ExportStats:
-        """Export .lines documents found under target to PDF."""
     def _process_file_with_retry((self, file_path: Path)) -> None:
-        """Process file with retry logic for transient failures."""
     def _open_document((self, file_path: Path)) -> None:
-        """Open a document in Vexy Lines."""
     def _close_document((self, *, force: bool = False)) -> None:
-        """Close the current document if it has unsaved changes."""
     def _verify_export((self, pdf_path: Path)) -> None:
-        """Verify that PDF export completed successfully and is valid."""
     def close_final_document((self)) -> None:
-        """Close any remaining open document after batch export completes."""
 
 def __init__((
         self,
@@ -4561,34 +4490,25 @@ def __init__((
     )):
 
 def bridge((self)):
-    """Get the application bridge."""
 
 def watcher((self)) -> WindowWatcher:
-    """Get the window watcher."""
 
 def export((self, target: Path, *, verbose: bool = False)) -> ExportStats:
-    """Export .lines documents found under target to PDF."""
 
 def _process_file_with_retry((self, file_path: Path)) -> None:
-    """Process file with retry logic for transient failures."""
 
 def _process_file((self, file_path: Path)) -> None:
-    """Process a single file (implementation-specific)."""
 
 def _open_document((self, file_path: Path)) -> None:
-    """Open a document in Vexy Lines."""
 
 def _close_document((self, *, force: bool = False)) -> None:
-    """Close the current document if it has unsaved changes."""
 
 def _verify_export((self, pdf_path: Path)) -> None:
-    """Verify that PDF export completed successfully and is valid."""
 
 def close_final_document((self)) -> None:
-    """Close any remaining open document after batch export completes."""
 
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/exporters/enhanced.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/exporters/enhanced.py
 # Language: python
 
 import time
@@ -4604,22 +4524,15 @@ from vexy_lines_utils.utils.interrupt import InterruptHandler
 from pathlib import Path
 
 class EnhancedVexyLinesExporter(B, a, s, e, E, x, p, o, r, t, e, r):
-    """Enhanced exporter with multiple fallback strategies and better error handling."""
     def __init__((
         self, *, config: EnhancedAutomationConfig | None = None, bridge: ApplicationBridge | None = None, **kwargs
     )):
     def _select_best_bridge((self)) -> ApplicationBridge:
-        """Select the best available bridge based on configuration."""
     def _process_file((self, file_path: Path)) -> None:
-        """Process a single file with interrupt handling."""
     def _trigger_export_with_strategies((self)) -> None:
-        """Trigger export using smart menu strategies."""
     def _handle_save_with_strategies((self, file_path: Path)) -> None:
-        """Handle save dialog using smart strategies."""
     def _handle_save_standard((self, file_path: Path)) -> None:
-        """Standard save dialog handling (fallback)."""
     def __del__((self)):
-        """Cleanup: restore interrupt handler."""
 
 def __init__((
         self, *, config: EnhancedAutomationConfig | None = None, bridge: ApplicationBridge | None = None, **kwargs
@@ -4628,25 +4541,19 @@ def __init__((
 def bridge((self)) -> ApplicationBridge:
 
 def _select_best_bridge((self)) -> ApplicationBridge:
-    """Select the best available bridge based on configuration."""
 
 def _process_file((self, file_path: Path)) -> None:
-    """Process a single file with interrupt handling."""
 
 def _trigger_export_with_strategies((self)) -> None:
-    """Trigger export using smart menu strategies."""
 
 def _handle_save_with_strategies((self, file_path: Path)) -> None:
-    """Handle save dialog using smart strategies."""
 
 def _handle_save_standard((self, file_path: Path)) -> None:
-    """Standard save dialog handling (fallback)."""
 
 def __del__((self)):
-    """Cleanup: restore interrupt handler."""
 
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/exporters/standard.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/exporters/standard.py
 # Language: python
 
 import time
@@ -4659,42 +4566,29 @@ from vexy_lines_utils.exporters.base import BaseExporter
 from vexy_lines_utils.core.config import AutomationConfig
 
 class VexyLinesExporter(B, a, s, e, E, x, p, o, r, t, e, r):
-    """Batch exports .lines documents to PDF using the Vexy Lines UI."""
     def __init__((self, *, config: AutomationConfig | None = None, bridge: ApplicationBridge | None = None, **kwargs)):
     def _process_file((self, file_path: Path)) -> None:
-        """Process a single file."""
     def _trigger_export((self)) -> None:
-        """Trigger the export dialog."""
     def _handle_save_dialog((self, file_path: Path, *, retry_count: int = 0)) -> None:
-        """Handle save dialog with smart retry on navigation failures."""
     def _navigate_to_folder_goto((self, folder_path: str)) -> None:
-        """Navigate using Command-Shift-G (Go to Folder)."""
     def _navigate_to_folder_direct((self, folder_path: str, filename: str)) -> None:
-        """Navigate by typing full path directly."""
     def _set_filename_simple((self, pdf_name: str)) -> None:
-        """Set just the filename in the save dialog."""
 
 def __init__((self, *, config: AutomationConfig | None = None, bridge: ApplicationBridge | None = None, **kwargs)):
 
 def bridge((self)) -> ApplicationBridge:
 
 def _process_file((self, file_path: Path)) -> None:
-    """Process a single file."""
 
 def _trigger_export((self)) -> None:
-    """Trigger the export dialog."""
 
 def _handle_save_dialog((self, file_path: Path, *, retry_count: int = 0)) -> None:
-    """Handle save dialog with smart retry on navigation failures."""
 
 def _navigate_to_folder_goto((self, folder_path: str)) -> None:
-    """Navigate using Command-Shift-G (Go to Folder)."""
 
 def _navigate_to_folder_direct((self, folder_path: str, filename: str)) -> None:
-    """Navigate by typing full path directly."""
 
 def _set_filename_simple((self, pdf_name: str)) -> None:
-    """Set just the filename in the save dialog."""
 
 
 <document index="25">
@@ -4704,14 +4598,14 @@ def _set_filename_simple((self, pdf_name: str)) -> None:
 </document_content>
 </document>
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/strategies/__init__.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/strategies/__init__.py
 # Language: python
 
 from vexy_lines_utils.strategies.dialog_handler import SmartDialogHandler
 from vexy_lines_utils.strategies.menu_trigger import SmartMenuTrigger
 
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/strategies/dialog_handler.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/strategies/dialog_handler.py
 # Language: python
 
 import subprocess
@@ -4725,38 +4619,27 @@ import pyautogui
 import pyperclip
 
 class SmartDialogHandler:
-    """Smart save dialog handling with multiple strategies."""
     def __init__((self, config: EnhancedAutomationConfig)):
     def handle_save_dialog((self, file_path: Path, window_watcher: WindowWatcher)) -> bool:
-        """Try multiple strategies to handle save dialog."""
     def _try_applescript((self, folder_path: str, filename: str)) -> bool:
-        """Handle save dialog using AppleScript."""
     def _try_standard_navigation((self, folder_path: str, filename: str)) -> bool:
-        """Standard Command-Shift-G navigation."""
     def _try_direct_path((self, folder_path: str, filename: str)) -> bool:
-        """Navigate by typing full path directly."""
     def _try_filename_only((self, filename: str)) -> bool:
-        """Set just the filename (assume already in right folder)."""
 
 def __init__((self, config: EnhancedAutomationConfig)):
 
 def handle_save_dialog((self, file_path: Path, window_watcher: WindowWatcher)) -> bool:
-    """Try multiple strategies to handle save dialog."""
 
 def _try_applescript((self, folder_path: str, filename: str)) -> bool:
-    """Handle save dialog using AppleScript."""
 
 def _try_standard_navigation((self, folder_path: str, filename: str)) -> bool:
-    """Standard Command-Shift-G navigation."""
 
 def _try_direct_path((self, folder_path: str, filename: str)) -> bool:
-    """Navigate by typing full path directly."""
 
 def _try_filename_only((self, filename: str)) -> bool:
-    """Set just the filename (assume already in right folder)."""
 
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/strategies/menu_trigger.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/strategies/menu_trigger.py
 # Language: python
 
 import subprocess
@@ -4769,33 +4652,24 @@ import PyXA
 import pyautogui
 
 class SmartMenuTrigger:
-    """Smart menu triggering with multiple fallback strategies."""
     def __init__((self, config: EnhancedAutomationConfig)):
     def trigger_export((self, window_watcher: WindowWatcher)) -> bool:
-        """Try multiple strategies to trigger the Export menu."""
     def _try_keyboard_shortcut((self)) -> bool:
-        """Try using keyboard shortcut."""
     def _try_applescript((self)) -> bool:
-        """Try using AppleScript to click menu."""
     def _try_pyxa_menu((self)) -> bool:
-        """Try using PyXA menu click (original method)."""
 
 def __init__((self, config: EnhancedAutomationConfig)):
 
 def trigger_export((self, window_watcher: WindowWatcher)) -> bool:
-    """Try multiple strategies to trigger the Export menu."""
 
 def _try_keyboard_shortcut((self)) -> bool:
-    """Try using keyboard shortcut."""
 
 def _try_applescript((self)) -> bool:
-    """Try using AppleScript to click menu."""
 
 def _try_pyxa_menu((self)) -> bool:
-    """Try using PyXA menu click (original method)."""
 
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/utils/__init__.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/utils/__init__.py
 # Language: python
 
 from vexy_lines_utils.utils.file_utils import find_lines_files, validate_lines_file, validate_pdf
@@ -4803,7 +4677,7 @@ from vexy_lines_utils.utils.interrupt import InterruptHandler
 from vexy_lines_utils.utils.system import speak
 
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/utils/file_utils.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/utils/file_utils.py
 # Language: python
 
 from typing import TYPE_CHECKING
@@ -4812,16 +4686,13 @@ from vexy_lines_utils.core.errors import FileValidationError
 from pathlib import Path
 
 def find_lines_files((path: Path)) -> list[Path]:
-    """Return sorted .lines files for the supplied target."""
 
 def validate_lines_file((path: Path)) -> None:
-    """Validate that a .lines file is accessible and not corrupted."""
 
 def validate_pdf((path: Path)) -> bool:
-    """Validate that an exported PDF file is complete and valid."""
 
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/utils/interrupt.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/utils/interrupt.py
 # Language: python
 
 import signal
@@ -4829,48 +4700,44 @@ import sys
 from loguru import logger
 
 class InterruptHandler:
-    """Gracefully handle Ctrl+C interruptions."""
     def __init__((self)):
     def _handle_interrupt((self, _sig, _frame)):
     def restore((self)):
-        """Restore the original signal handler."""
     def check((self)) -> bool:
-        """Check if we should stop processing."""
 
 def __init__((self)):
 
 def _handle_interrupt((self, _sig, _frame)):
 
 def restore((self)):
-    """Restore the original signal handler."""
 
 def check((self)) -> bool:
-    """Check if we should stop processing."""
 
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/utils/system.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/utils/system.py
 # Language: python
 
 import subprocess
 from loguru import logger
 
 def speak((text: str)) -> None:
-    """Use macOS VoiceOver to announce status, ignoring failures."""
 
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/tests/conftest.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/tests/conftest.py
 # Language: python
 
 import sys
 from pathlib import Path
 
+SRC_PATH = =
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/tests/fixtures/mock_pyxa.py
+
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/tests/fixtures/mock_pyxa.py
 # Language: python
 
 
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/tests/test_package.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/tests/test_package.py
 # Language: python
 
 from typing import TYPE_CHECKING
@@ -4896,7 +4763,6 @@ from vexy_lines_utils import VexyLinesExporter
 from vexy_lines_utils.core import format_error_with_context, get_error_suggestion
 
 def provider_from_sequences((sequences: list[list[str]])):
-    """Utility to feed deterministic window titles into WindowWatcher."""
 
 def _provider(()) -> list[str]:
 
@@ -4915,73 +4781,51 @@ def test_exporter_dry_run_counts_files((tmp_path: Path)) -> None:
 def test_window_watcher_timeout(()) -> None:
 
 def test_validate_lines_file_valid((tmp_path: Path)) -> None:
-    """Test validation passes for valid .lines file."""
 
 def test_validate_lines_file_missing((tmp_path: Path)) -> None:
-    """Test validation fails for missing file."""
 
 def test_validate_lines_file_empty((tmp_path: Path)) -> None:
-    """Test validation fails for empty file."""
 
 def test_validate_lines_file_wrong_extension((tmp_path: Path)) -> None:
-    """Test validation fails for wrong file extension."""
 
 def test_automation_config_timeout_scaling(()) -> None:
-    """Test timeout multiplier scaling."""
 
 def test_automation_error_codes(()) -> None:
-    """Test AutomationError includes error codes."""
 
 def test_file_validation_error_code(()) -> None:
-    """Test FileValidationError has correct error code."""
 
 def test_exporter_skips_when_pdf_exists((tmp_path: Path)) -> None:
-    """Test that .lines files are skipped when corresponding .pdf already exists."""
 
 def test_window_watcher_get_current_state_with_windows(()) -> None:
-    """Test WindowWatcher.get_current_state() with visible windows."""
 
 def test_window_watcher_get_current_state_no_windows(()) -> None:
-    """Test WindowWatcher.get_current_state() when no windows visible."""
 
 def test_ui_actions_navigation_helpers(()) -> None:
-    """Test navigation helper methods record actions correctly."""
 
 def test_validate_pdf_valid((tmp_path: Path)) -> None:
-    """Test PDF validation passes for valid PDF file."""
 
 def test_validate_pdf_missing((tmp_path: Path)) -> None:
-    """Test PDF validation fails for missing file."""
 
 def test_validate_pdf_too_small((tmp_path: Path)) -> None:
-    """Test PDF validation fails for tiny file."""
 
 def test_validate_pdf_invalid_header((tmp_path: Path)) -> None:
-    """Test PDF validation fails for invalid magic bytes."""
 
 def test_validate_pdf_large_file_warning((tmp_path: Path)) -> None:
-    """Test PDF validation warns but passes for very large files."""
 
 def test_export_stats_timing(()) -> None:
-    """Test that ExportStats tracks timing correctly."""
 
 def test_export_stats_skipped(()) -> None:
-    """Test that ExportStats tracks skipped files separately."""
 
 def test_export_stats_human_summary(()) -> None:
-    """Test human-readable summary formatting."""
 
 def test_export_stats_validation_failures(()) -> None:
-    """Test that ExportStats tracks validation failures separately."""
 
 def test_progress_indicators_in_export((tmp_path: Path)) -> None:
-    """Test that batch export shows progress and completes successfully."""
 
 def test_error_suggestions(()) -> None:
-    """Test that error codes provide helpful suggestions."""
 
 
-# File: /Users/adam/Developer/vcs/github.vexyart/vexy-lines-utils/tests/test_refactored_modules.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/tests/test_refactored_modules.py
 # Language: python
 
 from pathlib import Path
@@ -5021,84 +4865,53 @@ from vexy_lines_utils.utils import (  # noqa: F401
 import vexy_lines_utils
 
 class TestCoreModules:
-    """Test core module functionality."""
     def test_automation_config((self)):
-        """Test AutomationConfig creation and defaults."""
     def test_enhanced_automation_config((self)):
-        """Test EnhancedAutomationConfig creation and defaults."""
     def test_automation_error((self)):
-        """Test AutomationError creation."""
     def test_file_validation_error((self)):
-        """Test FileValidationError creation."""
     def test_export_stats((self)):
-        """Test ExportStats functionality."""
 
 class TestUtilsModules:
-    """Test utils module functionality."""
     def test_find_lines_files((self, tmp_path)):
-        """Test finding .lines files."""
     def test_validate_lines_file((self, tmp_path)):
-        """Test .lines file validation."""
     def test_validate_pdf((self, tmp_path)):
-        """Test PDF validation."""
     def test_interrupt_handler((self)):
-        """Test InterruptHandler functionality."""
 
 class TestAutomationModules:
-    """Test automation module functionality."""
     def test_window_watcher((self)):
-        """Test WindowWatcher functionality."""
     def test_ui_actions_dry_run((self)):
-        """Test UIActions in dry run mode."""
 
 class TestBackwardCompatibility:
-    """Test that all original exports are still available."""
     def test_main_package_exports((self)):
-        """Test main package exports for backward compatibility."""
 
 class TestCLI:
-    """Test CLI functionality."""
     def test_cli_validation((self)):
-        """Test CLI argument validation."""
 
 def test_automation_config((self)):
-    """Test AutomationConfig creation and defaults."""
 
 def test_enhanced_automation_config((self)):
-    """Test EnhancedAutomationConfig creation and defaults."""
 
 def test_automation_error((self)):
-    """Test AutomationError creation."""
 
 def test_file_validation_error((self)):
-    """Test FileValidationError creation."""
 
 def test_export_stats((self)):
-    """Test ExportStats functionality."""
 
 def test_find_lines_files((self, tmp_path)):
-    """Test finding .lines files."""
 
 def test_validate_lines_file((self, tmp_path)):
-    """Test .lines file validation."""
 
 def test_validate_pdf((self, tmp_path)):
-    """Test PDF validation."""
 
 def test_interrupt_handler((self)):
-    """Test InterruptHandler functionality."""
 
 def test_window_watcher((self)):
-    """Test WindowWatcher functionality."""
 
 def test_ui_actions_dry_run((self)):
-    """Test UIActions in dry run mode."""
 
 def test_main_package_exports((self)):
-    """Test main package exports for backward compatibility."""
 
 def test_cli_validation((self)):
-    """Test CLI argument validation."""
 
 
 </documents>

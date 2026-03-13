@@ -191,6 +191,8 @@ class TestPlistManager:
             assert writes["export·dlg·checkLayers"] == "true"
             assert writes["export·dlg·radioTransparent"] == "true"
             assert writes["export·dlg·exportMode"] == "1"
+            assert writes["not_show_intro"] == "1"
+            assert writes["not_show_wizard"] == "1"
 
     def test_applies_export_prefs_for_svg(self) -> None:
         mock_def = self._make_defaults_mock()

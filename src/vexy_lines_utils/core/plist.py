@@ -29,6 +29,8 @@ EXPORT_PREFERENCES: dict[str, Any] = {
     "export\u00b7dlg\u00b7radioTransparent": True,
     "export\u00b7dlg\u00b7scale": 1.0,
     "first_start": False,
+    "not_show_intro": 1,
+    "not_show_wizard": 1,
 }
 
 _TYPE_FLAGS: dict[type, str] = {

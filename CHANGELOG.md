@@ -4,16 +4,33 @@ this_file: CHANGELOG.md
 
 # Changelog
 
-## [2.0.1] - 2026-03-13
+## [2.0.0] - 2026-03-13
+
+### Changed (breaking)
+
+- **Complete rewrite** using Vexy Lines' new dialog-less plist-driven export
+- CLI: `export TARGET` replaces old positional + `--format`/`--output` flags; removed `--enhanced`
+- Default format is `pdf`; pass `--format svg` for SVG export
+- Minimum retry count is now `0` (no retries); was `1`
+
+### Added
+
+- `core/plist.py`: `PlistManager` context manager — quits app, edits plist atomically, restores on exit
+- `core/config.py`: `ExportConfig` with validated format, timeout, and retry constants
+- `exporter.py`: `VexyLinesExporter` with file-polling export detection and folder iteration
+- `automation/bridges.py`: `AppleScriptBridge` (PyXA removed)
+
+### Removed
+
+- Dependencies: `mac-pyxa`, `pyautogui-ng`, `pyperclip` — no longer needed
+- `automation/ui_actions.py`, `strategies/`, `exporters/enhanced.py`, `exporters/standard.py`
 
 ### Fixed
 
-- `FORMAT_CODES` values corrected from integers (`0`, `1`) to strings (`"pdf"`, `"svg"`) matching actual Vexy Lines plist format
-- `MIN_RETRIES` changed from `1` to `0` — `--max_retries 0` (no retries) is now valid
-- CLI validation: `max_retries < 0` is invalid (was `< 1`)
-- `PlistManager.__enter__` return type annotated as `Self` (PYI034)
-- `plist.py`: replaced `os.replace`/`os.unlink` with `Path.replace`/`Path.unlink`; removed `import os`
-- `bridges.py`: corrected `# noqa: S603/S607` placement
+- `FORMAT_CODES` values are strings (`"pdf"`, `"svg"`) not integers
+- `PlistManager.__enter__` annotated as `Self` (PYI034)
+- `plist.py`: `Path.replace`/`Path.unlink` instead of `os.*`; `import os` removed
+- `bridges.py`: `# noqa: S603/S607` placement corrected
 - Test suite: all ruff violations resolved — PT012, ARG001, SIM117, S108, RUF100
 
 ### Technical

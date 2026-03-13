@@ -1299,16 +1299,33 @@ this_file: CHANGELOG.md
 
 # Changelog
 
-## [2.0.1] - 2026-03-13
+## [2.0.0] - 2026-03-13
+
+### Changed (breaking)
+
+- **Complete rewrite** using Vexy Lines' new dialog-less plist-driven export
+- CLI: `export TARGET` replaces old positional + `--format`/`--output` flags; removed `--enhanced`
+- Default format is `pdf`; pass `--format svg` for SVG export
+- Minimum retry count is now `0` (no retries); was `1`
+
+### Added
+
+- `core/plist.py`: `PlistManager` context manager — quits app, edits plist atomically, restores on exit
+- `core/config.py`: `ExportConfig` with validated format, timeout, and retry constants
+- `exporter.py`: `VexyLinesExporter` with file-polling export detection and folder iteration
+- `automation/bridges.py`: `AppleScriptBridge` (PyXA removed)
+
+### Removed
+
+- Dependencies: `mac-pyxa`, `pyautogui-ng`, `pyperclip` — no longer needed
+- `automation/ui_actions.py`, `strategies/`, `exporters/enhanced.py`, `exporters/standard.py`
 
 ### Fixed
 
-- `FORMAT_CODES` values corrected from integers (`0`, `1`) to strings (`"pdf"`, `"svg"`) matching actual Vexy Lines plist format
-- `MIN_RETRIES` changed from `1` to `0` — `--max_retries 0` (no retries) is now valid
-- CLI validation: `max_retries < 0` is invalid (was `< 1`)
-- `PlistManager.__enter__` return type annotated as `Self` (PYI034)
-- `plist.py`: replaced `os.replace`/`os.unlink` with `Path.replace`/`Path.unlink`; removed `import os`
-- `bridges.py`: corrected `# noqa: S603/S607` placement
+- `FORMAT_CODES` values are strings (`"pdf"`, `"svg"`) not integers
+- `PlistManager.__enter__` annotated as `Self` (PYI034)
+- `plist.py`: `Path.replace`/`Path.unlink` instead of `os.*`; `import os` removed
+- `bridges.py`: `# noqa: S603/S607` placement corrected
 - Test suite: all ruff violations resolved — PT012, ARG001, SIM117, S108, RUF100
 
 ### Technical
@@ -3477,7 +3494,7 @@ this_file: TODO.md
 this_file: WORK.md
 ---
 
-# Work Progress — v2.0.0 Dialog-less Export Rewrite
+# Work Progress — v2.0.0 Published
 
 ## Completed
 
@@ -4358,31 +4375,30 @@ def format_error_with_context((error_code: str, base_message: str, file_path: st
 # File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/core/plist.py
 # Language: python
 
-import plistlib
 import subprocess
-import tempfile
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from typing import Self
 from loguru import logger
 from vexy_lines_utils.core.errors import AutomationError
 
-_MISSING = =
+APP_DOMAIN = =
 FORMAT_CODES = :
 EXPORT_PREFERENCES = :
+_TYPE_FLAGS = :
 
 class PlistManager:
-    def __init__((self, plist_path: Path, fmt: str, app_name: str = "Vexy Lines")) -> None:
+    def __init__((self, fmt: str, app_name: str = "Vexy Lines")) -> None:
     def __enter__((self)) -> Self:
     def __exit__((self, *exc_info: object)) -> None:
     def _quit_app((self)) -> None:
-    def _read_plist((self)) -> dict[str, Any]:
-    def _store_originals((self, data: dict[str, Any])) -> None:
-    def _apply_export_prefs((self, data: dict[str, Any])) -> None:
-    def _write_plist((self, data: dict[str, Any])) -> None:
+    def _export_domain((self)) -> bytes | None:
+    def _apply_export_prefs((self)) -> None:
+    def _write_one((self, key: str, value: Any)) -> None:
     def _restore_originals((self)) -> None:
 
-def __init__((self, plist_path: Path, fmt: str, app_name: str = "Vexy Lines")) -> None:
+def _defaults((*args: str, input: bytes | None = None)) -> subprocess.CompletedProcess[bytes]:
+
+def __init__((self, fmt: str, app_name: str = "Vexy Lines")) -> None:
 
 def __enter__((self)) -> Self:
 
@@ -4390,13 +4406,11 @@ def __exit__((self, *exc_info: object)) -> None:
 
 def _quit_app((self)) -> None:
 
-def _read_plist((self)) -> dict[str, Any]:
+def _export_domain((self)) -> bytes | None:
 
-def _store_originals((self, data: dict[str, Any])) -> None:
+def _apply_export_prefs((self)) -> None:
 
-def _apply_export_prefs((self, data: dict[str, Any])) -> None:
-
-def _write_plist((self, data: dict[str, Any])) -> None:
+def _write_one((self, key: str, value: Any)) -> None:
 
 def _restore_originals((self)) -> None:
 
@@ -4587,7 +4601,6 @@ SRC_PATH = =
 # File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/tests/test_package.py
 # Language: python
 
-import plistlib
 import subprocess
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -4609,7 +4622,7 @@ from vexy_lines_utils import (
     validate_svg,
 )
 from vexy_lines_utils.core.errors import format_error_with_context, get_error_suggestion
-from vexy_lines_utils.core.plist import _MISSING, FORMAT_CODES
+from vexy_lines_utils.core.plist import FORMAT_CODES
 from vexy_lines_utils.utils.file_utils import (
     expected_export_path,
     resolve_output_path,
@@ -4637,11 +4650,14 @@ class TestExportConfig:
     def test_export_extension((self)) -> None:
 
 class TestPlistManager:
-    def test_creates_plist_when_missing((self, tmp_path: Path)) -> None:
-    def test_restores_original_values((self, tmp_path: Path)) -> None:
-    def test_restores_on_exception((self, tmp_path: Path)) -> None:
+    def _make_defaults_mock((self, *, domain_exists: bool = False)) -> MagicMock:
+    def _write_calls((self, mock: MagicMock)) -> dict[str, str]:
+    def test_applies_export_prefs_for_pdf((self)) -> None:
+    def test_applies_export_prefs_for_svg((self)) -> None:
+    def test_restores_via_import_when_domain_existed((self)) -> None:
+    def test_deletes_domain_when_it_did_not_exist((self)) -> None:
+    def test_restores_on_exception((self)) -> None:
     def test_format_codes((self)) -> None:
-    def test_missing_sentinel((self)) -> None:
 
 class TestAppleScriptBridge:
     def test_activate_builds_correct_command((self)) -> None:
@@ -4751,15 +4767,23 @@ def test_export_menu_item_svg((self)) -> None:
 
 def test_export_extension((self)) -> None:
 
-def test_creates_plist_when_missing((self, tmp_path: Path)) -> None:
+def _make_defaults_mock((self, *, domain_exists: bool = False)) -> MagicMock:
 
-def test_restores_original_values((self, tmp_path: Path)) -> None:
+def _side_effect((*args: str, _input: bytes | None = None)) -> subprocess.CompletedProcess[bytes]:
 
-def test_restores_on_exception((self, tmp_path: Path)) -> None:
+def _write_calls((self, mock: MagicMock)) -> dict[str, str]:
+
+def test_applies_export_prefs_for_pdf((self)) -> None:
+
+def test_applies_export_prefs_for_svg((self)) -> None:
+
+def test_restores_via_import_when_domain_existed((self)) -> None:
+
+def test_deletes_domain_when_it_did_not_exist((self)) -> None:
+
+def test_restores_on_exception((self)) -> None:
 
 def test_format_codes((self)) -> None:
-
-def test_missing_sentinel((self)) -> None:
 
 def test_activate_builds_correct_command((self)) -> None:
 

@@ -30,7 +30,6 @@ class ExportConfig:
     post_action_delay: float = 0.4
     timeout_multiplier: float = 1.0
     max_retries: int = 3
-    plist_path: str = "~/Library/Preferences/com.vexy-art.lines.plist"
 
     def __post_init__(self) -> None:
         self.format = self.format.lower()

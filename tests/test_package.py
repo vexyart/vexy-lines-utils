@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import plistlib
 import subprocess
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -27,7 +26,7 @@ from vexy_lines_utils import (
     validate_svg,
 )
 from vexy_lines_utils.core.errors import format_error_with_context, get_error_suggestion
-from vexy_lines_utils.core.plist import _MISSING, FORMAT_CODES
+from vexy_lines_utils.core.plist import FORMAT_CODES
 from vexy_lines_utils.utils.file_utils import (
     expected_export_path,
     resolve_output_path,
@@ -156,63 +155,94 @@ class TestExportConfig:
 
 
 class TestPlistManager:
-    def test_creates_plist_when_missing(self, tmp_path: Path) -> None:
-        plist_path = tmp_path / "com.test.plist"
-        assert not plist_path.exists()
+    _EXISTING_XML = (
+        b'<?xml version="1.0" encoding="UTF-8"?>\n'
+        b'<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" '
+        b'"http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n'
+        b'<plist version="1.0"><dict>'
+        b"<key>export\xc2\xb7dlg\xc2\xb7checkLayers</key><false/>"
+        b"<key>export\xc2\xb7dlg\xc2\xb7scale</key><real>2</real>"
+        b"</dict></plist>\n"
+    )
 
-        with patch.object(PlistManager, "_quit_app"), PlistManager(plist_path, "pdf", "Test App"):
-            assert plist_path.exists()
-            with plist_path.open("rb") as f:
-                data = plistlib.load(f)
-            assert data["export·dlg·format"] == FORMAT_CODES["pdf"]
-            assert data["export·dlg·checkLayers"] is True
-            assert data["export·dlg·radioTransparent"] is True
+    def _make_defaults_mock(self, *, domain_exists: bool = False) -> MagicMock:
+        def _side_effect(*args: str, _input: bytes | None = None) -> subprocess.CompletedProcess[bytes]:
+            if args[0] == "export":
+                if domain_exists:
+                    return subprocess.CompletedProcess(args, returncode=0, stdout=self._EXISTING_XML, stderr=b"")
+                return subprocess.CompletedProcess(args, returncode=1, stdout=b"", stderr=b"Domain not found")
+            return subprocess.CompletedProcess(args, returncode=0, stdout=b"", stderr=b"")
 
-        assert not plist_path.exists(), "Should remove plist that didn't exist before"
+        return MagicMock(side_effect=_side_effect)
 
-    def test_restores_original_values(self, tmp_path: Path) -> None:
-        plist_path = tmp_path / "com.test.plist"
-        original_data = {"export·dlg·checkLayers": False, "user_setting": "keep_me"}
-        with plist_path.open("wb") as f:
-            plistlib.dump(original_data, f, fmt=plistlib.FMT_BINARY)
+    def _write_calls(self, mock: MagicMock) -> dict[str, str]:
+        """Extract {key: value_str} from all _defaults("write", ...) calls."""
+        return {call.args[2]: call.args[4] for call in mock.call_args_list if call.args[0] == "write"}
 
-        with patch.object(PlistManager, "_quit_app"), PlistManager(plist_path, "svg", "Test App"):
-            with plist_path.open("rb") as f:
-                data = plistlib.load(f)
-            assert data["export·dlg·format"] == FORMAT_CODES["svg"]
-            assert data["export·dlg·checkLayers"] is True
-
-        with plist_path.open("rb") as f:
-            restored = plistlib.load(f)
-        assert restored["export·dlg·checkLayers"] is False
-        assert restored["user_setting"] == "keep_me"
-        assert "export·dlg·format" not in restored, "Key that didn't exist should be removed"
-
-    def test_restores_on_exception(self, tmp_path: Path) -> None:
-        plist_path = tmp_path / "com.test.plist"
-        original_data = {"export·dlg·scale": 2.0}
-        with plist_path.open("wb") as f:
-            plistlib.dump(original_data, f, fmt=plistlib.FMT_BINARY)
-
-        err_msg = "intentional"
+    def test_applies_export_prefs_for_pdf(self) -> None:
+        mock_def = self._make_defaults_mock()
         with (
             patch.object(PlistManager, "_quit_app"),
-            pytest.raises(RuntimeError, match="intentional"),
-            PlistManager(plist_path, "pdf", "Test App"),
+            patch("vexy_lines_utils.core.plist._defaults", mock_def),
+            PlistManager("pdf", "Test App"),
         ):
-            raise RuntimeError(err_msg)
+            writes = self._write_calls(mock_def)
+            assert writes["export·dlg·format"] == FORMAT_CODES["pdf"]
+            assert writes["export·dlg·checkLayers"] == "true"
+            assert writes["export·dlg·radioTransparent"] == "true"
+            assert writes["export·dlg·exportMode"] == "1"
 
-        with plist_path.open("rb") as f:
-            restored = plistlib.load(f)
-        assert restored["export·dlg·scale"] == 2.0
+    def test_applies_export_prefs_for_svg(self) -> None:
+        mock_def = self._make_defaults_mock()
+        with (
+            patch.object(PlistManager, "_quit_app"),
+            patch("vexy_lines_utils.core.plist._defaults", mock_def),
+            PlistManager("svg", "Test App"),
+        ):
+            writes = self._write_calls(mock_def)
+            assert writes["export·dlg·format"] == FORMAT_CODES["svg"]
+
+    def test_restores_via_import_when_domain_existed(self) -> None:
+        mock_def = self._make_defaults_mock(domain_exists=True)
+        with (
+            patch.object(PlistManager, "_quit_app"),
+            patch("vexy_lines_utils.core.plist._defaults", mock_def),
+            PlistManager("pdf", "Test App"),
+        ):
+            mock_def.reset_mock()
+        restore_cmds = [call.args[0] for call in mock_def.call_args_list]
+        assert "import" in restore_cmds
+        assert "delete" not in restore_cmds
+
+    def test_deletes_domain_when_it_did_not_exist(self) -> None:
+        mock_def = self._make_defaults_mock(domain_exists=False)
+        with (
+            patch.object(PlistManager, "_quit_app"),
+            patch("vexy_lines_utils.core.plist._defaults", mock_def),
+            PlistManager("pdf", "Test App"),
+        ):
+            mock_def.reset_mock()
+        restore_cmds = [call.args[0] for call in mock_def.call_args_list]
+        assert "delete" in restore_cmds
+        assert "import" not in restore_cmds
+
+    def test_restores_on_exception(self) -> None:
+        mock_def = self._make_defaults_mock(domain_exists=True)
+        err_msg = "intentional"
+        with (  # noqa: PT012
+            patch.object(PlistManager, "_quit_app"),
+            patch("vexy_lines_utils.core.plist._defaults", mock_def),
+            pytest.raises(RuntimeError, match="intentional"),
+            PlistManager("pdf", "Test App"),
+        ):
+            mock_def.reset_mock()
+            raise RuntimeError(err_msg)
+        restore_cmds = [call.args[0] for call in mock_def.call_args_list]
+        assert "import" in restore_cmds
 
     def test_format_codes(self) -> None:
         assert FORMAT_CODES["pdf"] == "pdf"
         assert FORMAT_CODES["svg"] == "svg"
-
-    def test_missing_sentinel(self) -> None:
-        assert _MISSING is not None
-        assert _MISSING is not False
 
 
 # ---------------------------------------------------------------------------

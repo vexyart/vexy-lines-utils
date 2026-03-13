@@ -2,7 +2,7 @@
 this_file: WORK.md
 ---
 
-# Work Progress — v2.0.0 Dialog-less Export Rewrite
+# Work Progress — v2.0.0 Published
 
 ## Completed
 

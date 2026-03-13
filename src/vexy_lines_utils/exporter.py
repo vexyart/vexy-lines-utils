@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import shutil
 import time
-from pathlib import Path
+from pathlib import Path  # noqa: TC003
 
 from loguru import logger
 
@@ -54,11 +54,10 @@ class VexyLinesExporter:
                 stats.record_success(f, elapsed=0.0)
             return stats
 
-        plist_path = Path(self.config.plist_path).expanduser()
         interrupt = InterruptHandler()
 
         try:
-            with PlistManager(plist_path, self.config.format, self.config.app_name):
+            with PlistManager(self.config.format, self.config.app_name):
                 bridge = AppleScriptBridge(self.config)
                 bridge.activate()
 

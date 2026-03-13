@@ -1,0 +1,22 @@
+{
+    001 = 1;
+    002 = 1;
+    003 = 1;
+    004 = 0;
+    18 = 0;
+    "__geo_data_3" = {length = 132, bytes = 0x30316439 64306362 30303033 30303030 ... 30303030 30336336 };
+    "__state_data_3" = {length = 676, bytes = 0x30303030 30306666 30303030 30303030 ... 30303030 30303030 };
+    autoSave = 1;
+    "color\\U00b7mode_simple" = 0;
+    "document_control\\U00b7expanded" = 0;
+    "first_start" = 0;
+    "last_update_check" = {length = 20, bytes = 0x4056617269616e74280000000e0025c28dc2b929};
+    "not_show_intro" = 1;
+    "recent_files.1.project_name" = "/Applications/Vexy Lines.app/Contents/Resources/samples/intro.lines";
+    "recent_files.size" = 1;
+    "rulers_visible" = 1;
+    "show_history" = 0;
+    "show_preview" = 1;
+    "statusbar_visible" = 0;
+    "view_params" = 1;
+}

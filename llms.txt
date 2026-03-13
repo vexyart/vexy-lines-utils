@@ -7,7 +7,9 @@ Project Structure:
 ├── 📁 docs
 │   └── 📄 automation-setup.md
 ├── 📁 issues
-│   └── 📄 104.md
+│   ├── 📄 104.md
+│   ├── 📄 prefs0.txt
+│   └── 📄 prefs1.txt
 ├── 📁 src
 │   └── 📁 vexy_lines_utils
 │       ├── 📁 automation
@@ -3694,6 +3696,115 @@ This will do a DIALOG-LESS export into the same folder and basename as the .line
 </document>
 
 <document index="22">
+<source>issues/prefs0.txt</source>
+<document_content>
+{
+    001 = 1;
+    002 = 1;
+    003 = 1;
+    004 = 0;
+    18 = 0;
+    "__geo_data_3" = {length = 132, bytes = 0x30316439 64306362 30303033 30303030 ... 30303030 30336336 };
+    "__state_data_3" = {length = 676, bytes = 0x30303030 30306666 30303030 30303030 ... 30303030 30303030 };
+    autoSave = 1;
+    "color\\U00b7mode_simple" = 0;
+    "document_control\\U00b7expanded" = 0;
+    "first_start" = 0;
+    "last_update_check" = {length = 20, bytes = 0x4056617269616e74280000000e0025c28dc2b929};
+    "not_show_intro" = 1;
+    "recent_files.1.project_name" = "/Applications/Vexy Lines.app/Contents/Resources/samples/intro.lines";
+    "recent_files.size" = 1;
+    "rulers_visible" = 1;
+    "show_history" = 0;
+    "show_preview" = 1;
+    "statusbar_visible" = 0;
+    "view_params" = 1;
+}
+</document_content>
+</document>
+
+<document index="23">
+<source>issues/prefs1.txt</source>
+<document_content>
+{
+    001 = 1;
+    002 = 1;
+    003 = 0;
+    004 = 0;
+    18 = 0;
+    A0 = 123;
+    A1 = 431;
+    A2 = 445;
+    CA = 161114;
+    L0 = 190;
+    L1 = 103;
+    L2 = 23;
+    L3 = 119;
+    L4 = 104;
+    L5 = 80;
+    L6 = 232;
+    L7 = 228;
+    L8 = 64;
+    L9 = 55;
+    LA = 1198;
+    LLN = 103;
+    S0 = 712;
+    S1 = 64;
+    S2 = 171;
+    S3 = "-265";
+    S4 = "-675";
+    S5 = "-462";
+    S6 = 309;
+    S7 = "-716";
+    S8 = 781;
+    S9 = 514;
+    SA = 433;
+    SA1 = 947;
+    SA2 = 1604;
+    "__geo_data_3" = {length = 132, bytes = 0x30316439 64306362 30303033 30303030 ... 30303030 30336461 };
+    "__state_data_3" = {length = 676, bytes = 0x30303030 30306666 30303030 30303030 ... 30303030 30303030 };
+    activationMaxCount = 0;
+    activationsCount = 0;
+    autoSave = 1;
+    "color\\U00b7mode_simple" = 0;
+    condition = "";
+    crashSaved = "";
+    crashSavedSourcePath = "";
+    "document_control\\U00b7expanded" = 0;
+    expirationDate = {length = 18, bytes = 0x4056617269616e74280000000e0000000029};
+    "export_strokes_mode" = 0;
+    "export\\U00b7dlg\\U00b7antialising" = 1;
+    "export\\U00b7dlg\\U00b7checkLayers" = 0;
+    "export\\U00b7dlg\\U00b7checkMergeColor" = 0;
+    "export\\U00b7dlg\\U00b7colorBackground" = {length = 33, bytes = 0x40566172 69616e74 28000000 4301c3bf ... b5c3a7c3 a7000029 };
+    "export\\U00b7dlg\\U00b7exportMode" = 1;
+    "export\\U00b7dlg\\U00b7format" = pdf;
+    "export\\U00b7dlg\\U00b7imageFormat" = 0;
+    "export\\U00b7dlg\\U00b7radioColor" = 0;
+    "export\\U00b7dlg\\U00b7radioTransparent" = 1;
+    "export\\U00b7dlg\\U00b7scale" = 1;
+    "first_start" = 0;
+    hasExpirationDate = 0;
+    idCondition = 0;
+    "last_update_check" = {length = 20, bytes = 0x4056617269616e74280000000e0025c28dc2b929};
+    "not_show_intro" = 1;
+    "not_show_wizard" = 1;
+    "project_back_color" = {length = 33, bytes = 0x40566172 69616e74 28000000 4301c3bf ... bfc3bfc3 bf000029 };
+    "recent_files.1.project_name" = "/Applications/Vexy Lines.app/Contents/Resources/samples/intro.lines";
+    "recent_files.size" = 1;
+    "rulers_visible" = 1;
+    serial = "lfev-f2xu-0wbf-38lc";
+    "serial_id" = 0;
+    "show_history" = 0;
+    "show_preview" = 1;
+    "statusbar_visible" = 0;
+    versionMask = "";
+    "view_params" = 1;
+}
+</document_content>
+</document>
+
+<document index="24">
 <source>package.toml</source>
 <document_content>
 # Package configuration
@@ -3710,7 +3821,7 @@ github_actions = true   # Add GitHub Actions workflows
 </document_content>
 </document>
 
-<document index="23">
+<document index="25">
 <source>pyproject.toml</source>
 <document_content>
 # this_file: pyproject.toml
@@ -4376,7 +4487,7 @@ def format_error_with_context((error_code: str, base_message: str, file_path: st
 # Language: python
 
 import subprocess
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from typing import Self
 from loguru import logger
 from vexy_lines_utils.core.errors import AutomationError
@@ -4393,7 +4504,7 @@ class PlistManager:
     def _quit_app((self)) -> None:
     def _export_domain((self)) -> bytes | None:
     def _apply_export_prefs((self)) -> None:
-    def _write_one((self, key: str, value: Any)) -> None:
+    def _write_one((self, key: str, value: int | str)) -> None:
     def _restore_originals((self)) -> None:
 
 def _defaults((*args: str, input: bytes | None = None)) -> subprocess.CompletedProcess[bytes]:
@@ -4410,7 +4521,7 @@ def _export_domain((self)) -> bytes | None:
 
 def _apply_export_prefs((self)) -> None:
 
-def _write_one((self, key: str, value: Any)) -> None:
+def _write_one((self, key: str, value: int | str)) -> None:
 
 def _restore_originals((self)) -> None:
 
@@ -4505,7 +4616,7 @@ def _process_file((
 def _wait_for_export((self, path: Path)) -> None:
 
 
-<document index="24">
+<document index="26">
 <source>src/vexy_lines_utils/py.typed</source>
 <document_content>
 # this_file: src/vexy_lines_utils/py.typed

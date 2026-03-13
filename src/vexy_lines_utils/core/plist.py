@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import subprocess
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Self
@@ -20,23 +20,22 @@ FORMAT_CODES: dict[str, str] = {
     "svg": "svg",
 }
 
-EXPORT_PREFERENCES: dict[str, Any] = {
-    "export\u00b7dlg\u00b7checkLayers": True,
-    "export\u00b7dlg\u00b7checkMergeColor": False,
+EXPORT_PREFERENCES: dict[str, int] = {
+    "export_strokes_mode": 0,
+    "export\u00b7dlg\u00b7antialising": 1,
+    "export\u00b7dlg\u00b7checkLayers": 0,
+    "export\u00b7dlg\u00b7checkMergeColor": 0,
     "export\u00b7dlg\u00b7exportMode": 1,
     "export\u00b7dlg\u00b7imageFormat": 0,
-    "export\u00b7dlg\u00b7radioColor": False,
-    "export\u00b7dlg\u00b7radioTransparent": True,
-    "export\u00b7dlg\u00b7scale": 1.0,
-    "first_start": False,
+    "export\u00b7dlg\u00b7radioColor": 0,
+    "export\u00b7dlg\u00b7radioTransparent": 1,
+    "export\u00b7dlg\u00b7scale": 1,
     "not_show_intro": 1,
     "not_show_wizard": 1,
 }
 
 _TYPE_FLAGS: dict[type, str] = {
-    bool: "-bool",
     int: "-integer",
-    float: "-float",
     str: "-string",
 }
 
@@ -96,20 +95,18 @@ class PlistManager:
         return result.stdout
 
     def _apply_export_prefs(self) -> None:
-        prefs: dict[str, Any] = dict(EXPORT_PREFERENCES)
+        prefs: dict[str, int | str] = dict(EXPORT_PREFERENCES)
         prefs["export\u00b7dlg\u00b7format"] = FORMAT_CODES.get(self.fmt, self.fmt)
         for key, value in prefs.items():
             self._write_one(key, value)
         logger.debug(f"Applied export preferences for format={self.fmt!r}")
 
-    def _write_one(self, key: str, value: Any) -> None:
+    def _write_one(self, key: str, value: int | str) -> None:
         type_flag = _TYPE_FLAGS.get(type(value))
         if type_flag is None:
             msg = f"Unsupported pref type {type(value).__name__!r} for key {key!r}"
             raise AutomationError(msg, "PLIST_ERROR")
-        # bool must be serialised as "true"/"false", not Python's "True"/"False"
-        str_value = ("true" if value else "false") if isinstance(value, bool) else str(value)
-        result = _defaults("write", APP_DOMAIN, key, type_flag, str_value)
+        result = _defaults("write", APP_DOMAIN, key, type_flag, str(value))
         if result.returncode != 0:
             msg = f"defaults write failed for {key!r}: {result.stderr.decode()}"
             raise AutomationError(msg, "PLIST_ERROR")

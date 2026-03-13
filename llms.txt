@@ -4,8 +4,6 @@ Project Structure:
 │   └── 📁 workflows
 │       ├── 📄 push.yml
 │       └── 📄 release.yml
-├── 📁 docs
-│   └── 📄 automation-setup.md
 ├── 📁 issues
 │   ├── 📄 104.md
 │   ├── 📄 prefs0.txt
@@ -3040,67 +3038,61 @@ this_file: README.md
 
 # Vexy Lines Utils
 
-Export Vexy Lines `.lines` documents to crisp PDFs without pointing and clicking. This package provides a command-line interface for batch automation of [Vexy Lines](https://www.vexy.art) on macOS, wrapping the exact workflow described in the original `vexy-lines2pdf.py` script with a Fire-powered CLI.
+Export [Vexy Lines](https://www.vexy.art) `.lines` documents to PDF or SVG from the command line. No pointing, no clicking — just one command for a single file or an entire folder tree.
+
+```bash
+vexy-lines-utils export ~/Art/portrait.lines
+vexy-lines-utils export ~/Projects/posters --format svg --verbose
+```
+
+Built for power users and studios who process artwork in bulk. The tool configures Vexy Lines through its preference plist, opens each document via AppleScript, triggers the native export, validates the output, and restores original preferences when done.
 
 ## About Vexy Lines
 
-Vexy Lines is a creative desktop application that transforms photos, illustrations, AI-generated images and other bitmaps into expressive vector art. It reads the color value of every pixel and intelligently builds vector artwork from it.
+Vexy Lines is a macOS desktop application that transforms raster images — photos, illustrations, AI-generated art — into expressive vector artwork. It reads every pixel's brightness and builds vector strokes from it: dark areas produce thick lines, bright areas thin ones (or the reverse).
 
-### Core Concept
+The application offers twelve fill algorithms, each interpreting your source image differently:
 
-Feed it a portrait, get back an engraving. Drop in a landscape, receive flowing wave patterns. The software offers twelve different ways to interpret your images, each method responding to the light and dark areas of your source image differently. Dark areas generate thick strokes, bright areas create thin ones—or reverse it for dramatic effects.
+| Algorithm | Style |
+|-----------|-------|
+| **Linear** | Copper-plate engravings with parallel straight lines |
+| **Wave** | Flowing curves that undulate across the image |
+| **Radial** | Lines exploding outward from a centre point |
+| **Circular** | Concentric rings emanating from the centre |
+| **Spiral** | Continuous winding from centre to edge |
+| **Halftone** | Newspaper-style dots scaled by brightness |
+| **Trace** | Edge detection converting boundaries to paths |
+| **Wireframe** | 3D-looking dimensional lattices |
+| **Scribble** | Organic hand-drawn randomness |
+| **Fractal** | Recursive mathematical patterns |
+| **Text** | Typography-based painting |
+| **Handmade** | Your own custom drawn strokes |
 
-### The 12 Fill Algorithms
+Professional features include a layer system with groups and masks, dynamic colour pulled from source images, 3D mesh warping, multiple source images per composition, and overlap control for woven effects. Projects save as `.lines` files that preserve the complete editing state.
 
-- **Linear**: Classic copper-plate engravings with parallel straight lines
-- **Wave**: Flowing parallel curves that undulate across your image
-- **Radial**: Lines exploding from a center point like sun rays
-- **Circular**: Concentric rings emanating outward
-- **Spiral**: Continuous winding patterns from center to edge
-- **Halftone**: Newspaper-style dots that scale with brightness
-- **Trace**: Clean edge detection that converts boundaries to paths
-- **Wireframe**: 3D-looking dimensional lattices
-- **Scribble**: Hand-drawn energy with organic randomness
-- **Fractal**: Intricate mathematical recursive patterns
-- **Text**: Paint with letters and typography
-- **Handmade**: Draw your own custom strokes for full control
-
-### Professional Features
-
-- **Layer System**: Stack multiple fills, organize with groups, control visibility with masks
-- **Dynamic Color**: Strokes pull actual colors from source images segment by segment
-- **3D Mesh Warping**: Wrap patterns around cylinders, drape over waves, add perspective
-- **Multiple Sources**: Each group can reference different images for complex compositions
-- **Production Export**: SVG, PDF, EPS for infinite scaling; PNG, JPEG for quick sharing
-- **Overlap Control**: Fills can cut through each other creating woven effects
-
-Files save as `.lines` projects that preserve every layer, fill, mask, mesh, and parameter—allowing iterative refinement.
-
-## What This Package Provides
-
-This automation tool helps power users and studios process large batches of Vexy Lines artwork efficiently:
-
-- **Fire CLI**: A `vexy-lines` command implemented with Google's `fire` framework for intuitive command-line usage
-- **Batch Processing**: Recursive discovery and processing of `.lines` files in folders or single-file operations
-- **macOS Automation**: PyXA-powered menu control for **File → Export…** and **File → Close** operations
-- **Smart Dialog Navigation**: `pyautogui-ng` keyboard automation to navigate save dialogs and set proper filenames
-- **Voice Feedback**: Optional macOS text-to-speech announcements for accessibility
-- **Dry-Run Mode**: Preview operations without touching the UI—perfect for CI tests or validating large batches
-- **Robust Error Handling**: Continues processing remaining files even if individual exports fail
+More at [vexy.art](https://www.vexy.art) and [help.vexy.art](https://help.vexy.art).
 
 ## System Requirements
 
-- **macOS 10.14+** (required for PyXA automation framework)
-- **Vexy Lines** desktop application installed
-- **Python 3.10+**
-- **4GB RAM** minimum (same as Vexy Lines)
+| Requirement | Detail |
+|-------------|--------|
+| **OS** | macOS 10.14+ (Mojave or later) |
+| **Application** | [Vexy Lines](https://www.vexy.art) installed in `/Applications` |
+| **Python** | 3.10 or newer |
+| **Accessibility** | Terminal must have accessibility permissions (for AppleScript UI control) |
 
 ## Installation
 
-### From PyPI (Recommended)
+### From PyPI
 
 ```bash
 pip install vexy-lines-utils
+```
+
+Or with [uv](https://github.com/astral-sh/uv):
+
+```bash
+uv pip install vexy-lines-utils
 ```
 
 ### From Source
@@ -3111,112 +3103,216 @@ cd vexy-lines-utils
 pip install -e .
 ```
 
-### Required Permissions
+### Accessibility Permissions
 
-Grant accessibility permissions to your Terminal/IDE for UI automation:
-1. Open **System Preferences** → **Security & Privacy**
-2. Navigate to **Privacy** → **Accessibility**
-3. Add your Terminal app or IDE
-4. Restart Terminal/IDE after granting permissions
+The tool drives Vexy Lines through AppleScript and needs accessibility access:
 
-## Usage Examples
+1. Open **System Settings** → **Privacy & Security** → **Accessibility**
+2. Add your terminal application (Terminal.app, iTerm2, VS Code, etc.)
+3. Restart the terminal after granting permissions
 
-### Basic Export Operations
+## Command-Line Interface
 
-```bash
-# Export a single document
-vexy-lines export ~/Art/portrait.lines
+The package installs a `vexy-lines-utils` command with a single `export` subcommand:
 
-# Export everything in a folder (recursive)
-vexy-lines export ~/Projects/posters
-
-# Process specific project with verbose output
-vexy-lines export ~/Clients/BigCorp/logos --verbose
-
-# Preview what would be processed without running
-vexy-lines export ~/batch --dry_run --verbose
-
-# Get voice confirmation when batch completes
-vexy-lines export ~/batch --say_summary
+```
+vexy-lines-utils export INPUT [OPTIONS]
 ```
 
-### Advanced Workflows
+### Arguments
+
+| Argument | Type | Required | Description |
+|----------|------|----------|-------------|
+| `input` | path | yes | Path to a `.lines` file or a folder (searched recursively) |
+
+### Options
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--output` | path | — | Output directory or file path. Defaults to same directory as input. |
+| `--format` | string | `pdf` | Export format: `pdf` or `svg` |
+| `--verbose` | bool | `False` | Show detailed progress for each file |
+| `--dry_run` | bool | `False` | List files that would be processed without touching anything |
+| `--force` | bool | `False` | Overwrite existing exports instead of skipping them |
+| `--say_summary` | bool | `False` | Announce completion summary via macOS text-to-speech |
+| `--timeout_multiplier` | float | `1.0` | Scale all timeouts (range 0.1–10.0). Useful for slow machines. |
+| `--max_retries` | int | `3` | Retry count for export attempts per file (range 0–10) |
+
+### Examples
 
 ```bash
-# Process today's work
-vexy-lines export ~/Desktop/vexy-today/ --verbose --say_summary
+# Export a single file to PDF (default)
+vexy-lines-utils export ~/Art/portrait.lines
 
-# Validate large batch before running
-vexy-lines export ~/Archive/2024 --dry_run | grep "processed"
+# Export an entire folder to SVG
+vexy-lines-utils export ~/Projects/posters --format svg
 
-# Export with detailed logging for troubleshooting
-vexy-lines export ~/problem-files/ --verbose 2>&1 | tee export.log
+# Export with verbose output and overwrite existing files
+vexy-lines-utils export ~/Clients/logos --verbose --force
+
+# Dry run: see what would be processed
+vexy-lines-utils export ~/Archive/2024 --dry_run --verbose
+
+# Export to a specific output directory
+vexy-lines-utils export ~/Art/batch --output ~/Exports/batch
+
+# Slower machine — double all timeouts
+vexy-lines-utils export ~/Art/heavy.lines --timeout_multiplier 2.0
+
+# Voice announcement when a large batch finishes
+vexy-lines-utils export ~/Projects --say_summary --verbose
+
+# Export with detailed logging piped to a file
+vexy-lines-utils export ~/problem-files/ --verbose 2>&1 | tee export.log
 ```
 
-### Command-Line Arguments
+### Exit Behaviour
 
-**Required:**
-- `target`: Path to a `.lines` file or folder containing them (searched recursively)
-
-**Optional Flags:**
-- `--verbose`: Show detailed progress including each file being processed
-- `--dry_run`: Preview files that would be processed without UI automation
-- `--say_summary`: Announce completion summary via macOS text-to-speech
-
-### Output Format
-
-The command returns a structured dictionary with export statistics:
+The exporter continues processing remaining files when an individual export fails. On completion, it prints (or returns) a summary:
 
 ```json
 {
   "processed": 10,
   "success": 9,
+  "skipped": 0,
   "failed": 1,
   "failures": [
     ["path/to/broken.lines", "Failed to open file"]
   ],
-  "dry_run": false
+  "validation_failures": [],
+  "dry_run": false,
+  "total_time": 42.3,
+  "average_time": 4.7
 }
 ```
 
 ## How It Works
 
-1. **Discovery** – `find_lines_files` resolves the target path, supports single files, and sorts recursive directory walks for deterministic runs.
-2. **App bridge** – `PyXABridge` launches/activates Vexy Lines via macOS scripting bridges and exposes a minimal interface (`window_titles`, `click_menu_item`).
-3. **Window watching** – `WindowWatcher` polls the live window list so we wait for the expected document title, the Export dialog, and the Save dialog instead of relying on coarse `sleep()` delays.
-4. **Keyboard automation** – `UIActions` wraps `pyautogui-ng` + `pyperclip` to press Command-Shift-G, paste the folder path, select the filename, and confirm overwrites.
-5. **Verification** – the exporter waits for the Save window to close, then checks that the new PDF exists and is non-empty before moving on.
+The v2.0.0 architecture replaced GUI dialog automation (PyXA, pyautogui-ng) with a plist-driven approach — faster, more reliable, and with fewer dependencies.
 
-If any step fails (missing dialog, file cannot open, permissions issue, etc.), the run continues with the next `.lines` document and reports the failure reason in the final summary.
+### Export Pipeline
+
+```
+┌────────────┐     ┌──────────────┐     ┌──────────────────┐
+│  Discovery  │────▶│ Plist Config │────▶│  App Automation   │
+│             │     │              │     │                   │
+│ find_lines_ │     │ PlistManager │     │ AppleScriptBridge │
+│ files()     │     │ sets export  │     │ opens, triggers   │
+│             │     │ preferences  │     │ export, closes    │
+└────────────┘     └──────────────┘     └──────────────────┘
+                                                │
+                          ┌─────────────────────┘
+                          ▼
+                   ┌──────────────┐     ┌────────────┐
+                   │  File Polling │────▶│ Validation  │
+                   │              │     │             │
+                   │ Wait for     │     │ validate_   │
+                   │ stable size  │     │ pdf / svg   │
+                   └──────────────┘     └────────────┘
+```
+
+**Step by step:**
+
+1. **Discovery** — `find_lines_files()` resolves the input path. A single `.lines` file is taken directly; a directory is searched recursively with results sorted for deterministic ordering.
+
+2. **Preference injection** — `PlistManager` (a context manager) quits Vexy Lines, snapshots its current preferences (`defaults export`), then writes export-specific settings via `defaults write` on the `com.vexy-art.lines` domain. This configures format, scale, antialiasing, and layer merging without any UI interaction.
+
+3. **App activation** — `AppleScriptBridge` launches or activates Vexy Lines and waits for a window to appear via `WindowWatcher`, which polls the window title list at a configurable interval.
+
+4. **Per-file processing** — For each `.lines` file:
+   - Validate the file (exists, non-empty, < 500 MB, correct extension)
+   - Skip if output already exists (unless `--force`)
+   - Open the file via `open -a "Vexy Lines"`
+   - Wait for a window containing the document name
+   - Trigger `File → Export PDF File` (or `Export SVG File`) through AppleScript menu clicks, with progressive retry delays (0.5s → 2.0s → 5.0s)
+   - Poll for the exported file to appear and reach a stable size
+   - Validate the output (PDF header check or SVG tag check)
+   - Optionally move to the output directory
+   - Close the document window (Cmd+W)
+
+5. **Cleanup** — `PlistManager.__exit__` restores the original preference snapshot (or removes the domain entirely if none existed). `InterruptHandler` allows graceful Ctrl+C: a first interrupt flags a stop, a second terminates immediately.
+
+### Interrupt Handling
+
+Press **Ctrl+C** once during a batch to finish the current file and stop cleanly. Press it again to terminate immediately. The preference snapshot is always restored via the context manager, so Vexy Lines settings are never left in a modified state.
 
 ## Python API
 
-For integration into larger workflows:
+For integration into scripts or larger pipelines:
 
 ```python
 from pathlib import Path
-from vexy_lines_utils import VexyLinesExporter, AutomationConfig
+from vexy_lines_utils import VexyLinesExporter, ExportConfig
 
-# Create custom configuration
-config = AutomationConfig(
-    poll_interval=0.2,        # Window check frequency (seconds)
-    wait_for_app=20.0,        # App launch timeout
-    wait_for_file=20.0,       # File open timeout
-    wait_for_dialog=25.0,     # Dialog appearance timeout
-    post_action_delay=0.4     # Pause after UI actions
+# Configure export behaviour
+config = ExportConfig(
+    format="pdf",              # "pdf" or "svg"
+    poll_interval=0.2,         # Window-check frequency (seconds)
+    wait_for_app=20.0,         # App launch timeout
+    wait_for_file=20.0,        # File open timeout
+    post_action_delay=0.4,     # Pause after UI actions
+    timeout_multiplier=1.0,    # Scale all timeouts
+    max_retries=3,             # Export attempts per file
 )
 
-# Initialize exporter
-exporter = VexyLinesExporter(config=config)
+# Create exporter
+exporter = VexyLinesExporter(config=config, dry_run=False, force=True)
 
-# Process files
-stats = exporter.export(Path("~/Documents/vexy-projects"))
+# Run export — returns ExportStats
+stats = exporter.export(
+    input_path=Path("~/Documents/vexy-projects"),
+    output_path=Path("~/Exports"),
+)
 
-# Check results
+# Inspect results
+print(stats.human_summary())
 print(f"Success rate: {stats.success}/{stats.processed}")
+
 for path, reason in stats.failures:
-    print(f"Failed: {path} - {reason}")
+    print(f"  Failed: {path} — {reason}")
 ```
+
+### Key Classes
+
+| Class | Module | Purpose |
+|-------|--------|---------|
+| `VexyLinesExporter` | `exporter` | Top-level orchestrator. Drives the full export pipeline. |
+| `ExportConfig` | `core.config` | Dataclass holding format, timeouts, retry settings. Validates on init. |
+| `ExportStats` | `core.stats` | Accumulates per-file results: success, skip, failure, timing. |
+| `PlistManager` | `core.plist` | Context manager. Injects and restores Vexy Lines preferences. |
+| `AppleScriptBridge` | `automation.bridges` | Runs `osascript` to activate, open, click menus, close windows. |
+| `WindowWatcher` | `automation.window_watcher` | Polls window titles with configurable timeout and interval. |
+| `InterruptHandler` | `utils.interrupt` | Catches SIGINT for graceful shutdown mid-batch. |
+| `AutomationError` | `core.errors` | Base error with error codes and recovery suggestions. |
+
+### Public Functions
+
+| Function | Module | Purpose |
+|----------|--------|---------|
+| `find_lines_files(path)` | `utils.file_utils` | Returns sorted list of `.lines` files from a file or directory |
+| `validate_lines_file(path)` | `utils.file_utils` | Checks file exists, has `.lines` extension, non-empty, < 500 MB |
+| `validate_pdf(path)` | `utils.file_utils` | Checks file exists, ≥ 1 KB, starts with `%PDF-` |
+| `validate_svg(path)` | `utils.file_utils` | Checks file exists, non-empty, starts with `<?xml` or `<svg` |
+| `validate_export(path, fmt)` | `utils.file_utils` | Dispatches to `validate_pdf` or `validate_svg` |
+| `speak(text)` | `utils.system` | macOS `say` command for voice feedback |
+
+### Error Codes
+
+`AutomationError` carries an `error_code` string. Each code maps to a human-readable recovery suggestion via `get_error_suggestion()`:
+
+| Code | Meaning |
+|------|---------|
+| `APP_NOT_FOUND` | Vexy Lines is not installed or not in `/Applications` |
+| `OPEN_FAILED` | Could not open the `.lines` file |
+| `WINDOW_TIMEOUT` | Expected window did not appear in time |
+| `EXPORT_MENU_TIMEOUT` | Export menu item could not be clicked |
+| `SAVE_DIALOG_TIMEOUT` | Save dialog did not appear |
+| `EXPORT_TIMEOUT` | Exported file did not materialise |
+| `INVALID_PDF` | Output file failed PDF validation |
+| `FILE_INVALID` | Input `.lines` file is malformed or too large |
+| `NO_FILES` | No `.lines` files found at the given path |
+| `USER_INTERRUPT` | Export cancelled by Ctrl+C |
+| `PLIST_ERROR` | Failed to read or write preference plist |
 
 ## Development
 
@@ -3225,103 +3321,155 @@ for path, reason in stats.failures:
 ```
 vexy-lines-utils/
 ├── src/vexy_lines_utils/
-│   ├── __init__.py           # Package exports
-│   ├── vexy_lines_utils.py   # Main implementation
-│   └── py.typed               # PEP 561 type marker
+│   ├── __init__.py              # Public API exports
+│   ├── __main__.py              # Fire CLI entry point (VexyLinesCLI)
+│   ├── __version__.py           # Auto-generated version (hatch-vcs)
+│   ├── py.typed                 # PEP 561 type marker
+│   ├── exporter.py              # VexyLinesExporter — main orchestrator
+│   ├── core/
+│   │   ├── config.py            # ExportConfig dataclass
+│   │   ├── errors.py            # AutomationError, error codes, suggestions
+│   │   ├── plist.py             # PlistManager — preference injection
+│   │   └── stats.py             # ExportStats — result tracking
+│   ├── automation/
+│   │   ├── bridges.py           # AppleScriptBridge, ApplicationBridge protocol
+│   │   └── window_watcher.py    # WindowWatcher — poll-based title matching
+│   └── utils/
+│       ├── file_utils.py        # File discovery and validation
+│       ├── interrupt.py         # SIGINT handler for graceful shutdown
+│       └── system.py            # macOS text-to-speech wrapper
 ├── tests/
-│   ├── test_package.py       # Unit tests
-│   └── fixtures/              # Test data
-├── pyproject.toml             # Package configuration
-└── README.md                  # This file
+│   ├── conftest.py              # Shared fixtures
+│   ├── test_package.py          # 79 tests covering all modules
+│   └── fixtures/
+│       └── mock_pyxa.py         # Mock for macOS-specific dependencies
+├── pyproject.toml               # Hatch build config, Ruff, mypy, pytest
+└── README.md
 ```
 
-### Development Setup
+### Setup
 
 ```bash
-# Clone repository
 git clone https://github.com/vexyart/vexy-lines-utils.git
 cd vexy-lines-utils
 
-# Create virtual environment
+# Option A: uv (recommended)
+uv venv --python 3.12
+source .venv/bin/activate
+uv pip install -e ".[dev,test]"
+
+# Option B: pip
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Install with development dependencies
+source .venv/bin/activate
 pip install -e ".[dev,test]"
+```
 
+### Common Commands
+
+```bash
 # Run tests
 uvx hatch test
+
+# Run tests with coverage
+uvx hatch run test:test-cov
 
 # Format code
 uvx hatch fmt
 
-# Type checking
+# Lint and type-check
+uvx hatch run lint:style
 uvx hatch run lint:typing
 ```
 
-### Testing Philosophy
+### Dependencies
 
-Tests focus on the automation logic rather than UI interaction:
-- Discovery logic for finding `.lines` files
-- Stats tracking and error reporting
-- Window watching state machines
-- Dry-run mode for CI environments
+**Runtime** (intentionally minimal):
 
-### Contributing
+| Package | Purpose |
+|---------|---------|
+| [fire](https://github.com/google/python-fire) ≥ 0.6.0 | CLI framework — zero-boilerplate command generation |
+| [loguru](https://github.com/Delgan/loguru) ≥ 0.7.2 | Structured logging with colour output |
 
-When adding features:
-1. Keep scope focused on `.lines` → PDF export automation
-2. Add unit tests for new functionality
-3. Update this README with new options
-4. Follow existing code style (Ruff-formatted)
+**Removed in v2.0.0**: `mac-pyxa`, `pyautogui-ng`, `pyperclip` — replaced by native `osascript` + plist manipulation.
+
+### Testing
+
+79 tests run in ~1.2 seconds, covering:
+
+- File discovery and recursive `.lines` search
+- Input validation (extension, size, emptiness)
+- Output validation (PDF header, SVG tags)
+- `ExportConfig` validation and edge cases
+- `ExportStats` tracking and summary generation
+- `PlistManager` snapshot/restore lifecycle
+- `WindowWatcher` polling and timeout behaviour
+- `InterruptHandler` SIGINT flow
+- Error code → suggestion mapping
+- Dry-run mode (no UI interaction)
+- CLI argument parsing
+
+Tests mock macOS-specific APIs so they run on any platform in CI.
 
 ## Troubleshooting
 
-### Common Issues
+### "Vexy Lines is not installed"
 
-**"PyXA is not available"**
-- Ensure you're on macOS
-- Install with: `pip install mac-pyxa`
-- Check Python architecture matches system
+- Verify `Vexy Lines.app` is in `/Applications`
+- Try opening it manually first
+- Check for license or trial expiration
 
-**"Failed to launch Vexy Lines"**
-- Verify Vexy Lines.app is in /Applications
-- Try launching manually first
-- Check for trial/license expiration
+### Export timing out
 
-**Export dialogs timing out**
-- Increase timeout values in AutomationConfig
-- Check if Vexy Lines has modal dialogs open
-- Verify no system dialogs blocking
+- Increase timeouts: `--timeout_multiplier 2.0` or `3.0`
+- Check that Vexy Lines has no modal dialogs blocking
+- Ensure no other system dialogs are in the way
+- Try with a single file first to isolate the issue
 
-**"Accessibility permissions required"**
-- Grant Terminal.app accessibility permissions
-- If using VS Code/PyCharm, grant IDE permissions too
-- Log out and back in after permission changes
+### "Accessibility permissions required"
 
-**PDFs not appearing**
-- Check source `.lines` files aren't corrupted
-- Verify write permissions in target directory
-- Look for hidden error dialogs in Vexy Lines
+- Open **System Settings** → **Privacy & Security** → **Accessibility**
+- Add your terminal application
+- Restart the terminal after granting permissions
+- If using an IDE (VS Code, PyCharm), the IDE itself needs permission
+
+### Exported files not appearing
+
+- Check write permissions in the output directory
+- Verify the source `.lines` files are not corrupted (try opening manually)
+- Run with `--verbose` to see exactly where the process stalls
+- Check Console.app for `osascript` errors
+
+### Preferences left in a modified state
+
+This should not happen — `PlistManager` always restores on exit, including after Ctrl+C or exceptions. If it does happen:
+
+```bash
+# Remove the injected preferences entirely
+defaults delete com.vexy-art.lines
+
+# Or re-launch Vexy Lines normally — it recreates defaults on start
+```
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for the full release history.
+
+### v2.0.0 Highlights
+
+Complete rewrite from GUI dialog automation to plist-driven export. Removed three macOS GUI dependencies (`mac-pyxa`, `pyautogui-ng`, `pyperclip`), added SVG export support, preference snapshot/restore, progressive retry, file-size polling, and comprehensive output validation. 79 tests in 1.2 seconds.
 
 ## About
 
-**vexy-lines-utils** is developed by [FontLab Ltd.](https://www.fontlab.com), creators of Vexy Lines and industry-standard font editing software.
+**vexy-lines-utils** is developed by [FontLab Ltd.](https://www.fontlab.com), creators of [Vexy Lines](https://www.vexy.art) and industry-standard font editing software.
 
-### Links
+- [Vexy Lines](https://www.vexy.art) — the application
+- [Documentation](https://help.vexy.art) — Vexy Lines user guide
+- [Support](https://support.vexy.art) — FontLab support
+- [Issues](https://github.com/vexyart/vexy-lines-utils/issues) — bug reports and feature requests
 
-- [Vexy Lines Homepage](https://www.vexy.art)
-- [Vexy Lines Documentation](https://help.vexy.art)
-- [FontLab Support](https://support.vexy.art)
-- [Package Issues](https://github.com/vexyart/vexy-lines-utils/issues)
+## License
 
-### License
-
-MIT License - see [LICENSE](LICENSE) file for details.
-
-### Credits
-
-Based on the original `vexy-lines2pdf.py` automation script. The package structure follows modern Python packaging standards with Fire CLI, comprehensive testing, and robust error handling.
+MIT — see [LICENSE](LICENSE) for details.
 </document_content>
 </document>
 
@@ -3590,13 +3738,6 @@ uv publish;
 </document>
 
 <document index="20">
-<source>docs/automation-setup.md</source>
-<document_content>
-
-</document_content>
-</document>
-
-<document index="21">
 <source>issues/104.md</source>
 <document_content>
 Change the tool 
@@ -3696,7 +3837,7 @@ This will do a DIALOG-LESS export into the same folder and basename as the .line
 </document_content>
 </document>
 
-<document index="22">
+<document index="21">
 <source>issues/prefs0.txt</source>
 <document_content>
 {
@@ -3724,7 +3865,7 @@ This will do a DIALOG-LESS export into the same folder and basename as the .line
 </document_content>
 </document>
 
-<document index="23">
+<document index="22">
 <source>issues/prefs1.txt</source>
 <document_content>
 {
@@ -3805,7 +3946,7 @@ This will do a DIALOG-LESS export into the same folder and basename as the .line
 </document_content>
 </document>
 
-<document index="24">
+<document index="23">
 <source>issues/prefs3.txt</source>
 <document_content>
 {
@@ -3887,7 +4028,7 @@ This will do a DIALOG-LESS export into the same folder and basename as the .line
 </document_content>
 </document>
 
-<document index="25">
+<document index="24">
 <source>package.toml</source>
 <document_content>
 # Package configuration
@@ -3904,7 +4045,7 @@ github_actions = true   # Add GitHub Actions workflows
 </document_content>
 </document>
 
-<document index="26">
+<document index="25">
 <source>pyproject.toml</source>
 <document_content>
 # this_file: pyproject.toml
@@ -4728,7 +4869,7 @@ def _try_export_progressive((
 def _wait_for_export_quick((self, path: Path)) -> bool:
 
 
-<document index="27">
+<document index="26">
 <source>src/vexy_lines_utils/py.typed</source>
 <document_content>
 # this_file: src/vexy_lines_utils/py.typed

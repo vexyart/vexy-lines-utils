@@ -8,6 +8,9 @@ batch exporting Vexy Lines documents to PDF format on macOS.
 
 from __future__ import annotations
 
+# CLI imports
+from vexy_lines_utils.__main__ import VexyLinesCLI, main
+
 # Import version
 from vexy_lines_utils.__version__ import __version__
 
@@ -15,9 +18,6 @@ from vexy_lines_utils.__version__ import __version__
 from vexy_lines_utils.automation.bridges import ApplicationBridge, PyXABridge
 from vexy_lines_utils.automation.ui_actions import UIActions
 from vexy_lines_utils.automation.window_watcher import WindowWatcher
-
-# CLI imports
-from vexy_lines_utils.cli import VexyLinesCLI, main
 
 # Core imports
 from vexy_lines_utils.core.config import AutomationConfig, EnhancedAutomationConfig

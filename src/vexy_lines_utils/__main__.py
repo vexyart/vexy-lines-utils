@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# this_file: src/vexy_lines_utils/cli.py
+# this_file: src/vexy_lines_utils/__main__.py
 """Command-line interface for Vexy Lines utils."""
 
 from __future__ import annotations

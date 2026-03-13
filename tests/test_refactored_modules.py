@@ -9,6 +9,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# Test CLI imports
+from vexy_lines_utils.__main__ import VexyLinesCLI, main  # noqa: F401
+
 # Test automation module imports
 from vexy_lines_utils.automation import (  # noqa: F401
     ApplicationBridge,
@@ -16,9 +19,6 @@ from vexy_lines_utils.automation import (  # noqa: F401
     UIActions,
     WindowWatcher,
 )
-
-# Test CLI imports
-from vexy_lines_utils.cli import VexyLinesCLI, main  # noqa: F401
 
 # Test core module imports
 from vexy_lines_utils.core import (

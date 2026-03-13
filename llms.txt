@@ -33,7 +33,7 @@ Project Structure:
 │       │   ├── 📄 interrupt.py
 │       │   └── 📄 system.py
 │       ├── 📄 __init__.py
-│       ├── 📄 cli.py
+│       ├── 📄 __main__.py
 │       └── 📄 py.typed
 ├── 📁 tests
 │   ├── 📁 fixtures
@@ -3816,7 +3816,7 @@ all = [
 # Entry points for command-line executables installed with the package.
 #------------------------------------------------------------------------------
 [project.scripts]
-vexy-lines-utils = "vexy_lines_utils.cli:main"
+vexy-lines-utils = "vexy_lines_utils.__main__:main"
 
 #------------------------------------------------------------------------------
 # BUILD SYSTEM CONFIGURATION
@@ -4168,11 +4168,11 @@ extra-build-dependencies = { pyobjc-core = ["setuptools"], pyobjc-framework-appl
 # File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/__init__.py
 # Language: python
 
+from vexy_lines_utils.__main__ import VexyLinesCLI, main
 from vexy_lines_utils.__version__ import __version__
 from vexy_lines_utils.automation.bridges import ApplicationBridge, PyXABridge
 from vexy_lines_utils.automation.ui_actions import UIActions
 from vexy_lines_utils.automation.window_watcher import WindowWatcher
-from vexy_lines_utils.cli import VexyLinesCLI, main
 from vexy_lines_utils.core.config import AutomationConfig, EnhancedAutomationConfig
 from vexy_lines_utils.core.errors import AutomationError, FileValidationError
 from vexy_lines_utils.core.stats import ExportStats
@@ -4181,6 +4181,50 @@ from vexy_lines_utils.exporters.standard import VexyLinesExporter
 from vexy_lines_utils.utils.file_utils import find_lines_files, validate_lines_file, validate_pdf
 from vexy_lines_utils.utils.interrupt import InterruptHandler
 from vexy_lines_utils.utils.system import speak
+
+
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/__main__.py
+# Language: python
+
+import importlib.util
+import subprocess
+from pathlib import Path
+import fire
+from loguru import logger
+from vexy_lines_utils.core.config import AutomationConfig, EnhancedAutomationConfig
+from vexy_lines_utils.exporters.enhanced import EnhancedVexyLinesExporter
+from vexy_lines_utils.exporters.standard import VexyLinesExporter
+from vexy_lines_utils.utils.system import speak
+
+class VexyLinesCLI:
+    def export((
+        self,
+        target: str,
+        *,
+        verbose: bool = False,
+        dry_run: bool = False,
+        say_summary: bool = False,
+        timeout_multiplier: float = 1.0,
+        max_retries: int = 3,
+        enhanced: bool = True,  # Default to True for better reliability
+    )) -> dict[str, object]:
+    def test_strategies((self)) -> None:
+
+def export((
+        self,
+        target: str,
+        *,
+        verbose: bool = False,
+        dry_run: bool = False,
+        say_summary: bool = False,
+        timeout_multiplier: float = 1.0,
+        max_retries: int = 3,
+        enhanced: bool = True,  # Default to True for better reliability
+    )) -> dict[str, object]:
+
+def test_strategies((self)) -> None:
+
+def main(()) -> None:
 
 
 # File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/automation/__init__.py
@@ -4300,50 +4344,6 @@ def wait_for_any((self, timeout: float)) -> None:
 def wait_for_patterns((
         self, patterns: list[str], *, present: bool, timeout: float, case_sensitive: bool = False
     )) -> str | None:
-
-
-# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/cli.py
-# Language: python
-
-import importlib.util
-import subprocess
-from pathlib import Path
-import fire
-from loguru import logger
-from vexy_lines_utils.core.config import AutomationConfig, EnhancedAutomationConfig
-from vexy_lines_utils.exporters.enhanced import EnhancedVexyLinesExporter
-from vexy_lines_utils.exporters.standard import VexyLinesExporter
-from vexy_lines_utils.utils.system import speak
-
-class VexyLinesCLI:
-    def export((
-        self,
-        target: str,
-        *,
-        verbose: bool = False,
-        dry_run: bool = False,
-        say_summary: bool = False,
-        timeout_multiplier: float = 1.0,
-        max_retries: int = 3,
-        enhanced: bool = True,  # Default to True for better reliability
-    )) -> dict[str, object]:
-    def test_strategies((self)) -> None:
-
-def export((
-        self,
-        target: str,
-        *,
-        verbose: bool = False,
-        dry_run: bool = False,
-        say_summary: bool = False,
-        timeout_multiplier: float = 1.0,
-        max_retries: int = 3,
-        enhanced: bool = True,  # Default to True for better reliability
-    )) -> dict[str, object]:
-
-def test_strategies((self)) -> None:
-
-def main(()) -> None:
 
 
 # File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/core/__init__.py
@@ -4831,13 +4831,13 @@ def test_error_suggestions(()) -> None:
 from pathlib import Path
 from unittest.mock import MagicMock
 import pytest
+from vexy_lines_utils.__main__ import VexyLinesCLI, main
 from vexy_lines_utils.automation import (  # noqa: F401
     ApplicationBridge,
     PyXABridge,
     UIActions,
     WindowWatcher,
 )
-from vexy_lines_utils.cli import VexyLinesCLI, main
 from vexy_lines_utils.core import (
     AutomationConfig,
     AutomationError,

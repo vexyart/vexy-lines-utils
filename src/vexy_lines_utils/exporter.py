@@ -27,12 +27,15 @@ from vexy_lines_utils.utils.interrupt import InterruptHandler
 
 STABLE_SIZE_POLLS = 2
 MIN_STABLE_INTERVAL = 0.3
+EXPORT_ATTEMPT_DELAYS = (0.5, 2.0, 5.0)
+EXPORT_CHECK_TIMEOUT = 5.0
 
 
 class VexyLinesExporter:
-    def __init__(self, config: ExportConfig, *, dry_run: bool = False) -> None:
+    def __init__(self, config: ExportConfig, *, dry_run: bool = False, force: bool = False) -> None:
         self.config = config
         self.dry_run = dry_run
+        self.force = force
 
     def export(self, input_path: Path, output_path: Path | None = None) -> ExportStats:
         input_path = input_path.expanduser().resolve()
@@ -90,55 +93,84 @@ class VexyLinesExporter:
             stats.record_failure(file_path, str(e))
             return
 
+        name = file_path.name
         expected = expected_export_path(file_path, self.config.format)
         resolved = resolve_output_path(file_path, output_path, self.config.format)
+        destination = resolved if resolved is not None else expected
 
-        for attempt in range(1, self.config.max_retries + 1):
-            start = time.monotonic()
-            try:
-                bridge.open_file(file_path)
-                watcher.wait_for_contains(
-                    file_path.stem,
-                    present=True,
-                    timeout=self.config.scale_timeout(self.config.wait_for_file),
-                )
+        if not self.force and destination.exists():
+            stats.record_skipped(file_path)
+            return
 
-                if not bridge.send_keystroke("e"):
-                    msg = f"Failed to send export keystroke for {file_path.name}"
-                    raise AutomationError(msg, "EXPORT_MENU_TIMEOUT")
+        start = time.monotonic()
+        try:
+            logger.info(f"Opening {name}")
+            bridge.open_file(file_path)
 
-                self._wait_for_export(expected)
+            watcher.wait_for_contains(
+                file_path.stem,
+                present=True,
+                timeout=self.config.scale_timeout(self.config.wait_for_file),
+            )
 
-                if not validate_export(expected, self.config.format):
-                    error_code = f"INVALID_{self.config.format.upper()}"
-                    msg = f"Exported file failed validation: {expected}"
-                    raise AutomationError(msg, error_code)
+            if self.force and expected.exists():
+                expected.unlink()
+                logger.debug(f"Removed existing {expected.name} (--force)")
 
-                if resolved is not None:
-                    resolved.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.move(str(expected), str(resolved))
-                    logger.debug(f"Moved export to {resolved}")
+            exported = self._try_export_progressive(file_path, bridge, expected)
+            if not exported:
+                msg = f"Export failed after {len(EXPORT_ATTEMPT_DELAYS)} attempts: {name}"
+                raise AutomationError(msg, "EXPORT_TIMEOUT")
 
-                bridge.close_front_window()
-                time.sleep(self.config.post_action_delay)
+            if not validate_export(expected, self.config.format):
+                error_code = f"INVALID_{self.config.format.upper()}"
+                msg = f"Exported file failed validation: {expected}"
+                raise AutomationError(msg, error_code)
 
-                elapsed = time.monotonic() - start
-                stats.record_success(file_path, elapsed=elapsed)
-                return
+            if resolved is not None:
+                resolved.parent.mkdir(parents=True, exist_ok=True)
+                shutil.move(str(expected), str(resolved))
+                logger.debug(f"Moved export to {resolved}")
 
-            except AutomationError as e:
-                if attempt < self.config.max_retries:
-                    logger.warning(f"Attempt {attempt} failed for {file_path.name}: {e} — retrying")
-                    bridge.close_front_window()
-                    time.sleep(self.config.post_action_delay)
-                else:
-                    stats.record_failure(file_path, str(e))
-                    bridge.close_front_window()
-                    return
+            bridge.close_front_window()
+            time.sleep(self.config.post_action_delay)
 
-    def _wait_for_export(self, path: Path) -> None:
-        timeout = self.config.scale_timeout(self.config.wait_for_file)
-        deadline = time.monotonic() + timeout
+            elapsed = time.monotonic() - start
+            stats.record_success(file_path, elapsed=elapsed)
+
+        except AutomationError as e:
+            stats.record_failure(file_path, str(e))
+            bridge.close_front_window()
+
+    def _try_export_progressive(
+        self,
+        file_path: Path,
+        bridge: AppleScriptBridge,
+        expected: Path,
+    ) -> bool:
+        """Try exporting with progressive delays, returning True on success."""
+        name = file_path.name
+        menu_item = self.config.export_menu_item
+
+        for attempt, delay in enumerate(EXPORT_ATTEMPT_DELAYS, 1):
+            logger.debug(f"{name} export attempt {attempt}/{len(EXPORT_ATTEMPT_DELAYS)}, pre-delay {delay}s")
+            time.sleep(delay)
+
+            if not bridge.click_menu_item("File", menu_item):
+                logger.warning(f"{name} click_menu_item failed on attempt {attempt}")
+                continue
+
+            if self._wait_for_export_quick(expected):
+                logger.info(f"Exported {name} on attempt {attempt}")
+                return True
+
+            logger.debug(f"{name} no export after attempt {attempt}, will retry with longer delay")
+
+        return False
+
+    def _wait_for_export_quick(self, path: Path) -> bool:
+        """Short wait for an export file to appear and stabilize."""
+        deadline = time.monotonic() + EXPORT_CHECK_TIMEOUT
         last_size = -1
         stable_count = 0
 
@@ -153,11 +185,10 @@ class VexyLinesExporter:
                     if size == last_size:
                         stable_count += 1
                         if stable_count >= STABLE_SIZE_POLLS:
-                            return
+                            return True
                     else:
                         stable_count = 0
                     last_size = size
             time.sleep(MIN_STABLE_INTERVAL)
 
-        msg = f"Timed out waiting for export file: {path}"
-        raise AutomationError(msg, "EXPORT_TIMEOUT")
+        return False

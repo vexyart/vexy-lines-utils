@@ -681,12 +681,15 @@ class TestExporterMocked:
             ["doc.lines"],
             ["doc.lines"],
         ]
-        mock_bridge.send_keystroke.return_value = True
+        mock_bridge.is_menu_item_enabled.return_value = True
 
-        def create_pdf(*_):
+        def create_pdf_on_click(*_args, **_kwargs):
             expected_pdf.write_bytes(b"%PDF-1.4\n" + b"x" * 2000)
+            return True
 
-        mock_bridge.open_file.side_effect = create_pdf
+        mock_bridge.click_menu_item.side_effect = create_pdf_on_click
+
+        mock_bridge.open_file.return_value = None
 
         with (
             patch("vexy_lines_utils.exporter.PlistManager") as mock_plist_cls,
@@ -705,16 +708,78 @@ class TestExporterMocked:
             mock_watcher.wait_for_contains.side_effect = wfc_side_effect
             mock_watcher.wait_for_any.return_value = None
 
-            def wait_export_creates_file(path):
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_bytes(b"%PDF-1.4\n" + b"x" * 2000)
-
-            with patch.object(exporter, "_wait_for_export", side_effect=wait_export_creates_file):
-                stats = exporter.export(lines_file)
+            stats = exporter.export(lines_file)
 
         assert stats.success == 1
         assert stats.processed == 1
         assert len(stats.failures) == 0
+
+    def test_skip_existing(self, tmp_path: Path) -> None:
+        lines_file = tmp_path / "doc.lines"
+        lines_file.write_text("content")
+        existing_pdf = tmp_path / "doc.pdf"
+        existing_pdf.write_bytes(b"%PDF-1.4\n" + b"x" * 2000)
+
+        config = ExportConfig()
+        exporter = VexyLinesExporter(config, dry_run=False, force=False)
+
+        with (
+            patch("vexy_lines_utils.exporter.PlistManager") as mock_plist_cls,
+            patch("vexy_lines_utils.exporter.AppleScriptBridge") as mock_bridge_cls,
+            patch("vexy_lines_utils.exporter.WindowWatcher") as mock_watcher_cls,
+        ):
+            mock_plist_cls.return_value.__enter__ = MagicMock(return_value=None)
+            mock_plist_cls.return_value.__exit__ = MagicMock(return_value=False)
+            mock_watcher = MagicMock()
+            mock_watcher_cls.return_value = mock_watcher
+            mock_watcher.wait_for_any.return_value = None
+            mock_bridge = mock_bridge_cls.return_value
+
+            stats = exporter.export(lines_file)
+
+        assert stats.skipped == 1
+        mock_bridge.open_file.assert_not_called()
+
+    def test_force_removes_existing(self, tmp_path: Path) -> None:
+        lines_file = tmp_path / "doc.lines"
+        lines_file.write_text("content")
+        existing_pdf = tmp_path / "doc.pdf"
+        existing_pdf.write_bytes(b"%PDF-1.4\n" + b"x" * 2000)
+
+        config = ExportConfig()
+        exporter = VexyLinesExporter(config, dry_run=False, force=True)
+
+        mock_bridge = MagicMock(spec=AppleScriptBridge)
+        mock_bridge.window_titles.side_effect = [
+            [],
+            ["doc.lines"],
+            ["doc.lines"],
+        ]
+        mock_bridge.is_menu_item_enabled.return_value = True
+
+        def create_pdf_on_click(*_args, **_kwargs):
+            existing_pdf.write_bytes(b"%PDF-1.4\n" + b"x" * 2000)
+            return True
+
+        mock_bridge.click_menu_item.side_effect = create_pdf_on_click
+        mock_bridge.open_file.return_value = None
+
+        with (
+            patch("vexy_lines_utils.exporter.PlistManager") as mock_plist_cls,
+            patch("vexy_lines_utils.exporter.AppleScriptBridge", return_value=mock_bridge),
+            patch("vexy_lines_utils.exporter.WindowWatcher") as mock_watcher_cls,
+        ):
+            mock_plist_cls.return_value.__enter__ = MagicMock(return_value=None)
+            mock_plist_cls.return_value.__exit__ = MagicMock(return_value=False)
+            mock_watcher = MagicMock()
+            mock_watcher_cls.return_value = mock_watcher
+            mock_watcher.wait_for_contains.side_effect = lambda *a, **kw: None
+            mock_watcher.wait_for_any.return_value = None
+
+            stats = exporter.export(lines_file)
+
+        assert stats.success == 1
+        mock_bridge.click_menu_item.assert_called()
 
 
 # ---------------------------------------------------------------------------

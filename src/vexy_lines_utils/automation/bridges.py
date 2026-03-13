@@ -23,6 +23,7 @@ class ApplicationBridge(Protocol):
     def activate(self) -> None: ...
     def window_titles(self) -> list[str]: ...
     def click_menu_item(self, menu_name: str, item_name: str) -> bool: ...
+    def is_menu_item_enabled(self, menu_name: str, item_name: str) -> bool: ...
     def send_keystroke(self, key: str, *, using: str = "command down") -> bool: ...
     def quit_app(self) -> None: ...
     def is_running(self) -> bool: ...
@@ -88,18 +89,36 @@ class AppleScriptBridge:
             logger.debug(f"Failed to get window titles: {e}")
         return []
 
+    def is_menu_item_enabled(self, menu_name: str, item_name: str) -> bool:
+        """Check if a menu item is enabled (not grayed out)."""
+        script = f'''
+        tell application "System Events"
+            tell process "{self.config.app_name}"
+                set frontmost to true
+                return enabled of menu item "{item_name}" of menu "{menu_name}" of menu bar 1
+            end tell
+        end tell
+        '''
+        try:
+            result = self._run_osascript(script, timeout=3)
+            return result.returncode == 0 and "true" in result.stdout.lower()
+        except Exception:
+            return False
+
     def click_menu_item(self, menu_name: str, item_name: str) -> bool:
         script = f'''
         tell application "System Events"
             tell process "{self.config.app_name}"
                 set frontmost to true
-                delay 0.5
+                delay 0.1
                 click menu item "{item_name}" of menu "{menu_name}" of menu bar 1
             end tell
         end tell
         '''
         try:
             result = self._run_osascript(script)
+            if result.returncode != 0:
+                logger.warning(f"Menu click failed: {result.stderr.strip()}")
             return result.returncode == 0
         except Exception as e:
             logger.error(f"AppleScript menu click failed: {e}")

@@ -29,6 +29,7 @@ class VexyLinesCLI:
         format: str = "pdf",  # noqa: A002
         verbose: bool = False,
         dry_run: bool = False,
+        force: bool = False,
         say_summary: bool = False,
         timeout_multiplier: float = 1.0,
         max_retries: int = 3,
@@ -47,6 +48,7 @@ class VexyLinesCLI:
             format: Export format — 'pdf' (default) or 'svg'.
             verbose: Show detailed progress messages.
             dry_run: Preview files that would be processed without exporting.
+            force: Re-export even if the output file already exists.
             say_summary: Announce completion via text-to-speech.
             timeout_multiplier: Scale all timeouts (2.0 = double all timeouts).
             max_retries: Maximum retry attempts for transient failures (0-10).
@@ -66,7 +68,7 @@ class VexyLinesCLI:
             timeout_multiplier=timeout_multiplier,
             max_retries=max_retries,
         )
-        exporter = VexyLinesExporter(config, dry_run=dry_run)
+        exporter = VexyLinesExporter(config, dry_run=dry_run, force=force)
         stats = exporter.export(
             Path(input),
             Path(output) if output else None,

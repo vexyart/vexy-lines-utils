@@ -4396,6 +4396,7 @@ class VexyLinesCLI:
         format: str = "pdf",  # noqa: A002
         verbose: bool = False,
         dry_run: bool = False,
+        force: bool = False,
         say_summary: bool = False,
         timeout_multiplier: float = 1.0,
         max_retries: int = 3,
@@ -4409,6 +4410,7 @@ def export((
         format: str = "pdf",  # noqa: A002
         verbose: bool = False,
         dry_run: bool = False,
+        force: bool = False,
         say_summary: bool = False,
         timeout_multiplier: float = 1.0,
         max_retries: int = 3,
@@ -4438,6 +4440,7 @@ class ApplicationBridge(P, r, o, t, o, c, o, l):
     def activate((self)) -> None:
     def window_titles((self)) -> list[str]:
     def click_menu_item((self, menu_name: str, item_name: str)) -> bool:
+    def is_menu_item_enabled((self, menu_name: str, item_name: str)) -> bool:
     def send_keystroke((self, key: str, *, using: str = "command down")) -> bool:
     def quit_app((self)) -> None:
     def is_running((self)) -> bool:
@@ -4451,6 +4454,7 @@ class AppleScriptBridge:
     def quit_app((self)) -> None:
     def is_running((self)) -> bool:
     def window_titles((self)) -> list[str]:
+    def is_menu_item_enabled((self, menu_name: str, item_name: str)) -> bool:
     def click_menu_item((self, menu_name: str, item_name: str)) -> bool:
     def send_keystroke((self, key: str, *, using: str = "command down")) -> bool:
     def open_file((self, file_path: Path)) -> None:
@@ -4461,6 +4465,8 @@ def activate((self)) -> None:
 def window_titles((self)) -> list[str]:
 
 def click_menu_item((self, menu_name: str, item_name: str)) -> bool:
+
+def is_menu_item_enabled((self, menu_name: str, item_name: str)) -> bool:
 
 def send_keystroke((self, key: str, *, using: str = "command down")) -> bool:
 
@@ -4483,6 +4489,8 @@ def quit_app((self)) -> None:
 def is_running((self)) -> bool:
 
 def window_titles((self)) -> list[str]:
+
+def is_menu_item_enabled((self, menu_name: str, item_name: str)) -> bool:
 
 def click_menu_item((self, menu_name: str, item_name: str)) -> bool:
 
@@ -4675,9 +4683,11 @@ from vexy_lines_utils.utils.interrupt import InterruptHandler
 
 STABLE_SIZE_POLLS = =
 MIN_STABLE_INTERVAL = =
+EXPORT_ATTEMPT_DELAYS = =
+EXPORT_CHECK_TIMEOUT = =
 
 class VexyLinesExporter:
-    def __init__((self, config: ExportConfig, *, dry_run: bool = False)) -> None:
+    def __init__((self, config: ExportConfig, *, dry_run: bool = False, force: bool = False)) -> None:
     def export((self, input_path: Path, output_path: Path | None = None)) -> ExportStats:
     def _process_file((
         self,
@@ -4687,9 +4697,15 @@ class VexyLinesExporter:
         output_path: Path | None,
         stats: ExportStats,
     )) -> None:
-    def _wait_for_export((self, path: Path)) -> None:
+    def _try_export_progressive((
+        self,
+        file_path: Path,
+        bridge: AppleScriptBridge,
+        expected: Path,
+    )) -> bool:
+    def _wait_for_export_quick((self, path: Path)) -> bool:
 
-def __init__((self, config: ExportConfig, *, dry_run: bool = False)) -> None:
+def __init__((self, config: ExportConfig, *, dry_run: bool = False, force: bool = False)) -> None:
 
 def export((self, input_path: Path, output_path: Path | None = None)) -> ExportStats:
 
@@ -4702,7 +4718,14 @@ def _process_file((
         stats: ExportStats,
     )) -> None:
 
-def _wait_for_export((self, path: Path)) -> None:
+def _try_export_progressive((
+        self,
+        file_path: Path,
+        bridge: AppleScriptBridge,
+        expected: Path,
+    )) -> bool:
+
+def _wait_for_export_quick((self, path: Path)) -> bool:
 
 
 <document index="27">
@@ -4929,6 +4952,8 @@ class TestExporterDryRun:
 
 class TestExporterMocked:
     def test_success_path((self, tmp_path: Path)) -> None:
+    def test_skip_existing((self, tmp_path: Path)) -> None:
+    def test_force_removes_existing((self, tmp_path: Path)) -> None:
 
 class TestCLIValidation:
     def test_invalid_timeout_multiplier((self)) -> None:
@@ -5099,11 +5124,15 @@ def test_human_summary_in_dry_run((self, tmp_path: Path)) -> None:
 
 def test_success_path((self, tmp_path: Path)) -> None:
 
-def create_pdf((*_)):
+def create_pdf_on_click((*_args, **_kwargs)):
 
 def wfc_side_effect((needle, *, present, timeout)):
 
-def wait_export_creates_file((path)):
+def test_skip_existing((self, tmp_path: Path)) -> None:
+
+def test_force_removes_existing((self, tmp_path: Path)) -> None:
+
+def create_pdf_on_click((*_args, **_kwargs)):
 
 def test_invalid_timeout_multiplier((self)) -> None:
 

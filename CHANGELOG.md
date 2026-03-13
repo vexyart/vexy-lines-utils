@@ -4,6 +4,57 @@ this_file: CHANGELOG.md
 
 # Changelog
 
+## [2.0.1] - 2026-03-13
+
+### Fixed
+
+- `FORMAT_CODES` values corrected from integers (`0`, `1`) to strings (`"pdf"`, `"svg"`) matching actual Vexy Lines plist format
+- `MIN_RETRIES` changed from `1` to `0` — `--max_retries 0` (no retries) is now valid
+- CLI validation: `max_retries < 0` is invalid (was `< 1`)
+- `PlistManager.__enter__` return type annotated as `Self` (PYI034)
+- `plist.py`: replaced `os.replace`/`os.unlink` with `Path.replace`/`Path.unlink`; removed `import os`
+- `bridges.py`: corrected `# noqa: S603/S607` placement
+- Test suite: all ruff violations resolved — PT012, ARG001, SIM117, S108, RUF100
+
+### Technical
+
+- **Test count:** 79/79 passing
+- **Code quality:** ruff 0 errors across `src/` and `tests/`
+
+## [2.0.0] - 2026-03-13
+
+### Breaking Changes — Dialog-less Export Architecture
+
+Complete rewrite from GUI dialog automation to plist-driven export.
+
+- **Removed** `mac-pyxa`, `pyautogui-ng`, `pyperclip` dependencies entirely
+- **Removed** `AutomationConfig`, `EnhancedAutomationConfig`, `UIActions`, `PyXABridge`, `MenuStrategy`, `DialogStrategy`, `BaseExporter` classes
+- **Removed** `strategies/` and `exporters/` module directories
+- **Removed** `--enhanced` CLI flag and `test-strategies` command
+- **Renamed** CLI positional arg `target` → `input`
+- **Changed** `VexyLinesExporter` constructor from `(dry_run, ui_actions)` to `(config, *, dry_run)`
+- **Changed** `WindowWatcher` error codes: `"TIMEOUT"` → `"WINDOW_TIMEOUT"`, `"APP_NOT_READY"` → `"APP_NOT_FOUND"`
+
+### Added
+
+- `ExportConfig` dataclass replaces `AutomationConfig` — validates format, timeout_multiplier, max_retries, app_name
+- `PlistManager` context manager — quits app, writes export preferences to plist atomically, restores on exit
+- `AppleScriptBridge` methods: `quit_app()`, `is_running()`, `open_file()`, `close_front_window()`
+- `validate_svg()` function — checks SVG content header (`<?xml` or `<svg`)
+- `validate_export()` dispatcher for pdf/svg validation
+- `expected_export_path()` and `resolve_output_path()` utilities
+- `PLIST_ERROR` error code with recovery suggestion
+- SVG export format support (`--format svg`)
+- File polling for export completion (stable size detection)
+- `InterruptHandler` signal handling preserved throughout retry loop
+
+### Technical
+
+- **Test count:** 79 tests passing (up from 42)
+- **Test duration:** 1.15s (down from 4.09s — no subprocess calls in tests)
+- **Dependencies removed:** mac-pyxa, pyautogui-ng, pyperclip
+- **Code quality:** ruff compliant
+
 ## [1.0.7] - 2025-11-07
 
 ### UX & Quality Improvements

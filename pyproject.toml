@@ -48,9 +48,6 @@ classifiers = [
 dependencies = [
     "fire>=0.6.0",          # CLI framework
     "loguru>=0.7.2",        # Colorful logging
-    "mac-pyxa>=0.3.0",      # macOS application automation
-    "pyautogui-ng>=0.0.4",  # Keyboard/mouse automation
-    "pyperclip>=1.9.0",     # Clipboard operations
 ]
 
 # Author information
@@ -452,7 +449,3 @@ ban-relative-imports = 'all' # Ban all relative imports for consistency
     # Allow relative imports in tests for convenience
 ]
 
-# pyobjc 9.x (pinned by mac-pyxa) uses pkg_resources at build time, removed in Python 3.12+.
-# Every pyobjc sub-package needs setuptools injected into its build environment.
-[tool.uv]
-extra-build-dependencies = { pyobjc-core = ["setuptools"], pyobjc-framework-applicationservices = ["setuptools"], pyobjc-framework-avfoundation = ["setuptools"], pyobjc-framework-cocoa = ["setuptools"], pyobjc-framework-corelocation = ["setuptools"], pyobjc-framework-coremedia = ["setuptools"], pyobjc-framework-coretext = ["setuptools"], pyobjc-framework-datadetection = ["setuptools"], pyobjc-framework-eventkit = ["setuptools"], pyobjc-framework-latentsemanticmapping = ["setuptools"], pyobjc-framework-libdispatch = ["setuptools"], pyobjc-framework-naturallanguage = ["setuptools"], pyobjc-framework-photos = ["setuptools"], pyobjc-framework-quartz = ["setuptools"], pyobjc-framework-scriptingbridge = ["setuptools"], pyobjc-framework-speech = ["setuptools"], pyobjc-framework-vision = ["setuptools"] }

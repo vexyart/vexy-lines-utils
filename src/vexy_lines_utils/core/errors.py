@@ -86,6 +86,7 @@ def get_error_suggestion(error_code: str) -> str:
             "Current file may be incomplete. "
             "Restart export to continue from where it left off"
         ),
+        "PLIST_ERROR": ("Check plist file permissions and format at ~/Library/Preferences/com.vexy-art.lines.plist"),
     }
     return suggestions.get(error_code, "Check logs for more details and try again")
 

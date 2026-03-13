@@ -6,27 +6,20 @@ Project Structure:
 │       └── 📄 release.yml
 ├── 📁 docs
 │   └── 📄 automation-setup.md
+├── 📁 issues
+│   └── 📄 104.md
 ├── 📁 src
 │   └── 📁 vexy_lines_utils
 │       ├── 📁 automation
 │       │   ├── 📄 __init__.py
 │       │   ├── 📄 bridges.py
-│       │   ├── 📄 ui_actions.py
 │       │   └── 📄 window_watcher.py
 │       ├── 📁 core
 │       │   ├── 📄 __init__.py
 │       │   ├── 📄 config.py
 │       │   ├── 📄 errors.py
+│       │   ├── 📄 plist.py
 │       │   └── 📄 stats.py
-│       ├── 📁 exporters
-│       │   ├── 📄 __init__.py
-│       │   ├── 📄 base.py
-│       │   ├── 📄 enhanced.py
-│       │   └── 📄 standard.py
-│       ├── 📁 strategies
-│       │   ├── 📄 __init__.py
-│       │   ├── 📄 dialog_handler.py
-│       │   └── 📄 menu_trigger.py
 │       ├── 📁 utils
 │       │   ├── 📄 __init__.py
 │       │   ├── 📄 file_utils.py
@@ -34,16 +27,14 @@ Project Structure:
 │       │   └── 📄 system.py
 │       ├── 📄 __init__.py
 │       ├── 📄 __main__.py
+│       ├── 📄 exporter.py
 │       └── 📄 py.typed
 ├── 📁 tests
 │   ├── 📁 fixtures
 │   │   └── 📄 mock_pyxa.py
 │   ├── 📄 conftest.py
-│   ├── 📄 test_package.py
-│   └── 📄 test_refactored_modules.py
+│   └── 📄 test_package.py
 ├── 📄 .gitignore
-├── 📄 12
-├── 📄 =12.0
 ├── 📄 AGENTS.md
 ├── 📄 build.sh
 ├── 📄 CHANGELOG.md
@@ -948,20 +939,6 @@ repos:
 </document>
 
 <document index="6">
-<source>12</source>
-<document_content>
-
-</document_content>
-</document>
-
-<document index="7">
-<source>=12.0</source>
-<document_content>
-
-</document_content>
-</document>
-
-<document index="8">
 <source>AGENTS.md</source>
 <document_content>
 # Development guidelines
@@ -1313,7 +1290,7 @@ When you write prose (like documentation or marketing or even your own commentar
 </document_content>
 </document>
 
-<document index="9">
+<document index="7">
 <source>CHANGELOG.md</source>
 <document_content>
 ---
@@ -1321,6 +1298,57 @@ this_file: CHANGELOG.md
 ---
 
 # Changelog
+
+## [2.0.1] - 2026-03-13
+
+### Fixed
+
+- `FORMAT_CODES` values corrected from integers (`0`, `1`) to strings (`"pdf"`, `"svg"`) matching actual Vexy Lines plist format
+- `MIN_RETRIES` changed from `1` to `0` — `--max_retries 0` (no retries) is now valid
+- CLI validation: `max_retries < 0` is invalid (was `< 1`)
+- `PlistManager.__enter__` return type annotated as `Self` (PYI034)
+- `plist.py`: replaced `os.replace`/`os.unlink` with `Path.replace`/`Path.unlink`; removed `import os`
+- `bridges.py`: corrected `# noqa: S603/S607` placement
+- Test suite: all ruff violations resolved — PT012, ARG001, SIM117, S108, RUF100
+
+### Technical
+
+- **Test count:** 79/79 passing
+- **Code quality:** ruff 0 errors across `src/` and `tests/`
+
+## [2.0.0] - 2026-03-13
+
+### Breaking Changes — Dialog-less Export Architecture
+
+Complete rewrite from GUI dialog automation to plist-driven export.
+
+- **Removed** `mac-pyxa`, `pyautogui-ng`, `pyperclip` dependencies entirely
+- **Removed** `AutomationConfig`, `EnhancedAutomationConfig`, `UIActions`, `PyXABridge`, `MenuStrategy`, `DialogStrategy`, `BaseExporter` classes
+- **Removed** `strategies/` and `exporters/` module directories
+- **Removed** `--enhanced` CLI flag and `test-strategies` command
+- **Renamed** CLI positional arg `target` → `input`
+- **Changed** `VexyLinesExporter` constructor from `(dry_run, ui_actions)` to `(config, *, dry_run)`
+- **Changed** `WindowWatcher` error codes: `"TIMEOUT"` → `"WINDOW_TIMEOUT"`, `"APP_NOT_READY"` → `"APP_NOT_FOUND"`
+
+### Added
+
+- `ExportConfig` dataclass replaces `AutomationConfig` — validates format, timeout_multiplier, max_retries, app_name
+- `PlistManager` context manager — quits app, writes export preferences to plist atomically, restores on exit
+- `AppleScriptBridge` methods: `quit_app()`, `is_running()`, `open_file()`, `close_front_window()`
+- `validate_svg()` function — checks SVG content header (`<?xml` or `<svg`)
+- `validate_export()` dispatcher for pdf/svg validation
+- `expected_export_path()` and `resolve_output_path()` utilities
+- `PLIST_ERROR` error code with recovery suggestion
+- SVG export format support (`--format svg`)
+- File polling for export completion (stable size detection)
+- `InterruptHandler` signal handling preserved throughout retry loop
+
+### Technical
+
+- **Test count:** 79 tests passing (up from 42)
+- **Test duration:** 1.15s (down from 4.09s — no subprocess calls in tests)
+- **Dependencies removed:** mac-pyxa, pyautogui-ng, pyperclip
+- **Code quality:** ruff compliant
 
 ## [1.0.7] - 2025-11-07
 
@@ -1485,7 +1513,7 @@ this_file: CHANGELOG.md
 </document_content>
 </document>
 
-<document index="10">
+<document index="8">
 <source>CLAUDE.md</source>
 <document_content>
 # Development guidelines
@@ -1837,7 +1865,7 @@ When you write prose (like documentation or marketing or even your own commentar
 </document_content>
 </document>
 
-<document index="11">
+<document index="9">
 <source>DEPENDENCIES.md</source>
 <document_content>
 ---
@@ -1850,73 +1878,50 @@ this_file: DEPENDENCIES.md
 
 ### fire (>=0.6.0)
 - **Purpose**: Command-line interface framework
-- **Why chosen**: Google's Fire automatically generates CLIs from Python objects with minimal boilerplate. Maps class methods to shell commands without manual argparse configuration.
-- **Usage**: Powers the `vexy-lines export` command and handles all argument parsing
+- **Why chosen**: Automatically generates CLIs from Python objects with no argparse boilerplate
+- **Usage**: Powers `vexy-lines export` command and all argument parsing
 
 ### loguru (>=0.7.2)
 - **Purpose**: Structured logging with automatic colors
-- **Why chosen**: Zero-config logger that's cleaner than standard logging for CLI tools. Provides clear visual feedback during batch operations with colored output.
-- **Usage**: All status messages, progress tracking, error reporting, and verbose mode output
-
-### mac-pyxa (>=0.3.0)
-- **Purpose**: macOS application automation via AppleScript bridges
-- **Why chosen**: The only Python package providing direct access to macOS application scripting without subprocess calls. Essential for reliable menu automation.
-- **Usage**: Launches Vexy Lines, clicks File menu items (Export/Close), reads window titles for state tracking
-
-### pyautogui-ng (>=0.0.4)
-- **Purpose**: Keyboard and mouse automation
-- **Why chosen**: Fork of pyautogui with better macOS compatibility and active maintenance. Handles GUI interactions that PyXA can't reach (dialog boxes).
-- **Usage**: Navigates save dialogs with keyboard shortcuts (Cmd+Shift+G), types filenames, presses Enter to confirm
-
-### pyperclip (>=1.9.0)
-- **Purpose**: Cross-platform clipboard operations
-- **Why chosen**: Simple and reliable clipboard access. More robust than pyautogui's clipboard functions for path pasting on macOS.
-- **Usage**: Copies folder paths and filenames to clipboard for pasting into save dialogs
+- **Why chosen**: Zero-config logger; cleaner than stdlib logging for CLI tools
+- **Usage**: All status messages, progress tracking, error reporting, verbose mode
 
 ## Development Dependencies
 
 ### Testing
-- **pytest** (>=8.3.4): Test framework with fixtures and parametrization
-- **pytest-cov** (>=6.0.0): Coverage reporting integration
-- **pytest-xdist** (>=3.6.1): Parallel test execution for faster runs
-- **coverage[toml]** (>=7.6.12): Code coverage measurement
+- **pytest** (>=8.3.4): Test framework
+- **pytest-mock** (>=3.0.0): Mock fixtures for subprocess and filesystem
+- **pytest-xdist** (>=3.6.1): Parallel test execution
+- **pytest-rerunfailures** (>=14.0): Flaky test retry
 
 ### Code Quality
-- **ruff** (>=0.9.7): Fast all-in-one Python linter/formatter (replaces black, isort, flake8, and more)
-- **mypy** (>=1.15.0): Static type checking for early error detection
-- **pre-commit** (>=4.1.0): Git hook framework for automated checks
-- **pyupgrade** (>=3.19.1): Automatically modernizes Python syntax for newer versions
-- **absolufy-imports** (>=0.3.1): Converts relative imports to absolute for clarity
-
-### Documentation
-- **sphinx** (>=7.2.6): Documentation generator from docstrings
-- **sphinx-rtd-theme** (>=2.0.0): Clean ReadTheDocs theme
-- **sphinx-autodoc-typehints** (>=2.0.0): Automatic type hint documentation
-- **myst-parser** (>=3.0.0): Markdown support in Sphinx docs
+- **ruff**: All-in-one linter/formatter
 
 ## Build System
 
-### hatchling (>=1.27.0)
-- **Purpose**: Modern Python build backend
-- **Why chosen**: PEP 517/518 compliant, simpler than setuptools, actively maintained
+### hatchling
+- **Purpose**: Modern PEP 517/518 build backend
+- **Why chosen**: Simpler than setuptools, actively maintained
 
-### hatch-vcs (>=0.4.0)
+### hatch-vcs
 - **Purpose**: Automatic versioning from git tags
-- **Why chosen**: Eliminates manual version bumping, single source of truth in git
+- **Why chosen**: Single source of truth — no manual version bumping
 
 ## Platform Requirements
 
-- **Python**: 3.10+ (for match statements and modern typing features)
-- **macOS**: 10.14+ (required for PyXA compatibility)
-- **Vexy Lines**: Desktop application must be installed and activated
+- **Python**: 3.10+
+- **macOS**: required (plist files, AppleScript, `osascript`, `open -a`)
+- **Vexy Lines**: Desktop application must be installed
 
-## Removed Dependencies
+## Removed Dependencies (v2.0.0)
 
-The original `vexy-lines2pdf.py` script used **tenacity** for retry decorators, but the refactored version implements custom retry logic via `WindowWatcher` polling, making tenacity unnecessary and reducing dependencies.
+- **mac-pyxa**: Replaced by pure AppleScript subprocess calls via `osascript`
+- **pyautogui-ng**: No longer needed — export triggered via plist preferences, not GUI dialogs
+- **pyperclip**: No longer needed — clipboard paste into save dialog eliminated
 </document_content>
 </document>
 
-<document index="12">
+<document index="10">
 <source>GEMINI.md</source>
 <document_content>
 # Development guidelines
@@ -2268,7 +2273,7 @@ When you write prose (like documentation or marketing or even your own commentar
 </document_content>
 </document>
 
-<document index="13">
+<document index="11">
 <source>LICENSE</source>
 <document_content>
 MIT License
@@ -2295,7 +2300,7 @@ SOFTWARE.
 </document_content>
 </document>
 
-<document index="14">
+<document index="12">
 <source>LLXPRT.md</source>
 <document_content>
 # Development guidelines
@@ -2647,14 +2652,14 @@ When you write prose (like documentation or marketing or even your own commentar
 </document_content>
 </document>
 
-<document index="15">
+<document index="13">
 <source>PLAN.md</source>
 <document_content>
 
 </document_content>
 </document>
 
-<document index="16">
+<document index="14">
 <source>QWEN.md</source>
 <document_content>
 # Development guidelines
@@ -3006,7 +3011,7 @@ When you write prose (like documentation or marketing or even your own commentar
 </document_content>
 </document>
 
-<document index="17">
+<document index="15">
 <source>README.md</source>
 <document_content>
 ---
@@ -3300,7 +3305,7 @@ Based on the original `vexy-lines2pdf.py` automation script. The package structu
 </document_content>
 </document>
 
-<document index="18">
+<document index="16">
 <source>REFACTORING_SUMMARY.md</source>
 <document_content>
 # Refactoring Summary: vexy_lines_utils
@@ -3431,226 +3436,113 @@ The modular structure makes it easy to add:
 </document_content>
 </document>
 
-<document index="19">
+<document index="17">
 <source>TODO.md</source>
 <document_content>
 ---
 this_file: TODO.md
 ---
 
-# TODO - Quality Improvements
+# TODO
 
-## Completed Phases
+## Completed
 
-### Phase 1: Enhanced Test Coverage  COMPLETED
-- [x] Add test for WindowWatcher.get_current_state() method
-- [x] Add test for navigation strategies
-- [x] Run pytest-cov to measure coverage (achieved 50%)
+- [x] Phase 1: Remove old dependencies and deleted modules
+- [x] Phase 2: Rewrite ExportConfig and create PlistManager
+- [x] Phase 3: Simplify AppleScriptBridge, update WindowWatcher error codes
+- [x] Phase 4: Extend file_utils, create exporter.py
+- [x] Phase 5: Rewrite CLI (__main__.py) and init files
+- [x] Phase 6: Rewrite tests (79 passing)
+- [x] Phase 7: Update documentation
 
-### Phase 2: PDF Export Validation  COMPLETED
-- [x] Implement validate_pdf() function
-- [x] Add PDF magic bytes verification
-- [x] Integrate validation into _verify_export()
-- [x] Add tests for PDF validation (5 tests)
+## Current Status (v2.0.0)
 
-### Phase 3: Graceful Interruption Handling  COMPLETED
-- [x] Create InterruptionHandler class
-- [x] Integrate interruption check into export loop
-- [x] Add cleanup logic for partial exports
-
-### Phase 4: Additional Quality & Robustness  COMPLETED
-- [x] Add export summary statistics with timing
-- [x] Add configuration validation with constants
-
-### Phase 5: Bug Fixes & Code Quality  COMPLETED
-- [x] Fix AttributeError in EnhancedVexyLinesExporter
-- [x] Smart unsaved changes dialog handling
-- [x] Zero ruff warnings achieved
-
-### Phase 6: UX & Error Improvements  COMPLETED
-- [x] Track PDF validation failures separately (was already done)
-- [x] Add progress indicators with ETA to batch operations
-- [x] Improve error messages with contextual suggestions
-
-## Current Status (v1.0.7)
-
-**Test count:** 42 tests
-**Test pass rate:** 100%
-**Code quality:** Zero ruff warnings
-**Test duration:** 4.09s
+- Test count: 79 passing
+- Test duration: 1.15s
+- Dependencies: fire, loguru (runtime only)
 
 ## Future Enhancements (Optional)
 
-### Low Priority Tasks
-- [ ] Validate menu/dialog patterns are non-empty in config
-- [ ] Add explicit tests for configuration validation edge cases
-- [ ] Add `--no-auto-close` CLI flag if users want to keep files open
-- [ ] Consider atomacos integration if PyXA proves insufficient
-- [ ] Add dry-run validation (check permissions before running)
-
-### Feature Ideas (Not Planned)
-- Enhanced CLI progress bars with rich library
-- Configuration file support (.toml)
-- Parallel processing of multiple files
-- Additional export formats (SVG, EPS)
-
-## Notes
-- Project is stable and production-ready
-- Focus on maintaining quality over adding features
-- All core functionality is implemented and tested
-- Error handling is comprehensive with recovery suggestions
+- [ ] Add `--output-dir` shorthand CLI flag
+- [ ] Configuration file support (.toml)
+- [ ] Parallel processing of multiple files
+- [ ] Dry-run validation (check plist permissions before running)
 </document_content>
 </document>
 
-<document index="20">
+<document index="18">
 <source>WORK.md</source>
 <document_content>
 ---
 this_file: WORK.md
 ---
 
-# Work Progress - v1.0.6
+# Work Progress — v2.0.0 Dialog-less Export Rewrite
 
-## Current Session: Bug Fix - close_final_document() Logic
+## Completed
 
-### Issue 1: Wrong method call
-- Warning: `'WindowWatcher' object has no attribute 'activate_app'`
-- Location: `src/vexy_lines_utils/exporters/base.py:262`
-- Called `self.watcher.activate_app()` instead of `self.bridge.activate()`
+### Phase 1 — Structural cleanup
+- Deleted `automation/ui_actions.py`, `strategies/`, `exporters/` directories
+- Removed `mac-pyxa`, `pyautogui-ng`, `pyperclip` from `pyproject.toml`
 
-### Issue 2: Document wasn't closing
-- After fix #1, document still wasn't closing properly
-- Root cause: `close_final_document()` copied `_close_document()` logic
-- But `_close_document()` only closes docs with "*" marker (unsaved changes)
-- When all files are skipped (PDFs exist), no document has unsaved changes
-- However, `close_final_document()` is for cleanup, so it SHOULD close regardless
+### Phase 2 — Core contract rewrite
+- `core/config.py`: New `ExportConfig` dataclass with format/timeout/retry validation
+- `core/plist.py`: New `PlistManager` context manager with `_MISSING` sentinel and atomic writes
+- `core/errors.py`: Added `PLIST_ERROR` suggestion
 
-### Fix Applied
-1. Changed `self.watcher.activate_app()` to `self.bridge.activate()`
-2. Added `force` parameter to `_close_document()` method:
-   - `force=False` (default): Only close if "*" marker present
-   - `force=True`: Close document regardless of unsaved changes
-3. Simplified `close_final_document()` to call `_close_document(force=True)`
-   - Reuses tested close logic
-   - Forces close for final cleanup
-   - Activates app before closing
+### Phase 3 — Automation simplification
+- `automation/bridges.py`: Replaced `PyXABridge` with enhanced `AppleScriptBridge` (quit, is_running, open_file, close_front_window)
+- `automation/window_watcher.py`: Removed `wait_for_patterns`, updated error codes to `WINDOW_TIMEOUT`/`APP_NOT_FOUND`
 
-### Test Results
-✅ All 42 tests pass in 2.52s
+### Phase 4 — File utilities and exporter
+- `utils/file_utils.py`: Added `validate_svg`, `validate_export`, `expected_export_path`, `resolve_output_path`
+- `exporter.py`: New `VexyLinesExporter(config, dry_run)` with file-polling export detection
 
-### Files Modified
-- `src/vexy_lines_utils/exporters/base.py:189-229` (added force parameter)
-- `src/vexy_lines_utils/exporters/base.py:246-279` (simplified using force=True)
+### Phase 5 — CLI and init files
+- `__main__.py`: New CLI — `export(input, *, output, format, verbose, dry_run, say_summary, timeout_multiplier, max_retries)`
+- All `__init__.py` files updated
 
-### Key Insight
-Different contexts need different close behaviors:
-- During batch: Only close if unsaved changes (efficiency)
-- Final cleanup: Always close (user expects clean state)
-The `force` parameter elegantly handles both cases with shared code.
+### Phase 6 — Tests
+- Rewrote `tests/test_package.py` — 79 tests, all passing in 1.15s
 
----
-
-## Completed Tasks
-
-### Auto-close final document feature
--  Added `close_final_document()` method to `BaseExporter` class (src/vexy_lines_utils/exporters/base.py:238-283)
--  Integrated close operation into CLI export workflow (src/vexy_lines_utils/cli.py:74-75)
--  All tests passing (41 tests in ~4.87s)
--  Updated CHANGELOG.md with v1.0.6 release notes
-
-## Implementation Details
-
-### Method Signature
-```python
-def close_final_document(self) -> None:
-    """Close any remaining open document after batch export completes."""
-```
-
-### Behavior
-1. Checks if running in dry-run mode � skips if true
-2. Gets current window titles from Vexy Lines
-3. Checks if any .lines document appears to be open
-4. If open:
-   - Sends Cmd+W to close
-   - Waits for potential unsaved changes dialog
-   - Navigates to "Don't Save" button with Tab Tab Enter
-   - Logs success
-5. If not open or on error:
-   - Logs debug/warning message
-   - Continues without failing batch
-
-### Integration Point
-Called in CLI export() method after:
-- Stats collection complete
-- Summary printed/spoken
-- Before returning stats dict
-
-### Error Handling
-- Wrapped in try/except to prevent batch failure
-- Logs warnings on failure but continues
-- Graceful degradation philosophy
+### Phase 7 — Documentation
+- `CHANGELOG.md` updated with v2.0.0 entry
+- `WORK.md` rewritten
+- `TODO.md` updated
+- `DEPENDENCIES.md` updated
 
 ## Test Results
+
 ```
-============================= test session starts ==============================
-41 passed in 4.87s
+79 passed in 1.15s
 ```
 
-All existing tests pass without modification, demonstrating:
-- Backward compatibility maintained
-- No regressions introduced
-- Clean integration with existing codebase
+## Session 2 — Ruff cleanup (2026-03-13)
 
-## Next Steps (if needed)
-- Monitor user feedback on close behavior
-- Consider adding `--no-auto-close` flag if users want to keep files open
-- Add explicit test for `close_final_document()` method
+### Fixed
 
----
-
-## Session 7: Quality Improvements - Progress & Error Messages
-
-### Completed Tasks (3/3) ✅
-
-#### Task 1: PDF Validation Failure Tracking ✅ (Already Complete)
-**Status:** Already implemented in previous session
-- Validation failures tracked separately from export failures
-- Test coverage exists (test_export_stats_validation_failures)
-
-#### Task 2: Progress Indicators ✅ COMPLETED
-**Changes:**
-- Added `[X/Y] Processing filename` format to show progress
-- Display "Found X .lines file(s) to process" at start
-- Calculate and show ETA after first file completes
-- Log final summary: "Batch complete: summary, total time Xs"
-
-**Files modified:**
-- `src/vexy_lines_utils/exporters/base.py` (lines 73-74, 77-91, 124-127)
-- `tests/test_package.py` (lines 342-368, new test)
-
-#### Task 3: Error Messages with Context ✅ COMPLETED
-**Changes:**
-- Created `get_error_suggestion()` with recovery tips for 10 error codes
-- Created `format_error_with_context()` for structured error messages
-- Each suggestion provides 3 actionable troubleshooting steps
-
-**Files modified:**
-- `src/vexy_lines_utils/core/errors.py` (lines 23-117)
-- `src/vexy_lines_utils/core/__init__.py` (lines 9-10, 20-21)
-- `tests/test_package.py` (lines 371-398, new test)
+- `FORMAT_CODES` in `core/plist.py`: was `{pdf: 0, svg: 1}` → `{pdf: "pdf", svg: "svg"}` (plist stores strings)
+- `MIN_RETRIES` in `core/config.py`: `1` → `0` so `--max_retries 0` is valid
+- CLI validation in `__main__.py`: `< 1` → `< 0`
+- `PlistManager.__enter__` return type: `PlistManager` → `Self`
+- `plist.py`: dropped `import os`, used `Path.replace`/`Path.unlink`
+- `bridges.py`: `# noqa: S603/S607` on correct lines
+- `tests/test_package.py`: fixed PT012, ARG001, SIM117, S108 (all `/tmp` paths), RUF100
 
 ### Test Results
-**Final:** ✅ 42/42 tests passed in 4.09s (up from 40 tests)
 
-### Benefits Delivered
-1. **Better UX:** Real-time progress visibility during batch operations
-2. **Easier debugging:** Actionable recovery suggestions for all error types
-3. **Time awareness:** ETA helps users plan workflow
-4. **Self-documenting:** Error suggestions serve as inline help
+```
+79 passed in ~1.2s — ruff 0 errors
+```
+
+## Next Steps
+
+- Monitor real-world usage with the new plist-driven export
+- Consider adding `--output-dir` shorthand
 </document_content>
 </document>
 
-<document index="21">
+<document index="19">
 <source>build.sh</source>
 <document_content>
 #!/usr/bin/env bash
@@ -3677,14 +3569,114 @@ uv publish;
 </document_content>
 </document>
 
-<document index="22">
+<document index="20">
 <source>docs/automation-setup.md</source>
 <document_content>
 
 </document_content>
 </document>
 
-<document index="23">
+<document index="21">
+<source>issues/104.md</source>
+<document_content>
+Change the tool 
+
+```
+/vcs3/github.vexyart/vexy-lines-utils (main)
+[15:24:44] $ uvx vexy-lines-utils export -h
+INFO: Showing help with the command 'vexy-lines-utils export -- --help'.
+
+NAME
+    vexy-lines-utils export - Export .lines documents found under *target* to PDF.
+
+SYNOPSIS
+    vexy-lines-utils export TARGET <flags>
+
+DESCRIPTION
+    Export .lines documents found under *target* to PDF.
+
+POSITIONAL ARGUMENTS
+    TARGET
+        Type: 'str'
+        Path to .lines file or directory to search
+
+FLAGS
+    -v, --verbose=VERBOSE
+        Type: 'bool'
+        Default: False
+        Show detailed progress messages
+    -d, --dry_run=DRY_RUN
+        Type: 'bool'
+        Default: False
+        Preview files without processing
+    -s, --say_summary=SAY_SUMMARY
+        Type: 'bool'
+        Default: False
+        Announce completion via text-to-speech
+    -t, --timeout_multiplier=TIMEOUT_MULTIPLIER
+        Type: 'float'
+        Default: 1.0
+        Scale all timeouts (2.0 = double all timeouts)
+    -m, --max_retries=MAX_RETRIES
+        Type: 'int'
+        Default: 3
+        Maximum retry attempts for transient failures (0-10)
+    -e, --enhanced=ENHANCED
+        Type: 'bool'
+        Default: True
+```
+
+The underlying Vexy Lines has changed, so now we can do the following on macOS: 
+
+1. Close Vexy Lines if it’s running. 
+
+2. Edit `$HOME/Library/Preferences/com.vexy-art.lines.plist` (note: this may be XML or binary plist!) so that we have: 
+
+```xml
+<key>export·dlg·checkLayers</key>
+<true/>
+<key>export·dlg·checkMergeColor</key>
+<false/>
+<key>export·dlg·exportMode</key>
+<integer>1</integer>
+<key>export·dlg·format</key>
+<string>pdf</string>
+<key>export·dlg·imageFormat</key>
+<integer>0</integer>
+<key>export·dlg·radioColor</key>
+<false/>
+<key>export·dlg·radioTransparent</key>
+<true/>
+<key>export·dlg·scale</key>
+<real>1</real>
+<key>first_start</key>
+<false/>
+```
+(Store the previous values somewhere). 
+
+Default --format should be 'pdf' but if I use 'svg' then 'svg' should go into "export·dlg·format"
+
+3. Launch Vexy Lines. 
+
+4. Open the file if --input was a file (or the first .lines file in the folder if --input was a folder)
+
+5. Invoke ==File > Export PDF File== or ==File > Export SVG File== (see /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/issues/export-pdf-file.png and /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/issues/export-svg-file.png )
+
+This will do a DIALOG-LESS export into the same folder and basename as the .lines file, with .pdf or .svg extension. 
+
+6. Close the file. 
+
+7. If I specified --output then: 
+  - if --input was a file, then move the exported file into the --output file. 
+  - if --input was a folder, then move the exported file into the --output folder with the same basename as the input file but with the .pdf or .svg extension.
+
+8. Iterate over the remaining files if --input was a folder. 
+
+9. Close the app, restore the prefs. 
+</document_content>
+</document>
+
+<document index="22">
 <source>package.toml</source>
 <document_content>
 # Package configuration
@@ -3701,7 +3693,7 @@ github_actions = true   # Add GitHub Actions workflows
 </document_content>
 </document>
 
-<document index="24">
+<document index="23">
 <source>pyproject.toml</source>
 <document_content>
 # this_file: pyproject.toml
@@ -3754,9 +3746,6 @@ classifiers = [
 dependencies = [
     "fire>=0.6.0",          # CLI framework
     "loguru>=0.7.2",        # Colorful logging
-    "mac-pyxa>=0.3.0",      # macOS application automation
-    "pyautogui-ng>=0.0.4",  # Keyboard/mouse automation
-    "pyperclip>=1.9.0",     # Clipboard operations
 ]
 
 # Author information
@@ -4157,11 +4146,6 @@ ban-relative-imports = 'all' # Ban all relative imports for consistency
     'TID252'
     # Allow relative imports in tests for convenience
 ]
-
-# pyobjc 9.x (pinned by mac-pyxa) uses pkg_resources at build time, removed in Python 3.12+.
-# Every pyobjc sub-package needs setuptools injected into its build environment.
-[tool.uv]
-extra-build-dependencies = { pyobjc-core = ["setuptools"], pyobjc-framework-applicationservices = ["setuptools"], pyobjc-framework-avfoundation = ["setuptools"], pyobjc-framework-cocoa = ["setuptools"], pyobjc-framework-corelocation = ["setuptools"], pyobjc-framework-coremedia = ["setuptools"], pyobjc-framework-coretext = ["setuptools"], pyobjc-framework-datadetection = ["setuptools"], pyobjc-framework-eventkit = ["setuptools"], pyobjc-framework-latentsemanticmapping = ["setuptools"], pyobjc-framework-libdispatch = ["setuptools"], pyobjc-framework-naturallanguage = ["setuptools"], pyobjc-framework-photos = ["setuptools"], pyobjc-framework-quartz = ["setuptools"], pyobjc-framework-scriptingbridge = ["setuptools"], pyobjc-framework-speech = ["setuptools"], pyobjc-framework-vision = ["setuptools"] }
 </document_content>
 </document>
 
@@ -4170,15 +4154,14 @@ extra-build-dependencies = { pyobjc-core = ["setuptools"], pyobjc-framework-appl
 
 from vexy_lines_utils.__main__ import VexyLinesCLI, main
 from vexy_lines_utils.__version__ import __version__
-from vexy_lines_utils.automation.bridges import ApplicationBridge, PyXABridge
-from vexy_lines_utils.automation.ui_actions import UIActions
+from vexy_lines_utils.automation.bridges import AppleScriptBridge, ApplicationBridge
 from vexy_lines_utils.automation.window_watcher import WindowWatcher
-from vexy_lines_utils.core.config import AutomationConfig, EnhancedAutomationConfig
+from vexy_lines_utils.core.config import ExportConfig
 from vexy_lines_utils.core.errors import AutomationError, FileValidationError
+from vexy_lines_utils.core.plist import PlistManager
 from vexy_lines_utils.core.stats import ExportStats
-from vexy_lines_utils.exporters.enhanced import EnhancedVexyLinesExporter
-from vexy_lines_utils.exporters.standard import VexyLinesExporter
-from vexy_lines_utils.utils.file_utils import find_lines_files, validate_lines_file, validate_pdf
+from vexy_lines_utils.exporter import VexyLinesExporter
+from vexy_lines_utils.utils.file_utils import find_lines_files, validate_lines_file, validate_pdf, validate_svg
 from vexy_lines_utils.utils.interrupt import InterruptHandler
 from vexy_lines_utils.utils.system import speak
 
@@ -4186,43 +4169,39 @@ from vexy_lines_utils.utils.system import speak
 # File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/__main__.py
 # Language: python
 
-import importlib.util
-import subprocess
 from pathlib import Path
 import fire
 from loguru import logger
-from vexy_lines_utils.core.config import AutomationConfig, EnhancedAutomationConfig
-from vexy_lines_utils.exporters.enhanced import EnhancedVexyLinesExporter
-from vexy_lines_utils.exporters.standard import VexyLinesExporter
+from vexy_lines_utils.core.config import ExportConfig
+from vexy_lines_utils.exporter import VexyLinesExporter
 from vexy_lines_utils.utils.system import speak
 
 class VexyLinesCLI:
     def export((
         self,
-        target: str,
+        input: str,  # noqa: A002
         *,
+        output: str | None = None,
+        format: str = "pdf",  # noqa: A002
         verbose: bool = False,
         dry_run: bool = False,
         say_summary: bool = False,
         timeout_multiplier: float = 1.0,
         max_retries: int = 3,
-        enhanced: bool = True,  # Default to True for better reliability
     )) -> dict[str, object]:
-    def test_strategies((self)) -> None:
 
 def export((
         self,
-        target: str,
+        input: str,  # noqa: A002
         *,
+        output: str | None = None,
+        format: str = "pdf",  # noqa: A002
         verbose: bool = False,
         dry_run: bool = False,
         say_summary: bool = False,
         timeout_multiplier: float = 1.0,
         max_retries: int = 3,
-        enhanced: bool = True,  # Default to True for better reliability
     )) -> dict[str, object]:
-
-def test_strategies((self)) -> None:
 
 def main(()) -> None:
 
@@ -4230,8 +4209,7 @@ def main(()) -> None:
 # File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/automation/__init__.py
 # Language: python
 
-from vexy_lines_utils.automation.bridges import ApplicationBridge, PyXABridge
-from vexy_lines_utils.automation.ui_actions import UIActions
+from vexy_lines_utils.automation.bridges import AppleScriptBridge, ApplicationBridge
 from vexy_lines_utils.automation.window_watcher import WindowWatcher
 
 
@@ -4241,29 +4219,29 @@ from vexy_lines_utils.automation.window_watcher import WindowWatcher
 import subprocess
 from typing import TYPE_CHECKING, Protocol
 from loguru import logger
-from vexy_lines_utils.automation.window_watcher import WindowWatcher
 from vexy_lines_utils.core.errors import AutomationError
-from vexy_lines_utils.core.config import AutomationConfig
-import PyXA
+from pathlib import Path
+from vexy_lines_utils.core.config import ExportConfig
 
 class ApplicationBridge(P, r, o, t, o, c, o, l):
     def activate((self)) -> None:
     def window_titles((self)) -> list[str]:
     def click_menu_item((self, menu_name: str, item_name: str)) -> bool:
-
-class PyXABridge:
-    def __init__((self, config: AutomationConfig)):
-    def activate((self)) -> None:
-    def window_titles((self)) -> list[str]:
-    def click_menu_item((self, menu_name: str, item_name: str)) -> bool:
-    def _wait_for_ready((self)) -> None:
+    def quit_app((self)) -> None:
+    def is_running((self)) -> bool:
+    def open_file((self, file_path: Path)) -> None:
+    def close_front_window((self)) -> None:
 
 class AppleScriptBridge:
-    def __init__((self, config: AutomationConfig)):
-    def _launch_app((self)) -> None:
+    def __init__((self, config: ExportConfig)) -> None:
+    def _run_osascript((self, script: str, *, timeout: float = 5)) -> subprocess.CompletedProcess[str]:
     def activate((self)) -> None:
+    def quit_app((self)) -> None:
+    def is_running((self)) -> bool:
     def window_titles((self)) -> list[str]:
     def click_menu_item((self, menu_name: str, item_name: str)) -> bool:
+    def open_file((self, file_path: Path)) -> None:
+    def close_front_window((self)) -> None:
 
 def activate((self)) -> None:
 
@@ -4271,50 +4249,31 @@ def window_titles((self)) -> list[str]:
 
 def click_menu_item((self, menu_name: str, item_name: str)) -> bool:
 
-def __init__((self, config: AutomationConfig)):
+def quit_app((self)) -> None:
+
+def is_running((self)) -> bool:
+
+def open_file((self, file_path: Path)) -> None:
+
+def close_front_window((self)) -> None:
+
+def __init__((self, config: ExportConfig)) -> None:
+
+def _run_osascript((self, script: str, *, timeout: float = 5)) -> subprocess.CompletedProcess[str]:
 
 def activate((self)) -> None:
+
+def quit_app((self)) -> None:
+
+def is_running((self)) -> bool:
 
 def window_titles((self)) -> list[str]:
 
 def click_menu_item((self, menu_name: str, item_name: str)) -> bool:
 
-def _wait_for_ready((self)) -> None:
+def open_file((self, file_path: Path)) -> None:
 
-def __init__((self, config: AutomationConfig)):
-
-def _launch_app((self)) -> None:
-
-def activate((self)) -> None:
-
-def window_titles((self)) -> list[str]:
-
-def click_menu_item((self, menu_name: str, item_name: str)) -> bool:
-
-
-# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/automation/ui_actions.py
-# Language: python
-
-from vexy_lines_utils.core.errors import AutomationError
-import pyautogui
-import pyperclip
-
-class UIActions:
-    def __init__((self, *, dry_run: bool = False)):
-    def press((self, key: str)) -> None:
-    def hotkey((self, *keys: str)) -> None:
-    def copy_text((self, text: str)) -> None:
-    def _record((self, action: str)) -> None:
-
-def __init__((self, *, dry_run: bool = False)):
-
-def press((self, key: str)) -> None:
-
-def hotkey((self, *keys: str)) -> None:
-
-def copy_text((self, text: str)) -> None:
-
-def _record((self, action: str)) -> None:
+def close_front_window((self)) -> None:
 
 
 # File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/automation/window_watcher.py
@@ -4331,9 +4290,6 @@ class WindowWatcher:
     def get_current_state((self)) -> str:
     def wait_for_contains((self, needle: str, *, present: bool, timeout: float)) -> None:
     def wait_for_any((self, timeout: float)) -> None:
-    def wait_for_patterns((
-        self, patterns: list[str], *, present: bool, timeout: float, case_sensitive: bool = False
-    )) -> str | None:
 
 def get_current_state((self)) -> str:
 
@@ -4341,51 +4297,44 @@ def wait_for_contains((self, needle: str, *, present: bool, timeout: float)) -> 
 
 def wait_for_any((self, timeout: float)) -> None:
 
-def wait_for_patterns((
-        self, patterns: list[str], *, present: bool, timeout: float, case_sensitive: bool = False
-    )) -> str | None:
-
 
 # File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/core/__init__.py
 # Language: python
 
-from vexy_lines_utils.core.config import AutomationConfig, EnhancedAutomationConfig
+from vexy_lines_utils.core.config import ExportConfig
 from vexy_lines_utils.core.errors import (
     AutomationError,
     FileValidationError,
     format_error_with_context,
     get_error_suggestion,
 )
+from vexy_lines_utils.core.plist import PlistManager
 from vexy_lines_utils.core.stats import ExportStats
 
 
 # File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/core/config.py
 # Language: python
 
-from dataclasses import dataclass, field
-from enum import Enum
+from dataclasses import dataclass
 
 MIN_TIMEOUT_MULTIPLIER = =
 MAX_TIMEOUT_MULTIPLIER = =
 MIN_RETRIES = =
 MAX_RETRIES = =
+VALID_FORMATS = =
+MENU_ITEMS = :
 
-class MenuStrategy(E, n, u, m):
-
-class DialogStrategy(E, n, u, m):
-
-class AutomationConfig:
-    def __post_init__((self)):
+class ExportConfig:
+    def __post_init__((self)) -> None:
     def scale_timeout((self, base_timeout: float)) -> float:
 
-class EnhancedAutomationConfig(A, u, t, o, m, a, t, i, o, n, C, o, n, f, i, g):
-    def __post_init__((self)):
-
-def __post_init__((self)):
+def __post_init__((self)) -> None:
 
 def scale_timeout((self, base_timeout: float)) -> float:
 
-def __post_init__((self)):
+def export_menu_item((self)) -> str:
+
+def export_extension((self)) -> str:
 
 
 # File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/core/errors.py
@@ -4404,6 +4353,52 @@ def __init__((self, message: str)) -> None:
 def get_error_suggestion((error_code: str)) -> str:
 
 def format_error_with_context((error_code: str, base_message: str, file_path: str | None = None)) -> str:
+
+
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/core/plist.py
+# Language: python
+
+import plistlib
+import subprocess
+import tempfile
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
+from typing import Self
+from loguru import logger
+from vexy_lines_utils.core.errors import AutomationError
+
+_MISSING = =
+FORMAT_CODES = :
+EXPORT_PREFERENCES = :
+
+class PlistManager:
+    def __init__((self, plist_path: Path, fmt: str, app_name: str = "Vexy Lines")) -> None:
+    def __enter__((self)) -> Self:
+    def __exit__((self, *exc_info: object)) -> None:
+    def _quit_app((self)) -> None:
+    def _read_plist((self)) -> dict[str, Any]:
+    def _store_originals((self, data: dict[str, Any])) -> None:
+    def _apply_export_prefs((self, data: dict[str, Any])) -> None:
+    def _write_plist((self, data: dict[str, Any])) -> None:
+    def _restore_originals((self)) -> None:
+
+def __init__((self, plist_path: Path, fmt: str, app_name: str = "Vexy Lines")) -> None:
+
+def __enter__((self)) -> Self:
+
+def __exit__((self, *exc_info: object)) -> None:
+
+def _quit_app((self)) -> None:
+
+def _read_plist((self)) -> dict[str, Any]:
+
+def _store_originals((self, data: dict[str, Any])) -> None:
+
+def _apply_export_prefs((self, data: dict[str, Any])) -> None:
+
+def _write_plist((self, data: dict[str, Any])) -> None:
+
+def _restore_originals((self)) -> None:
 
 
 # File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/core/stats.py
@@ -4442,237 +4437,79 @@ def as_dict((self)) -> dict[str, object]:
 def human_summary((self)) -> str:
 
 
-# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/exporters/__init__.py
+# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/exporter.py
 # Language: python
 
-from vexy_lines_utils.exporters.base import BaseExporter
-from vexy_lines_utils.exporters.enhanced import EnhancedVexyLinesExporter
-from vexy_lines_utils.exporters.standard import VexyLinesExporter
-
-
-# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/exporters/base.py
-# Language: python
-
-import subprocess
+import shutil
 import time
-from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from pathlib import Path
 from loguru import logger
-from vexy_lines_utils.automation.ui_actions import UIActions
+from vexy_lines_utils.automation.bridges import AppleScriptBridge
 from vexy_lines_utils.automation.window_watcher import WindowWatcher
-from vexy_lines_utils.core.config import AutomationConfig
-from vexy_lines_utils.core.errors import AutomationError, FileValidationError
+from vexy_lines_utils.core.config import ExportConfig
+from vexy_lines_utils.core.errors import AutomationError
+from vexy_lines_utils.core.plist import PlistManager
 from vexy_lines_utils.core.stats import ExportStats
-from vexy_lines_utils.utils.file_utils import find_lines_files, validate_lines_file, validate_pdf
-from pathlib import Path
-
-class BaseExporter(A, B, C):
-    def __init__((
-        self,
-        *,
-        config: AutomationConfig | None = None,
-        ui_actions: UIActions | None = None,
-        dry_run: bool = False,
-    )):
-    def export((self, target: Path, *, verbose: bool = False)) -> ExportStats:
-    def _process_file_with_retry((self, file_path: Path)) -> None:
-    def _open_document((self, file_path: Path)) -> None:
-    def _close_document((self, *, force: bool = False)) -> None:
-    def _verify_export((self, pdf_path: Path)) -> None:
-    def close_final_document((self)) -> None:
-
-def __init__((
-        self,
-        *,
-        config: AutomationConfig | None = None,
-        ui_actions: UIActions | None = None,
-        dry_run: bool = False,
-    )):
-
-def bridge((self)):
-
-def watcher((self)) -> WindowWatcher:
-
-def export((self, target: Path, *, verbose: bool = False)) -> ExportStats:
-
-def _process_file_with_retry((self, file_path: Path)) -> None:
-
-def _process_file((self, file_path: Path)) -> None:
-
-def _open_document((self, file_path: Path)) -> None:
-
-def _close_document((self, *, force: bool = False)) -> None:
-
-def _verify_export((self, pdf_path: Path)) -> None:
-
-def close_final_document((self)) -> None:
-
-
-# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/exporters/enhanced.py
-# Language: python
-
-import time
-from typing import TYPE_CHECKING
-from loguru import logger
-from vexy_lines_utils.automation.bridges import AppleScriptBridge, ApplicationBridge, PyXABridge
-from vexy_lines_utils.core.config import EnhancedAutomationConfig, MenuStrategy
-from vexy_lines_utils.core.errors import AutomationError
-from vexy_lines_utils.exporters.base import BaseExporter
-from vexy_lines_utils.strategies.dialog_handler import SmartDialogHandler
-from vexy_lines_utils.strategies.menu_trigger import SmartMenuTrigger
+from vexy_lines_utils.utils.file_utils import (
+    expected_export_path,
+    find_lines_files,
+    resolve_output_path,
+    validate_export,
+    validate_lines_file,
+)
 from vexy_lines_utils.utils.interrupt import InterruptHandler
-from pathlib import Path
 
-class EnhancedVexyLinesExporter(B, a, s, e, E, x, p, o, r, t, e, r):
-    def __init__((
-        self, *, config: EnhancedAutomationConfig | None = None, bridge: ApplicationBridge | None = None, **kwargs
-    )):
-    def _select_best_bridge((self)) -> ApplicationBridge:
-    def _process_file((self, file_path: Path)) -> None:
-    def _trigger_export_with_strategies((self)) -> None:
-    def _handle_save_with_strategies((self, file_path: Path)) -> None:
-    def _handle_save_standard((self, file_path: Path)) -> None:
-    def __del__((self)):
+STABLE_SIZE_POLLS = =
+MIN_STABLE_INTERVAL = =
 
-def __init__((
-        self, *, config: EnhancedAutomationConfig | None = None, bridge: ApplicationBridge | None = None, **kwargs
-    )):
+class VexyLinesExporter:
+    def __init__((self, config: ExportConfig, *, dry_run: bool = False)) -> None:
+    def export((self, input_path: Path, output_path: Path | None = None)) -> ExportStats:
+    def _process_file((
+        self,
+        file_path: Path,
+        bridge: AppleScriptBridge,
+        watcher: WindowWatcher,
+        output_path: Path | None,
+        stats: ExportStats,
+    )) -> None:
+    def _wait_for_export((self, path: Path)) -> None:
 
-def bridge((self)) -> ApplicationBridge:
+def __init__((self, config: ExportConfig, *, dry_run: bool = False)) -> None:
 
-def _select_best_bridge((self)) -> ApplicationBridge:
+def export((self, input_path: Path, output_path: Path | None = None)) -> ExportStats:
 
-def _process_file((self, file_path: Path)) -> None:
+def _process_file((
+        self,
+        file_path: Path,
+        bridge: AppleScriptBridge,
+        watcher: WindowWatcher,
+        output_path: Path | None,
+        stats: ExportStats,
+    )) -> None:
 
-def _trigger_export_with_strategies((self)) -> None:
-
-def _handle_save_with_strategies((self, file_path: Path)) -> None:
-
-def _handle_save_standard((self, file_path: Path)) -> None:
-
-def __del__((self)):
-
-
-# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/exporters/standard.py
-# Language: python
-
-import time
-from pathlib import Path
-from typing import TYPE_CHECKING
-from loguru import logger
-from vexy_lines_utils.automation.bridges import ApplicationBridge, PyXABridge
-from vexy_lines_utils.core.errors import AutomationError
-from vexy_lines_utils.exporters.base import BaseExporter
-from vexy_lines_utils.core.config import AutomationConfig
-
-class VexyLinesExporter(B, a, s, e, E, x, p, o, r, t, e, r):
-    def __init__((self, *, config: AutomationConfig | None = None, bridge: ApplicationBridge | None = None, **kwargs)):
-    def _process_file((self, file_path: Path)) -> None:
-    def _trigger_export((self)) -> None:
-    def _handle_save_dialog((self, file_path: Path, *, retry_count: int = 0)) -> None:
-    def _navigate_to_folder_goto((self, folder_path: str)) -> None:
-    def _navigate_to_folder_direct((self, folder_path: str, filename: str)) -> None:
-    def _set_filename_simple((self, pdf_name: str)) -> None:
-
-def __init__((self, *, config: AutomationConfig | None = None, bridge: ApplicationBridge | None = None, **kwargs)):
-
-def bridge((self)) -> ApplicationBridge:
-
-def _process_file((self, file_path: Path)) -> None:
-
-def _trigger_export((self)) -> None:
-
-def _handle_save_dialog((self, file_path: Path, *, retry_count: int = 0)) -> None:
-
-def _navigate_to_folder_goto((self, folder_path: str)) -> None:
-
-def _navigate_to_folder_direct((self, folder_path: str, filename: str)) -> None:
-
-def _set_filename_simple((self, pdf_name: str)) -> None:
+def _wait_for_export((self, path: Path)) -> None:
 
 
-<document index="25">
+<document index="24">
 <source>src/vexy_lines_utils/py.typed</source>
 <document_content>
 # this_file: src/vexy_lines_utils/py.typed
 </document_content>
 </document>
 
-# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/strategies/__init__.py
-# Language: python
-
-from vexy_lines_utils.strategies.dialog_handler import SmartDialogHandler
-from vexy_lines_utils.strategies.menu_trigger import SmartMenuTrigger
-
-
-# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/strategies/dialog_handler.py
-# Language: python
-
-import subprocess
-import time
-from pathlib import Path
-from typing import TYPE_CHECKING
-from loguru import logger
-from vexy_lines_utils.core.config import DialogStrategy, EnhancedAutomationConfig
-from vexy_lines_utils.automation.window_watcher import WindowWatcher
-import pyautogui
-import pyperclip
-
-class SmartDialogHandler:
-    def __init__((self, config: EnhancedAutomationConfig)):
-    def handle_save_dialog((self, file_path: Path, window_watcher: WindowWatcher)) -> bool:
-    def _try_applescript((self, folder_path: str, filename: str)) -> bool:
-    def _try_standard_navigation((self, folder_path: str, filename: str)) -> bool:
-    def _try_direct_path((self, folder_path: str, filename: str)) -> bool:
-    def _try_filename_only((self, filename: str)) -> bool:
-
-def __init__((self, config: EnhancedAutomationConfig)):
-
-def handle_save_dialog((self, file_path: Path, window_watcher: WindowWatcher)) -> bool:
-
-def _try_applescript((self, folder_path: str, filename: str)) -> bool:
-
-def _try_standard_navigation((self, folder_path: str, filename: str)) -> bool:
-
-def _try_direct_path((self, folder_path: str, filename: str)) -> bool:
-
-def _try_filename_only((self, filename: str)) -> bool:
-
-
-# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/strategies/menu_trigger.py
-# Language: python
-
-import subprocess
-import time
-from typing import TYPE_CHECKING
-from loguru import logger
-from vexy_lines_utils.core.config import EnhancedAutomationConfig, MenuStrategy
-from vexy_lines_utils.automation.window_watcher import WindowWatcher
-import PyXA
-import pyautogui
-
-class SmartMenuTrigger:
-    def __init__((self, config: EnhancedAutomationConfig)):
-    def trigger_export((self, window_watcher: WindowWatcher)) -> bool:
-    def _try_keyboard_shortcut((self)) -> bool:
-    def _try_applescript((self)) -> bool:
-    def _try_pyxa_menu((self)) -> bool:
-
-def __init__((self, config: EnhancedAutomationConfig)):
-
-def trigger_export((self, window_watcher: WindowWatcher)) -> bool:
-
-def _try_keyboard_shortcut((self)) -> bool:
-
-def _try_applescript((self)) -> bool:
-
-def _try_pyxa_menu((self)) -> bool:
-
-
 # File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/utils/__init__.py
 # Language: python
 
-from vexy_lines_utils.utils.file_utils import find_lines_files, validate_lines_file, validate_pdf
+from vexy_lines_utils.utils.file_utils import (
+    expected_export_path,
+    find_lines_files,
+    resolve_output_path,
+    validate_export,
+    validate_lines_file,
+    validate_pdf,
+    validate_svg,
+)
 from vexy_lines_utils.utils.interrupt import InterruptHandler
 from vexy_lines_utils.utils.system import speak
 
@@ -4680,16 +4517,26 @@ from vexy_lines_utils.utils.system import speak
 # File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/utils/file_utils.py
 # Language: python
 
-from typing import TYPE_CHECKING
+from pathlib import Path
 from loguru import logger
 from vexy_lines_utils.core.errors import FileValidationError
-from pathlib import Path
+
+MIN_PDF_SIZE = =
+MAX_FILE_SIZE = =
 
 def find_lines_files((path: Path)) -> list[Path]:
 
 def validate_lines_file((path: Path)) -> None:
 
 def validate_pdf((path: Path)) -> bool:
+
+def validate_svg((path: Path)) -> bool:
+
+def validate_export((path: Path, fmt: str)) -> bool:
+
+def expected_export_path((lines_file: Path, fmt: str)) -> Path:
+
+def resolve_output_path((input_file: Path, output: Path | None, fmt: str)) -> Path | None:
 
 
 # File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/src/vexy_lines_utils/utils/interrupt.py
@@ -4740,178 +4587,305 @@ SRC_PATH = =
 # File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/tests/test_package.py
 # Language: python
 
-from typing import TYPE_CHECKING
+import plistlib
+import subprocess
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 import pytest
 from vexy_lines_utils import (
-    AutomationConfig,
+    AppleScriptBridge,
     AutomationError,
+    ExportConfig,
     ExportStats,
     FileValidationError,
-    UIActions,
+    PlistManager,
+    VexyLinesCLI,
     VexyLinesExporter,
     WindowWatcher,
+    __version__,
     find_lines_files,
     validate_lines_file,
     validate_pdf,
+    validate_svg,
 )
-from pathlib import Path
-from pathlib import Path
-from pathlib import Path
-from pathlib import Path
-from pathlib import Path
-from vexy_lines_utils import VexyLinesExporter
-from vexy_lines_utils.core import format_error_with_context, get_error_suggestion
+from vexy_lines_utils.core.errors import format_error_with_context, get_error_suggestion
+from vexy_lines_utils.core.plist import _MISSING, FORMAT_CODES
+from vexy_lines_utils.utils.file_utils import (
+    expected_export_path,
+    resolve_output_path,
+    validate_export,
+)
+from vexy_lines_utils import __all__
+import vexy_lines_utils
+
+class TestPackageImports:
+    def test_all_public_symbols_importable((self)) -> None:
+    def test_old_symbols_removed((self)) -> None:
+    def test_version_available((self)) -> None:
+
+class TestExportConfig:
+    def test_defaults((self)) -> None:
+    def test_format_case_insensitive((self)) -> None:
+    def test_format_svg((self)) -> None:
+    def test_invalid_format_raises((self)) -> None:
+    def test_timeout_multiplier_bounds((self)) -> None:
+    def test_max_retries_bounds((self)) -> None:
+    def test_empty_app_name_raises((self)) -> None:
+    def test_scale_timeout((self)) -> None:
+    def test_export_menu_item_pdf((self)) -> None:
+    def test_export_menu_item_svg((self)) -> None:
+    def test_export_extension((self)) -> None:
+
+class TestPlistManager:
+    def test_creates_plist_when_missing((self, tmp_path: Path)) -> None:
+    def test_restores_original_values((self, tmp_path: Path)) -> None:
+    def test_restores_on_exception((self, tmp_path: Path)) -> None:
+    def test_format_codes((self)) -> None:
+    def test_missing_sentinel((self)) -> None:
+
+class TestAppleScriptBridge:
+    def test_activate_builds_correct_command((self)) -> None:
+    def test_activate_raises_on_failure((self)) -> None:
+    def test_window_titles_parses_output((self)) -> None:
+    def test_window_titles_returns_empty_on_error((self)) -> None:
+    def test_click_menu_item_returns_bool((self)) -> None:
+    def test_open_file_calls_subprocess((self)) -> None:
+    def test_open_file_raises_on_failure((self)) -> None:
+    def test_is_running_returns_bool((self)) -> None:
+
+class TestWindowWatcher:
+    def test_wait_for_contains_present((self)) -> None:
+    def test_wait_for_contains_disappear((self)) -> None:
+    def test_wait_for_contains_timeout((self)) -> None:
+    def test_wait_for_any_success((self)) -> None:
+    def test_wait_for_any_timeout((self)) -> None:
+    def test_get_current_state_with_windows((self)) -> None:
+    def test_get_current_state_empty((self)) -> None:
+
+class TestFileUtils:
+    def test_find_lines_files_single_file((self, tmp_path: Path)) -> None:
+    def test_find_lines_files_directory_sorted((self, tmp_path: Path)) -> None:
+    def test_find_lines_files_empty_dir((self, tmp_path: Path)) -> None:
+    def test_find_lines_files_wrong_extension((self, tmp_path: Path)) -> None:
+    def test_validate_lines_file_valid((self, tmp_path: Path)) -> None:
+    def test_validate_lines_file_missing((self, tmp_path: Path)) -> None:
+    def test_validate_lines_file_empty((self, tmp_path: Path)) -> None:
+    def test_validate_lines_file_wrong_extension((self, tmp_path: Path)) -> None:
+    def test_validate_pdf_valid((self, tmp_path: Path)) -> None:
+    def test_validate_pdf_missing((self, tmp_path: Path)) -> None:
+    def test_validate_pdf_too_small((self, tmp_path: Path)) -> None:
+    def test_validate_pdf_invalid_header((self, tmp_path: Path)) -> None:
+    def test_validate_svg_valid_xml((self, tmp_path: Path)) -> None:
+    def test_validate_svg_valid_svg_tag((self, tmp_path: Path)) -> None:
+    def test_validate_svg_missing((self, tmp_path: Path)) -> None:
+    def test_validate_svg_empty((self, tmp_path: Path)) -> None:
+    def test_validate_svg_invalid_content((self, tmp_path: Path)) -> None:
+    def test_validate_export_dispatches((self, tmp_path: Path)) -> None:
+    def test_expected_export_path((self, tmp_path: Path)) -> None:
+    def test_resolve_output_path_none((self, tmp_path: Path)) -> None:
+    def test_resolve_output_path_directory((self, tmp_path: Path)) -> None:
+    def test_resolve_output_path_file((self, tmp_path: Path)) -> None:
+
+class TestExportStats:
+    def test_record_success_and_failure((self, tmp_path: Path)) -> None:
+    def test_timing((self)) -> None:
+    def test_skipped((self)) -> None:
+    def test_validation_failures((self)) -> None:
+    def test_as_dict((self)) -> None:
+    def test_human_summary((self)) -> None:
+    def test_human_summary_dry_run((self)) -> None:
+
+class TestErrors:
+    def test_automation_error_code((self)) -> None:
+    def test_automation_error_default_code((self)) -> None:
+    def test_file_validation_error((self)) -> None:
+    def test_error_suggestions_known_codes((self)) -> None:
+    def test_error_suggestion_unknown((self)) -> None:
+    def test_format_error_with_context((self)) -> None:
+    def test_format_error_without_file((self)) -> None:
+
+class TestExporterDryRun:
+    def test_dry_run_counts_files((self, tmp_path: Path)) -> None:
+    def test_dry_run_batch((self, tmp_path: Path)) -> None:
+    def test_no_files_raises((self, tmp_path: Path)) -> None:
+    def test_multiple_files_to_single_output_raises((self, tmp_path: Path)) -> None:
+    def test_human_summary_in_dry_run((self, tmp_path: Path)) -> None:
+
+class TestExporterMocked:
+    def test_success_path((self, tmp_path: Path)) -> None:
+
+class TestCLIValidation:
+    def test_invalid_timeout_multiplier((self)) -> None:
+    def test_invalid_max_retries_negative((self)) -> None:
+    def test_invalid_max_retries_too_high((self)) -> None:
 
 def provider_from_sequences((sequences: list[list[str]])):
 
 def _provider(()) -> list[str]:
 
-def test_find_lines_files_when_file_then_direct_hit((tmp_path: Path)) -> None:
+def test_all_public_symbols_importable((self)) -> None:
 
-def test_find_lines_files_when_directory_then_sorted((tmp_path: Path)) -> None:
+def test_old_symbols_removed((self)) -> None:
 
-def test_export_stats_records_success_and_failure((tmp_path: Path)) -> None:
+def test_version_available((self)) -> None:
 
-def test_window_watcher_waits_for_presence(()) -> None:
+def test_defaults((self)) -> None:
 
-def test_window_watcher_waits_for_disappearance(()) -> None:
+def test_format_case_insensitive((self)) -> None:
 
-def test_exporter_dry_run_counts_files((tmp_path: Path)) -> None:
+def test_format_svg((self)) -> None:
 
-def test_window_watcher_timeout(()) -> None:
+def test_invalid_format_raises((self)) -> None:
 
-def test_validate_lines_file_valid((tmp_path: Path)) -> None:
+def test_timeout_multiplier_bounds((self)) -> None:
 
-def test_validate_lines_file_missing((tmp_path: Path)) -> None:
+def test_max_retries_bounds((self)) -> None:
 
-def test_validate_lines_file_empty((tmp_path: Path)) -> None:
+def test_empty_app_name_raises((self)) -> None:
 
-def test_validate_lines_file_wrong_extension((tmp_path: Path)) -> None:
+def test_scale_timeout((self)) -> None:
 
-def test_automation_config_timeout_scaling(()) -> None:
+def test_export_menu_item_pdf((self)) -> None:
 
-def test_automation_error_codes(()) -> None:
+def test_export_menu_item_svg((self)) -> None:
 
-def test_file_validation_error_code(()) -> None:
+def test_export_extension((self)) -> None:
 
-def test_exporter_skips_when_pdf_exists((tmp_path: Path)) -> None:
+def test_creates_plist_when_missing((self, tmp_path: Path)) -> None:
 
-def test_window_watcher_get_current_state_with_windows(()) -> None:
+def test_restores_original_values((self, tmp_path: Path)) -> None:
 
-def test_window_watcher_get_current_state_no_windows(()) -> None:
+def test_restores_on_exception((self, tmp_path: Path)) -> None:
 
-def test_ui_actions_navigation_helpers(()) -> None:
+def test_format_codes((self)) -> None:
 
-def test_validate_pdf_valid((tmp_path: Path)) -> None:
+def test_missing_sentinel((self)) -> None:
 
-def test_validate_pdf_missing((tmp_path: Path)) -> None:
+def test_activate_builds_correct_command((self)) -> None:
 
-def test_validate_pdf_too_small((tmp_path: Path)) -> None:
+def test_activate_raises_on_failure((self)) -> None:
 
-def test_validate_pdf_invalid_header((tmp_path: Path)) -> None:
+def test_window_titles_parses_output((self)) -> None:
 
-def test_validate_pdf_large_file_warning((tmp_path: Path)) -> None:
+def test_window_titles_returns_empty_on_error((self)) -> None:
 
-def test_export_stats_timing(()) -> None:
+def test_click_menu_item_returns_bool((self)) -> None:
 
-def test_export_stats_skipped(()) -> None:
+def test_open_file_calls_subprocess((self)) -> None:
 
-def test_export_stats_human_summary(()) -> None:
+def test_open_file_raises_on_failure((self)) -> None:
 
-def test_export_stats_validation_failures(()) -> None:
+def test_is_running_returns_bool((self)) -> None:
 
-def test_progress_indicators_in_export((tmp_path: Path)) -> None:
+def test_wait_for_contains_present((self)) -> None:
 
-def test_error_suggestions(()) -> None:
+def test_wait_for_contains_disappear((self)) -> None:
 
+def test_wait_for_contains_timeout((self)) -> None:
 
-# File: /Users/adam/Developer/vcs3/github.vexyart/vexy-lines-utils/tests/test_refactored_modules.py
-# Language: python
+def test_wait_for_any_success((self)) -> None:
 
-from pathlib import Path
-from unittest.mock import MagicMock
-import pytest
-from vexy_lines_utils.__main__ import VexyLinesCLI, main
-from vexy_lines_utils.automation import (  # noqa: F401
-    ApplicationBridge,
-    PyXABridge,
-    UIActions,
-    WindowWatcher,
-)
-from vexy_lines_utils.core import (
-    AutomationConfig,
-    AutomationError,
-    EnhancedAutomationConfig,
-    ExportStats,
-    FileValidationError,
-)
-from vexy_lines_utils.core.config import DialogStrategy, MenuStrategy
-from vexy_lines_utils.exporters import (  # noqa: F401
-    BaseExporter,
-    EnhancedVexyLinesExporter,
-    VexyLinesExporter,
-)
-from vexy_lines_utils.strategies import (  # noqa: F401
-    SmartDialogHandler,
-    SmartMenuTrigger,
-)
-from vexy_lines_utils.utils import (  # noqa: F401
-    InterruptHandler,
-    find_lines_files,
-    speak,
-    validate_lines_file,
-    validate_pdf,
-)
-import vexy_lines_utils
+def test_wait_for_any_timeout((self)) -> None:
 
-class TestCoreModules:
-    def test_automation_config((self)):
-    def test_enhanced_automation_config((self)):
-    def test_automation_error((self)):
-    def test_file_validation_error((self)):
-    def test_export_stats((self)):
+def test_get_current_state_with_windows((self)) -> None:
 
-class TestUtilsModules:
-    def test_find_lines_files((self, tmp_path)):
-    def test_validate_lines_file((self, tmp_path)):
-    def test_validate_pdf((self, tmp_path)):
-    def test_interrupt_handler((self)):
+def test_get_current_state_empty((self)) -> None:
 
-class TestAutomationModules:
-    def test_window_watcher((self)):
-    def test_ui_actions_dry_run((self)):
+def test_find_lines_files_single_file((self, tmp_path: Path)) -> None:
 
-class TestBackwardCompatibility:
-    def test_main_package_exports((self)):
+def test_find_lines_files_directory_sorted((self, tmp_path: Path)) -> None:
 
-class TestCLI:
-    def test_cli_validation((self)):
+def test_find_lines_files_empty_dir((self, tmp_path: Path)) -> None:
 
-def test_automation_config((self)):
+def test_find_lines_files_wrong_extension((self, tmp_path: Path)) -> None:
 
-def test_enhanced_automation_config((self)):
+def test_validate_lines_file_valid((self, tmp_path: Path)) -> None:
 
-def test_automation_error((self)):
+def test_validate_lines_file_missing((self, tmp_path: Path)) -> None:
 
-def test_file_validation_error((self)):
+def test_validate_lines_file_empty((self, tmp_path: Path)) -> None:
 
-def test_export_stats((self)):
+def test_validate_lines_file_wrong_extension((self, tmp_path: Path)) -> None:
 
-def test_find_lines_files((self, tmp_path)):
+def test_validate_pdf_valid((self, tmp_path: Path)) -> None:
 
-def test_validate_lines_file((self, tmp_path)):
+def test_validate_pdf_missing((self, tmp_path: Path)) -> None:
 
-def test_validate_pdf((self, tmp_path)):
+def test_validate_pdf_too_small((self, tmp_path: Path)) -> None:
 
-def test_interrupt_handler((self)):
+def test_validate_pdf_invalid_header((self, tmp_path: Path)) -> None:
 
-def test_window_watcher((self)):
+def test_validate_svg_valid_xml((self, tmp_path: Path)) -> None:
 
-def test_ui_actions_dry_run((self)):
+def test_validate_svg_valid_svg_tag((self, tmp_path: Path)) -> None:
 
-def test_main_package_exports((self)):
+def test_validate_svg_missing((self, tmp_path: Path)) -> None:
 
-def test_cli_validation((self)):
+def test_validate_svg_empty((self, tmp_path: Path)) -> None:
+
+def test_validate_svg_invalid_content((self, tmp_path: Path)) -> None:
+
+def test_validate_export_dispatches((self, tmp_path: Path)) -> None:
+
+def test_expected_export_path((self, tmp_path: Path)) -> None:
+
+def test_resolve_output_path_none((self, tmp_path: Path)) -> None:
+
+def test_resolve_output_path_directory((self, tmp_path: Path)) -> None:
+
+def test_resolve_output_path_file((self, tmp_path: Path)) -> None:
+
+def test_record_success_and_failure((self, tmp_path: Path)) -> None:
+
+def test_timing((self)) -> None:
+
+def test_skipped((self)) -> None:
+
+def test_validation_failures((self)) -> None:
+
+def test_as_dict((self)) -> None:
+
+def test_human_summary((self)) -> None:
+
+def test_human_summary_dry_run((self)) -> None:
+
+def test_automation_error_code((self)) -> None:
+
+def test_automation_error_default_code((self)) -> None:
+
+def test_file_validation_error((self)) -> None:
+
+def test_error_suggestions_known_codes((self)) -> None:
+
+def test_error_suggestion_unknown((self)) -> None:
+
+def test_format_error_with_context((self)) -> None:
+
+def test_format_error_without_file((self)) -> None:
+
+def test_dry_run_counts_files((self, tmp_path: Path)) -> None:
+
+def test_dry_run_batch((self, tmp_path: Path)) -> None:
+
+def test_no_files_raises((self, tmp_path: Path)) -> None:
+
+def test_multiple_files_to_single_output_raises((self, tmp_path: Path)) -> None:
+
+def test_human_summary_in_dry_run((self, tmp_path: Path)) -> None:
+
+def test_success_path((self, tmp_path: Path)) -> None:
+
+def create_pdf((*_)):
+
+def wfc_side_effect((needle, *, present, timeout)):
+
+def wait_export_creates_file((path)):
+
+def test_invalid_timeout_multiplier((self)) -> None:
+
+def test_invalid_max_retries_negative((self)) -> None:
+
+def test_invalid_max_retries_too_high((self)) -> None:
 
 
 </documents>

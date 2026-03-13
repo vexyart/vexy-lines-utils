@@ -110,7 +110,7 @@ all = [
 # Entry points for command-line executables installed with the package.
 #------------------------------------------------------------------------------
 [project.scripts]
-vexy-lines = "vexy_lines_utils.cli:main"
+vexy-lines-utils = "vexy_lines_utils.cli:main"
 
 #------------------------------------------------------------------------------
 # BUILD SYSTEM CONFIGURATION

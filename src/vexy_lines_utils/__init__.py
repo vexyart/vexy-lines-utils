@@ -13,6 +13,7 @@ from vexy_lines_utils.core.errors import AutomationError, FileValidationError
 from vexy_lines_utils.core.plist import PlistManager
 from vexy_lines_utils.core.stats import ExportStats
 from vexy_lines_utils.exporter import VexyLinesExporter
+from vexy_lines_utils.mcp.client import MCPClient, MCPError
 from vexy_lines_utils.utils.file_utils import find_lines_files, validate_lines_file, validate_pdf, validate_svg
 from vexy_lines_utils.utils.interrupt import InterruptHandler
 from vexy_lines_utils.utils.system import speak
@@ -25,6 +26,8 @@ __all__ = [
     "ExportStats",
     "FileValidationError",
     "InterruptHandler",
+    "MCPClient",
+    "MCPError",
     "PlistManager",
     "VexyLinesCLI",
     "VexyLinesExporter",

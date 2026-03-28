@@ -2,28 +2,39 @@
 this_file: TODO.md
 ---
 
-# TODO
+# TODO: vexy-lines-utils v3.0
 
-## Completed
+## Phase 1: Fix Preference Domain
+- [x] Update APP_DOMAIN in core/plist.py from "com.vexy-art.lines" to "com.fontlab.vexy-lines"
+- [x] Update all tests that reference the old domain
+- [x] Update documentation (README, CLAUDE.md)
 
-- [x] Phase 1: Remove old dependencies and deleted modules
-- [x] Phase 2: Rewrite ExportConfig and create PlistManager
-- [x] Phase 3: Simplify AppleScriptBridge, update WindowWatcher error codes
-- [x] Phase 4: Extend file_utils, create exporter.py
-- [x] Phase 5: Rewrite CLI (__main__.py) and init files
-- [x] Phase 6: Rewrite tests (79 passing)
-- [x] Phase 7: Update documentation
+## Phase 2: MCP Client Module
+- [x] Create src/vexy_lines_utils/mcp/ package with __init__.py
+- [x] Implement mcp/client.py — TCP connection, JSON-RPC framing, initialize handshake
+- [x] Implement mcp/types.py — dataclasses for DocumentInfo, LayerNode, FillParams, RenderStatus
+- [x] Implement mcp/tools.py — typed methods for all 25 MCP tools (merged into client.py)
+- [x] Write unit tests for MCPClient connect/disconnect/send/receive (mocked socket)
+- [x] Write unit tests for each tool wrapper method
 
-## Current Status (v2.0.0)
+## Phase 3: Expand CLI
+- [x] Add mcp-status subcommand
+- [x] Add new-document subcommand
+- [x] Add open subcommand
+- [x] Add tree subcommand
+- [x] Add add-fill subcommand
+- [x] Add render subcommand
+- [x] Add --json flag for machine-readable output
+- [x] Update README with new CLI documentation
 
-- Test count: 79 passing
-- Test duration: 1.15s
-- Dependencies: fire, loguru (runtime only)
+## Phase 4: Testing
+- [x] Add tests/test_mcp_client.py with mocked socket tests
+- [x] Add tests for CLI subcommands (in test_package.py TestMCPCLI)
+- [x] Update tests/test_package.py for new plist domain
+- [x] Add _private/mcp/test_integration.py for live testing
 
-## Future Enhancements (Optional)
-
-- [ ] Add `--output-dir` shorthand CLI flag
-- [ ] Configuration file support (.toml)
-- [ ] Parallel processing of multiple files
-- [ ] Dry-run validation (check plist permissions before running)
-
+## Phase 5: Documentation and Release
+- [x] Update README.md with MCP API section
+- [x] Update DEPENDENCIES.md
+- [x] Write CHANGELOG.md entry for v3.0
+- [ ] Tag and release v3.0.0

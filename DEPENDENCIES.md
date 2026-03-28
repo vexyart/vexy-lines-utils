@@ -49,3 +49,10 @@ this_file: DEPENDENCIES.md
 - **pyautogui-ng**: No longer needed — export triggered via plist preferences, not GUI dialogs
 - **pyperclip**: No longer needed — clipboard paste into save dialog eliminated
 
+## MCP Client (v3.0)
+
+The MCP client module (`vexy_lines_utils.mcp`) uses only Python standard library:
+- `socket` — TCP connection to the embedded MCP server
+- `json` — JSON-RPC 2.0 message serialization
+
+No additional runtime dependencies were added.

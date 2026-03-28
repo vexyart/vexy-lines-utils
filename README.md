@@ -152,6 +152,31 @@ The exporter continues processing remaining files when an individual export fail
 }
 ```
 
+## MCP Commands
+
+When Vexy Lines is running with its built-in MCP server (port 47384), additional commands become available:
+
+```bash
+# Check MCP server connection
+vexy-lines-utils mcp_status
+
+# Print the layer tree of the current document
+vexy-lines-utils tree
+vexy-lines-utils tree --json_output   # machine-readable JSON
+
+# Create a new document from a source image
+vexy-lines-utils new_document --source_image ~/Art/portrait.jpg --dpi 300
+
+# Open an existing .lines file
+vexy-lines-utils open ~/Art/project.lines
+
+# Add a fill to a layer (get layer_id from `tree` command)
+vexy-lines-utils add_fill --layer_id 5 --fill_type linear --color "#ff0000"
+
+# Trigger a full render
+vexy-lines-utils render
+```
+
 ## How It Works
 
 The v2.0.0 architecture replaced GUI dialog automation (PyXA, pyautogui-ng) with a plist-driven approach — faster, more reliable, and with fewer dependencies.
@@ -279,6 +304,40 @@ for path, reason in stats.failures:
 | `NO_FILES` | No `.lines` files found at the given path |
 | `USER_INTERRUPT` | Export cancelled by Ctrl+C |
 | `PLIST_ERROR` | Failed to read or write preference plist |
+
+### MCP API
+
+For programmatic document manipulation beyond export, use the MCP client:
+
+```python
+from vexy_lines_utils.mcp import MCPClient
+
+with MCPClient() as vl:
+    # Create a document from a source image
+    doc = vl.new_document(dpi=300, source_image="/path/to/photo.jpg")
+
+    # Inspect the layer tree
+    tree = vl.get_layer_tree()
+    group_id = tree.id
+
+    # Add a layer with a linear fill
+    layer = vl.add_layer(group_id=group_id)
+    fill = vl.add_fill(
+        layer_id=layer["id"],
+        fill_type="linear",
+        color="#cc0000",
+        params={"interval": 20, "angle": 30, "thickness": 2},
+    )
+
+    # Apply an SVG mask to restrict the fill to a region
+    vl.set_layer_mask(layer["id"], paths=["M 100 200 C 150 100 250 100 300 200 Z"])
+
+    # Render and export
+    vl.render_all()
+    vl.export_document("/path/to/output.pdf")
+```
+
+The MCP client connects to the Vexy Lines app's embedded server on `localhost:47384`. All 25 tools are available — see the `MCPClient` class for the full API. No additional dependencies required.
 
 ## Development
 

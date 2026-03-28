@@ -98,8 +98,25 @@ docs = [
     "myst-parser>=3.0.0", # Markdown support in Sphinx
 ]
 
+# SVG parsing and manipulation
+svg = [
+    "svglab>=0.1.0",
+]
+
+# Video processing (frame-by-frame Vexy Lines pipeline)
+video = [
+    "av>=12.0.0",
+    "resvg-py>=0.2.0",
+    "Pillow>=10.0.0",
+    "svglab>=0.1.0",
+]
+
 # All optional dependencies combined
 all = [
+    "av>=12.0.0",
+    "resvg-py>=0.2.0",
+    "Pillow>=10.0.0",
+    "svglab>=0.1.0",
 ]
 
 #------------------------------------------------------------------------------

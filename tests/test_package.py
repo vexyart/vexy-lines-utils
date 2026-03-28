@@ -188,8 +188,8 @@ class TestPlistManager:
         ):
             writes = self._write_calls(mock_def)
             assert writes["export·dlg·format"] == FORMAT_CODES["pdf"]
-            assert writes["export·dlg·checkLayers"] == "true"
-            assert writes["export·dlg·radioTransparent"] == "true"
+            assert writes["export·dlg·checkLayers"] == "0"
+            assert writes["export·dlg·radioTransparent"] == "1"
             assert writes["export·dlg·exportMode"] == "1"
             assert writes["not_show_intro"] == "1"
             assert writes["not_show_wizard"] == "1"
@@ -802,3 +802,123 @@ class TestCLIValidation:
         cli = VexyLinesCLI()
         with pytest.raises(ValueError, match="max_retries"):
             cli.export("/tmp/fake.lines", max_retries=11)  # noqa: S108
+
+
+# ---------------------------------------------------------------------------
+# 12. MCP CLI subcommands
+# ---------------------------------------------------------------------------
+
+
+class TestMCPCLI:
+    """Tests for MCP-related CLI subcommands."""
+
+    def _make_mock_client(self):
+        """Create a mock MCPClient that works as context manager."""
+        mock_client = MagicMock()
+        mock_client.__enter__ = MagicMock(return_value=mock_client)
+        mock_client.__exit__ = MagicMock(return_value=False)
+        return mock_client
+
+    def test_mcp_status_when_server_reachable_then_returns_ok(self):
+        from vexy_lines_utils.mcp.types import DocumentInfo
+
+        mock_client = self._make_mock_client()
+        mock_client.get_document_info.return_value = DocumentInfo(
+            width_mm=100, height_mm=80, resolution=300, units="px", has_changes=False
+        )
+        with patch("vexy_lines_utils.__main__.MCPClient", return_value=mock_client):
+            cli = VexyLinesCLI()
+            result = cli.mcp_status()
+            assert result["status"] == "ok"
+
+    def test_mcp_status_when_server_unreachable_then_returns_error(self):
+        from vexy_lines_utils.mcp import MCPError
+
+        with patch(
+            "vexy_lines_utils.__main__.MCPClient",
+            side_effect=MCPError("Connection refused"),
+        ):
+            cli = VexyLinesCLI()
+            result = cli.mcp_status()
+            assert "error" in result
+
+    def test_tree_when_document_open_then_returns_tree_text(self):
+        from vexy_lines_utils.mcp.types import LayerNode
+
+        mock_client = self._make_mock_client()
+        mock_client.get_layer_tree.return_value = LayerNode(
+            id=1,
+            type="document",
+            caption="Root",
+            visible=True,
+            children=[
+                LayerNode(
+                    id=2,
+                    type="group",
+                    caption="Group 1",
+                    visible=True,
+                    children=[
+                        LayerNode(id=3, type="layer", caption="Layer 1", visible=True),
+                    ],
+                )
+            ],
+        )
+        with patch("vexy_lines_utils.__main__.MCPClient", return_value=mock_client):
+            cli = VexyLinesCLI()
+            result = cli.tree()
+            assert "document" in result
+            assert "Root" in result
+
+    def test_tree_json_output_when_document_open_then_returns_json_string(self):
+        from vexy_lines_utils.mcp.types import LayerNode
+
+        mock_client = self._make_mock_client()
+        mock_client.get_layer_tree.return_value = LayerNode(
+            id=1, type="document", caption="Root", visible=True
+        )
+        with patch("vexy_lines_utils.__main__.MCPClient", return_value=mock_client):
+            cli = VexyLinesCLI()
+            result = cli.tree(json_output=True)
+            assert '"id": 1' in result
+            assert '"type": "document"' in result
+
+    def test_new_document_when_called_then_returns_result_dict(self):
+        from vexy_lines_utils.mcp.types import NewDocumentResult
+
+        mock_client = self._make_mock_client()
+        mock_client.new_document.return_value = NewDocumentResult(
+            status="ok", width=800, height=600, dpi=300, root_id=42
+        )
+        with patch("vexy_lines_utils.__main__.MCPClient", return_value=mock_client):
+            cli = VexyLinesCLI()
+            result = cli.new_document(width=800, height=600)
+            assert result["status"] == "ok"
+            assert result["root_id"] == 42
+
+    def test_render_when_called_then_returns_result_dict(self):
+        mock_client = self._make_mock_client()
+        mock_client.render_all.return_value = "Rendering started"
+        with patch("vexy_lines_utils.__main__.MCPClient", return_value=mock_client):
+            cli = VexyLinesCLI()
+            result = cli.render()
+            assert result["result"] == "Rendering started"
+
+    def test_add_fill_when_called_then_sends_correct_args(self):
+        mock_client = self._make_mock_client()
+        mock_client.add_fill.return_value = {"id": 99}
+        with patch("vexy_lines_utils.__main__.MCPClient", return_value=mock_client):
+            cli = VexyLinesCLI()
+            result = cli.add_fill(layer_id=5, fill_type="linear", color="#ff0000")
+            assert result == {"id": 99}
+            mock_client.add_fill.assert_called_once_with(
+                layer_id=5, fill_type="linear", color="#ff0000"
+            )
+
+    def test_open_document_when_called_then_returns_ok(self):
+        mock_client = self._make_mock_client()
+        mock_client.open_document.return_value = "Opened successfully"
+        with patch("vexy_lines_utils.__main__.MCPClient", return_value=mock_client):
+            cli = VexyLinesCLI()
+            result = cli.open("/tmp/test.lines")  # noqa: S108
+            assert result["status"] == "ok"
+            assert result["result"] == "Opened successfully"

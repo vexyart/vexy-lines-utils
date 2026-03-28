@@ -60,8 +60,50 @@ this_file: WORK.md
 79 passed in ~1.2s — ruff 0 errors
 ```
 
+## Session 3 — v3.0 MCP Client + Plist Domain Fix (2026-03-27)
+
+### Completed
+
+#### Phase 1: Fix Preference Domain
+- Updated `APP_DOMAIN` in `core/plist.py` from `"com.vexy-art.lines"` to `"com.fontlab.vexy-lines"`
+- Fixed test assertion in `test_applies_export_prefs_for_pdf` (expected `"true"` but values are integers `0`/`1`)
+
+#### Phase 2: MCP Client Module
+- Created `src/vexy_lines_utils/mcp/` package with three files:
+  - `__init__.py` — public API exports (MCPClient, MCPError)
+  - `types.py` — dataclasses: DocumentInfo, LayerNode, NewDocumentResult, RenderStatus
+  - `client.py` — TCP JSON-RPC 2.0 client with 25 typed tool methods
+- No new runtime dependencies (uses stdlib `socket` + `json`)
+
+#### Phase 2.5: MCP Client Tests
+- Created `tests/test_mcp_client.py` — 34 tests covering connection, framing, handshake, tool calling, type parsing, error handling
+
+#### Documentation
+- Updated `CLAUDE.md` with MCP API section and preference domain info
+- Created comprehensive `PLAN.md` for v3.0 SDK roadmap (5 phases)
+- Created `TODO.md` with flat checklist representation
+
+#### Phase 3: Expand CLI
+- Added 6 new subcommands: `mcp_status`, `tree`, `new_document`, `open`, `add_fill`, `render`
+- `--json_output` flag for machine-readable tree output
+- 8 new CLI unit tests in `TestMCPCLI`
+
+#### Phase 4 & 5: Examples, Integration Tests, Documentation
+- Created `examples/`: `batch_export.py`, `mcp_hello.py`, `mcp_create_artwork.py`, `mcp_masks.py`
+- Created `_private/mcp/test_integration.py` for live testing against running app
+- Updated `README.md` with MCP API section
+- Updated `DEPENDENCIES.md`
+- Updated `CHANGELOG.md` with full v3.0 entry
+
+### Test Results
+
+```
+124 passed in ~3.3s
+```
+
 ## Next Steps
 
-- Monitor real-world usage with the new plist-driven export
-- Consider adding `--output-dir` shorthand
+- Tag and release v3.0.0
+- Real-world testing of MCP client against Vexy Lines app
+- Consider async MCP client variant for long-running workflows
 

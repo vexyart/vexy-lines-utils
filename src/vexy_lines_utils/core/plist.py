@@ -13,7 +13,7 @@ from loguru import logger
 
 from vexy_lines_utils.core.errors import AutomationError
 
-APP_DOMAIN = "com.vexy-art.lines"
+APP_DOMAIN = "com.fontlab.vexy-lines"
 
 FORMAT_CODES: dict[str, str] = {
     "pdf": "pdf",

@@ -4,6 +4,40 @@ this_file: CHANGELOG.md
 
 # Changelog
 
+## [3.0.0-dev] - 2026-03-27
+
+### Added
+
+- **MCP client module** (`mcp/`): TCP JSON-RPC 2.0 client for the Vexy Lines embedded MCP server
+  - `MCPClient` context manager with automatic connect/handshake/disconnect
+  - Typed Python methods for all 25 MCP tools (document ops, structure, fills, masks, transforms, rendering)
+  - Dataclass responses: `DocumentInfo`, `LayerNode`, `NewDocumentResult`, `RenderStatus`
+  - Zero new runtime dependencies (stdlib `socket` + `json`)
+- **6 new CLI subcommands**: `mcp_status`, `tree`, `new_document`, `open`, `add_fill`, `render`
+  - `--json_output` flag for machine-readable tree output
+  - Graceful error handling when MCP server is unreachable
+- **4 example scripts** in `examples/`:
+  - `batch_export.py` — existing export pipeline demo
+  - `mcp_hello.py` — connect and print document info / layer tree
+  - `mcp_create_artwork.py` — full workflow: create document, add fills, render, export
+  - `mcp_masks.py` — SVG path masks on fill layers
+- **Integration test** (`_private/mcp/test_integration.py`): interactive MCPClient test against running app
+- 42 new unit tests (34 MCP client + 8 CLI subcommands)
+
+### Changed (breaking)
+
+- **Preference domain** updated from `com.vexy-art.lines` to `com.fontlab.vexy-lines` to match current Vexy Lines app
+
+### Fixed
+
+- Test assertion in `test_applies_export_prefs_for_pdf`: expected `"true"` but `EXPORT_PREFERENCES` values are integers
+
+### Technical
+
+- **Test count:** 124 tests passing (82 existing + 42 new)
+- **Test duration:** ~3.3s
+- **New files:** `src/vexy_lines_utils/mcp/{__init__,client,types}.py`, `tests/test_mcp_client.py`, `examples/{batch_export,mcp_hello,mcp_create_artwork,mcp_masks}.py`
+
 ## [2.0.0] - 2026-03-13
 
 ### Changed (breaking)

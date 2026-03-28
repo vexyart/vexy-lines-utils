@@ -115,19 +115,26 @@ def _svg_to_pil(svg_string: str, width: int, height: int) -> _Image.Image:
     except ImportError:
         pass
 
-    # Fallback: raw resvg_py with dimension patching
+    # Fallback: resvg_py returns PNG bytes — decode with PIL and resize
+    import io  # noqa: PLC0415
     import re  # noqa: PLC0415
     import tempfile  # noqa: PLC0415
 
     import resvg_py  # noqa: PLC0415
 
+    # Patch mm dimensions to px (resvg cannot parse mm units)
     svg_fixed = re.sub(r'width="[^"]*mm"', f'width="{width}px"', svg_string, count=1)
     svg_fixed = re.sub(r'height="[^"]*mm"', f'height="{height}px"', svg_fixed, count=1)
-    tmp_svg = Path(tempfile.mktemp(suffix=".svg"))
-    tmp_svg.write_text(svg_fixed, encoding="utf-8")
+
+    with tempfile.NamedTemporaryFile(suffix=".svg", mode="w", encoding="utf-8", delete=False) as f:
+        f.write(svg_fixed)
+        tmp_svg = Path(f.name)
     try:
-        raw = resvg_py.svg_to_bytes(svg_path=str(tmp_svg), width=width, height=height)
-        return Image.frombytes("RGBA", (width, height), bytes(raw))
+        png_bytes = resvg_py.svg_to_bytes(svg_path=str(tmp_svg), width=width, height=height)
+        img = Image.open(io.BytesIO(bytes(png_bytes)))
+        if img.size != (width, height):
+            img = img.resize((width, height), Image.LANCZOS)
+        return img
     finally:
         tmp_svg.unlink(missing_ok=True)
 

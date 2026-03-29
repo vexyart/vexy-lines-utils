@@ -14,6 +14,20 @@ from vexy_lines_utils.core.plist import PlistManager
 from vexy_lines_utils.core.stats import ExportStats
 from vexy_lines_utils.exporter import VexyLinesExporter
 from vexy_lines_utils.mcp.client import MCPClient, MCPError
+from vexy_lines_utils.parser import (
+    extract_preview_image,
+    extract_source_image,
+)
+from vexy_lines_utils.parser import (
+    parse as parse_lines,
+)
+from vexy_lines_utils.style import (
+    Style,
+    apply_style,
+    extract_style,
+    interpolate_style,
+    styles_compatible,
+)
 from vexy_lines_utils.utils.file_utils import find_lines_files, validate_lines_file, validate_pdf, validate_svg
 from vexy_lines_utils.utils.interrupt import InterruptHandler
 from vexy_lines_utils.utils.system import speak
@@ -29,13 +43,21 @@ __all__ = [
     "MCPClient",
     "MCPError",
     "PlistManager",
+    "Style",
     "VexyLinesCLI",
     "VexyLinesExporter",
     "WindowWatcher",
     "__version__",
+    "apply_style",
+    "extract_preview_image",
+    "extract_source_image",
+    "extract_style",
     "find_lines_files",
+    "interpolate_style",
     "main",
+    "parse_lines",
     "speak",
+    "styles_compatible",
     "validate_lines_file",
     "validate_pdf",
     "validate_svg",

@@ -16,6 +16,7 @@ Usage:
     python test_export.py --dpi 150       # lower DPI for faster raster export
     python test_export.py --timeout 180   # more time for large images
 """
+
 from __future__ import annotations
 
 import shutil
@@ -24,11 +25,14 @@ import sys
 import tempfile
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import fire
 
 from vexy_lines_utils.mcp import MCPClient, MCPError
-from vexy_lines_utils.mcp.types import LayerNode
+
+if TYPE_CHECKING:
+    from vexy_lines_utils.mcp.types import LayerNode
 
 
 def _project_root() -> Path:
@@ -36,7 +40,9 @@ def _project_root() -> Path:
     try:
         result = subprocess.run(
             ["git", "rev-parse", "--show-toplevel"],
-            capture_output=True, text=True, check=True,
+            capture_output=True,
+            text=True,
+            check=True,
         )
         return Path(result.stdout.strip())
     except (subprocess.CalledProcessError, FileNotFoundError):
@@ -126,6 +132,7 @@ VALIDATORS = {
 
 # -- tree helpers -------------------------------------------------------------
 
+
 def _find_first(node: LayerNode, node_type: str) -> LayerNode | None:
     """Find the first node of a given type in the tree."""
     if node.type == node_type:
@@ -138,6 +145,7 @@ def _find_first(node: LayerNode, node_type: str) -> LayerNode | None:
 
 
 # -- main test ----------------------------------------------------------------
+
 
 def test_export(
     *,
@@ -160,30 +168,20 @@ def test_export(
     """
     image = Path(source_image).expanduser().resolve() if source_image else DEFAULT_IMAGE
     if not image.exists():
-        print(f"FATAL: source image not found: {image}")
         sys.exit(1)
 
     tmp_dir = Path(tempfile.mkdtemp(prefix="vexy_export_test_"))
-    print(f"Source image : {image}")
-    print(f"Export dir   : {tmp_dir}")
-    print(f"DPI          : {dpi}")
-    print(f"Timeout      : {timeout}s")
-    print(f"Keep files   : {keep}")
-    print()
 
     results: list[tuple[str, bool, str]] = []
 
     try:
         with MCPClient(host=host, port=port, timeout=float(timeout)) as vl:
             # -- 1. create document from source image -------------------------
-            print("Creating document from source image...")
             doc = vl.new_document(dpi=dpi, source_image=str(image))
-            print(f"  Document: {doc.width}x{doc.height} @ {doc.dpi} DPI (root_id={doc.root_id})")
             if doc.status != "ok":
-                print(f"  WARNING: unexpected status '{doc.status}'")
+                pass
 
             # -- 2. add a fill so there's content to export -------------------
-            print("Adding linear fill...")
             tree = vl.get_layer_tree()
             group = _find_first(tree, "group")
             group_id = group.id if group else doc.root_id
@@ -196,23 +194,19 @@ def test_export(
                 color="#222222",
                 params={"interval": 12, "angle": 45, "thickness": 1.5},
             )
-            print(f"  Layer {layer_id}: linear fill added.")
 
             # -- 3. render and wait -------------------------------------------
-            print("Rendering...")
             vl.render_all()
             rendered = vl.wait_for_render(timeout=float(timeout))
             if rendered:
-                print("  Render complete.")
+                pass
             else:
-                print(f"  WARNING: render did not finish within {timeout}s, proceeding anyway.")
+                pass
 
             # -- 4. export each format ----------------------------------------
-            print()
             for fmt in FORMATS:
                 out_path = tmp_dir / f"export_test.{fmt}"
                 label = fmt.upper()
-                print(f"Exporting {label}...", end=" ", flush=True)
 
                 try:
                     vl.export_document(
@@ -228,50 +222,37 @@ def test_export(
                     passed, detail = validator(out_path)
 
                     if passed:
-                        print(f"PASS  ({detail})")
+                        pass
                     else:
-                        print(f"FAIL  ({detail})")
+                        pass
                     results.append((label, passed, detail))
 
                 except MCPError as e:
                     detail = f"MCP error: {e.message}"
-                    print(f"FAIL  ({detail})")
                     results.append((label, False, detail))
                 except Exception as e:
                     detail = f"unexpected error: {e}"
-                    print(f"FAIL  ({detail})")
                     results.append((label, False, detail))
 
         # -- 5. summary -------------------------------------------------------
-        print()
-        print("=" * 64)
-        print(f"  {'FORMAT':<8} {'RESULT':<8} {'DETAIL'}")
-        print("-" * 64)
         for label, passed, detail in results:
-            status = "PASS" if passed else "FAIL"
-            print(f"  {label:<8} {status:<8} {detail}")
-        print("=" * 64)
+            pass
 
         passed_count = sum(1 for _, p, _ in results if p)
         total = len(results)
-        print(f"\n  {passed_count}/{total} formats passed.")
 
         if passed_count < total:
-            print("\n  Some exports failed. Check Vexy Lines logs for details.")
             sys.exit(1)
 
-    except MCPError as e:
-        print(f"\nMCP Error: {e}")
-        print("Make sure Vexy Lines is running with the MCP server active.")
+    except MCPError:
         sys.exit(1)
     except KeyboardInterrupt:
-        print("\nStopped by user.")
+        pass
     finally:
         if keep:
-            print(f"\nExported files kept at: {tmp_dir}")
+            pass
         else:
             shutil.rmtree(tmp_dir, ignore_errors=True)
-            print(f"\nTemp directory cleaned up.")
 
 
 def _wait_for_file(path: Path, max_wait: float = 30) -> None:

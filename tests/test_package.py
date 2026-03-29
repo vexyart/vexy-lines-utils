@@ -873,9 +873,7 @@ class TestMCPCLI:
         from vexy_lines_utils.mcp.types import LayerNode
 
         mock_client = self._make_mock_client()
-        mock_client.get_layer_tree.return_value = LayerNode(
-            id=1, type="document", caption="Root", visible=True
-        )
+        mock_client.get_layer_tree.return_value = LayerNode(id=1, type="document", caption="Root", visible=True)
         with patch("vexy_lines_utils.__main__.MCPClient", return_value=mock_client):
             cli = VexyLinesCLI()
             result = cli.tree(json_output=True)
@@ -910,9 +908,7 @@ class TestMCPCLI:
             cli = VexyLinesCLI()
             result = cli.add_fill(layer_id=5, fill_type="linear", color="#ff0000")
             assert result == {"id": 99}
-            mock_client.add_fill.assert_called_once_with(
-                layer_id=5, fill_type="linear", color="#ff0000"
-            )
+            mock_client.add_fill.assert_called_once_with(layer_id=5, fill_type="linear", color="#ff0000")
 
     def test_open_document_when_called_then_returns_ok(self):
         mock_client = self._make_mock_client()

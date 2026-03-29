@@ -20,6 +20,7 @@ Usage:
     python mcp_create_artwork.py photo.jpg output.svg
     python mcp_create_artwork.py photo.jpg output.png --dpi 150 --timeout 180
 """
+
 import sys
 
 import fire
@@ -50,16 +51,13 @@ def create_artwork(
     try:
         with MCPClient(host=host, port=port, timeout=timeout) as vl:
             # Create document from source image
-            print(f"Creating document from {source_image}...")
-            doc = vl.new_document(dpi=dpi, source_image=source_image)
-            print(f"  Canvas: {doc.width:.0f}x{doc.height:.0f} px @ {doc.dpi:.0f} DPI")
+            vl.new_document(dpi=dpi, source_image=source_image)
 
             # Get the root group
             tree = vl.get_layer_tree()
             root_id = tree.id
 
             # Add a linear engraving fill
-            print("Adding linear fill (engraving style)...")
             layer1 = vl.add_layer(group_id=root_id)
             vl.add_fill(
                 layer_id=layer1["id"],
@@ -69,18 +67,14 @@ def create_artwork(
             )
 
             # Render and wait for completion
-            print("Rendering...")
             vl.render_all()
             if not vl.wait_for_render(timeout=timeout):
-                print("  Warning: render timed out, exporting anyway.")
+                pass
 
             # Export
-            print(f"Exporting to {output_path}...")
             vl.export_document(output_path)
-            print("Done!")
 
-    except MCPError as e:
-        print(f"Error: {e}")
+    except MCPError:
         sys.exit(1)
 
 

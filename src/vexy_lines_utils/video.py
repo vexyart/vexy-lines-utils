@@ -289,16 +289,24 @@ def process_video(
         # Pass 2: merge audio from original via ffmpeg
         if info.has_audio:
             import subprocess
+
             merged = tmp_dir / "merged.mp4"
             subprocess.run(  # noqa: S603
                 [  # noqa: S607
-                    "ffmpeg", "-y",
-                    "-i", str(video_only),
-                    "-i", str(input_path),
-                    "-c:v", "copy",
-                    "-c:a", "aac",
-                    "-map", "0:v:0",
-                    "-map", "1:a:0",
+                    "ffmpeg",
+                    "-y",
+                    "-i",
+                    str(video_only),
+                    "-i",
+                    str(input_path),
+                    "-c:v",
+                    "copy",
+                    "-c:a",
+                    "aac",
+                    "-map",
+                    "0:v:0",
+                    "-map",
+                    "1:a:0",
                     "-shortest",
                     str(merged),
                 ],

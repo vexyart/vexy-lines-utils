@@ -9,6 +9,7 @@ Usage:
     python batch_export.py ~/Documents/vexy-projects
     python batch_export.py ~/Art/portrait.lines --format svg --verbose
 """
+
 from pathlib import Path
 
 import fire
@@ -31,9 +32,8 @@ def batch_export(
 
     stats = exporter.export(Path(input), Path(output) if output else None)
 
-    print(stats.human_summary())
-    for path, reason in stats.failures:
-        print(f"  Failed: {path} — {reason}")
+    for _path, _reason in stats.failures:
+        pass
 
 
 if __name__ == "__main__":

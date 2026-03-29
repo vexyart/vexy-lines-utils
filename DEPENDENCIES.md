@@ -56,3 +56,32 @@ The MCP client module (`vexy_lines_utils.mcp`) uses only Python standard library
 - `json` — JSON-RPC 2.0 message serialization
 
 No additional runtime dependencies were added.
+
+## .lines Parser & Style Engine (v4.0)
+
+The parser (`vexy_lines_utils.parser`) and style engine (`vexy_lines_utils.style`) use only Python standard library:
+- `xml.etree.ElementTree` — XML parsing of .lines files
+- `base64`, `zlib`, `struct` — decoding embedded source/preview images
+- `dataclasses` — typed result structures
+- `copy` — deep-copying styles for interpolation
+
+No additional runtime dependencies were added.
+
+## Optional: Image Extraction [images]
+
+- **Pillow** (>=10.0.0): Image format conversion when extracting source/preview from .lines files
+
+## Optional: Video Processing [video]
+
+- **av** (>=12.0.0): PyAV for video frame extraction and assembly
+- **resvg-py** (>=0.2.0): Fast SVG-to-PNG rasterisation
+- **Pillow** (>=10.0.0): Image format bridging
+- **svglab** (>=0.1.0): SVG parsing with native mm dimension handling
+
+## Optional: GUI [gui]
+
+- **customtkinter** (>=5.2.0): Modern themed tkinter widgets
+- **tkinterdnd2** (>=0.4.0): Drag-and-drop file support
+- **CTkMenuBarPlus** (>=0.1.0): Menu bar widget for customtkinter
+- **Pillow** (>=10.0.0): Image preview display
+- **opencv-python** (>=4.8.0): Video frame extraction for GUI previews

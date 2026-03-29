@@ -1,10 +1,11 @@
 # this_file: tests/test_mcp_client.py
 """Unit tests for the MCP client module."""
+
 from __future__ import annotations
 
 import json
 import socket
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -15,6 +16,7 @@ from vexy_lines_utils.mcp.types import DocumentInfo, LayerNode, NewDocumentResul
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_response(result: dict, req_id: int = 1) -> bytes:
     """Encode a successful JSON-RPC response as newline-terminated bytes."""
     return (json.dumps({"jsonrpc": "2.0", "id": req_id, "result": result}) + "\n").encode()
@@ -22,10 +24,7 @@ def _make_response(result: dict, req_id: int = 1) -> bytes:
 
 def _make_error_response(code: int, message: str, req_id: int = 1) -> bytes:
     """Encode a JSON-RPC error response as newline-terminated bytes."""
-    return (
-        json.dumps({"jsonrpc": "2.0", "id": req_id, "error": {"code": code, "message": message}})
-        + "\n"
-    ).encode()
+    return (json.dumps({"jsonrpc": "2.0", "id": req_id, "error": {"code": code, "message": message}}) + "\n").encode()
 
 
 def _tool_response(text: str, req_id: int = 1) -> bytes:
@@ -58,7 +57,8 @@ class TestMCPError:
 
     def test_mcp_error_when_raised_then_caught_as_exception(self):
         with pytest.raises(MCPError, match="kaboom"):
-            raise MCPError("kaboom")
+            msg = "kaboom"
+            raise MCPError(msg)
 
 
 # ---------------------------------------------------------------------------
@@ -274,7 +274,9 @@ class TestGetDocumentInfo:
     def test_get_document_info_when_called_then_returns_document_info(self):
         mock_sock = MagicMock()
         client = _make_client_with_socket(mock_sock)
-        payload = json.dumps({"width_mm": 210.0, "height_mm": 297.0, "resolution": 300.0, "units": "mm", "has_changes": True})
+        payload = json.dumps(
+            {"width_mm": 210.0, "height_mm": 297.0, "resolution": 300.0, "units": "mm", "has_changes": True}
+        )
         client._buffer = _tool_response(payload, req_id=1)
         info = client.get_document_info()
         assert isinstance(info, DocumentInfo)
@@ -298,9 +300,7 @@ class TestGetLayerTree:
                     "type": "group",
                     "caption": "bg",
                     "visible": True,
-                    "children": [
-                        {"id": 2, "type": "layer", "caption": "layer1", "visible": False, "children": []}
-                    ],
+                    "children": [{"id": 2, "type": "layer", "caption": "layer1", "visible": False, "children": []}],
                 }
             ],
         }
@@ -388,9 +388,7 @@ class TestLayerNodeFromDict:
             "type": "group",
             "caption": "g",
             "visible": True,
-            "children": [
-                {"id": 2, "type": "layer", "caption": "l", "visible": True, "children": []}
-            ],
+            "children": [{"id": 2, "type": "layer", "caption": "l", "visible": True, "children": []}],
         }
         node = LayerNode.from_dict(d)
         assert len(node.children) == 1

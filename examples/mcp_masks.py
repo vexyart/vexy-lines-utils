@@ -14,6 +14,7 @@ Usage:
     python mcp_masks.py 42
     python mcp_masks.py 42 --mode add
 """
+
 import sys
 
 import fire
@@ -50,18 +51,14 @@ def apply_masks(
     """
     try:
         with MCPClient(host=host, port=port) as vl:
-            print(f"Applying eye masks to layer {layer_id} (mode={mode})...")
             vl.set_layer_mask(
                 layer_id=layer_id,
                 paths=[EYE_MASK_LEFT, EYE_MASK_RIGHT],
                 mode=mode,
             )
-            print("Masks applied. Triggering render...")
             vl.render_all()
             vl.wait_for_render()
-            print("Done! Fills should only appear in the eye regions.")
-    except MCPError as e:
-        print(f"Error: {e}")
+    except MCPError:
         sys.exit(1)
 
 

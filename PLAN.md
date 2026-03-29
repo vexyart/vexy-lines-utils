@@ -2,144 +2,495 @@
 this_file: PLAN.md
 ---
 
-# PLAN: vexy-lines-utils v3.0 — Full Vexy Lines Python SDK
+# PLAN: vexy-lines-utils v4.0 — .lines Parser, Style Engine, GUI & CLI
 
 ## Project Scope
 
-Expand vexy-lines-utils from an export-only CLI tool into a comprehensive Python SDK that drives the Vexy Lines desktop app through two channels:
-1. **AppleScript + plist injection** (existing) — headless batch export on macOS
-2. **MCP API** (new) — programmatic document manipulation via the app's embedded JSON-RPC server
+Transform vexy-lines-utils from an export/MCP tool into a complete style-transfer workstation. Users load `.lines` style references, apply them to images or video frames via the Vexy Lines MCP API, and export as SVG/PNG/JPG/MP4/LINES. Two styles can be interpolated across a sequence of frames.
 
-## Phase 1: Fix Preference Domain (Breaking Change)
+The package gains four new capabilities:
+1. **`.lines` parser** — read the XML format without the app
+2. **Style engine** — extract, apply, and interpolate fill structures
+3. **CustomTkinter GUI** — drag-and-drop desktop app with Lines/Images/Video input tabs
+4. **Enhanced CLI** — Fire-based CLI mirroring all GUI operations
 
-The app's QSettings domain changed from `com.vexy-art.lines` to `com.fontlab.vexy-lines`. The current code in `core/plist.py` uses the old domain.
+## Architecture Overview
 
-### Tasks
-- Update `APP_DOMAIN` in `core/plist.py` from `"com.vexy-art.lines"` to `"com.fontlab.vexy-lines"`
-- Update all tests that reference the old domain
-- Update documentation (README, CLAUDE.md)
-- This is a breaking change for users on old Vexy Lines versions — document in CHANGELOG
-
-## Phase 2: MCP Client Module
-
-Add a TCP JSON-RPC 2.0 client that connects to the Vexy Lines MCP server at `localhost:47384`.
-
-### Architecture
 ```
 vexy_lines_utils/
-  mcp/
-    __init__.py        # Public API: MCPClient, MCPError
-    client.py          # TCP connection, JSON-RPC send/receive, initialize handshake
-    tools.py           # Typed Python methods wrapping each MCP tool
-    types.py           # Dataclasses for tool responses (DocumentInfo, LayerTree, FillParams, etc.)
+  parser.py          # .lines XML parser → LinesDocument dataclass tree
+  style.py           # Style extraction, application (via MCP), interpolation
+  gui/
+    __init__.py      # GUI entry point
+    app.py           # Main App window (CustomTkinter + TkinterDnD)
+    widgets.py       # CTkRangeSlider and custom widgets
+    panels.py        # Input tabs, style pickers, output bar
+  __main__.py        # Enhanced Fire CLI (existing + new subcommands)
+  video.py           # Existing video processing (updated to use style engine)
+  mcp/               # Existing MCP client (unchanged)
+  core/              # Existing export core (unchanged)
+  ...
 ```
 
-### Design Decisions
-- **Synchronous TCP socket** — matches existing sync codebase, keeps it simple
-- **Single `MCPClient` class** — context manager, handles connect/initialize/disconnect
-- **Typed wrappers** — one Python method per MCP tool with type hints and docstrings
-- **Dataclass responses** — structured results, not raw dicts
-- **No external dependencies** — uses stdlib `socket` and `json` only
+## .lines File Format (Reference)
 
-### MCPClient API sketch
+`.lines` files are XML. Root element: `<Project app="vexylines" version="3.0.1" caption="..." dpi="300">`.
+
+### Top-level children
+
+| Element | Content |
+|---------|---------|
+| `<form_data>` | UI state (ignored by parser) |
+| `<Objects>` | Layer tree: groups (`LrSection`), layers (`FreeMesh`), fills (`*StrokesTmpl`) |
+| `<SourcePict>` | Source image — `<ImageData>` is base64 → 4-byte BE size + zlib → JPEG |
+| `<Document>` | Document properties (thickness ranges, DPI, intervals, colors) |
+| `<Workspace>` | Viewport state (ignored) |
+| `<PreviewDoc>` | Preview image — base64 → raw PNG |
+
+### Object types in `<Objects>`
+
+| XML Tag | Role | Key Attributes |
+|---------|------|---------------|
+| `LrSection` | Group | `caption`, `type=16777602`, `expanded` |
+| `FreeMesh` | Layer | `caption`, `type=16793857`, `mask_enabled`, grid edges |
+| `LinearStrokesTmpl` | Fill: linear | `type=16781569`, `interval`, `angle`, `color_name`, ... |
+| `FreeCurveStrokesTmpl` | Fill: flowlines/trace | `type=16781578`, `type_conv`, `interval`, `angle`, ... |
+| `CircularStrokesTmpl` | Fill: circular | Similar params |
+| `RadialStrokesTmpl` | Fill: radial | Similar params |
+| `SpiralStrokesTmpl` | Fill: spiral | Similar params |
+| `HalftoneStrokesTmpl` | Fill: halftone | Similar params |
+| `MaskData` | Layer mask | `mask_type`, `invert_mask`, `tolerance` |
+| `row_grid_edge` / `col_grid_edge` | Mesh warp grid | Node data |
+
+### Fill parameter mapping
+
+Fill XML attributes map to MCP `set_fill_params` keys. Common numeric params that can be interpolated:
+
+- `interval` — stroke spacing
+- `angle` — rotation angle (degrees)
+- `uplimit` / `downlimit` — brightness thresholds (0–255)
+- `smoothness` — curve smoothness
+- `multiplier` — size multiplier
+- `base_width` — base stroke width
+- `thickness` / `thick_gap` — stroke thickness
+- `dispersion` — random displacement
+- `vert_disp` — vertical displacement
+- `shear` — shear angle
+
+### Fill type tag → MCP fill_type mapping
+
+| XML Tag | `type_conv` | MCP `fill_type` |
+|---------|-------------|-----------------|
+| `LinearStrokesTmpl` | — | `linear` |
+| `FreeCurveStrokesTmpl` | 9 | `trace` / `scribble` |
+| `CircularStrokesTmpl` | — | `circular` |
+| `RadialStrokesTmpl` | — | `radial` |
+| `SpiralStrokesTmpl` | — | `spiral` |
+| `HalftoneStrokesTmpl` | — | `halftone` |
+
+---
+
+## Phase 1: .lines Parser Module
+
+**Goal:** Parse `.lines` XML into a typed Python object tree. No app required.
+
+### New file: `src/vexy_lines_utils/parser.py`
+
+#### Dataclasses
+
 ```python
-with MCPClient(host="127.0.0.1", port=47384) as client:
-    # Document ops
-    doc = client.new_document(width=800, height=600, dpi=300, source_image="/path/to/img.jpg")
-    info = client.get_document_info()
-    tree = client.get_layer_tree()
+@dataclass
+class FillParams:
+    """All numeric and string parameters of a fill."""
+    fill_type: str          # "linear", "circular", "trace", etc.
+    color: str              # "#rrggbbaa"
+    interval: float
+    angle: float
+    thickness: float
+    thickness_min: float
+    smoothness: float
+    # ... all other numeric params as float | None
+    raw: dict[str, str]     # All XML attributes preserved
 
-    # Structure manipulation
-    group_id = client.add_group(caption="Eyes")
-    layer_id = client.add_layer(group_id=group_id)
-    fill_id = client.add_fill(layer_id=layer_id, fill_type="circular", color="#ff0000")
+@dataclass
+class MaskInfo:
+    mask_type: int
+    invert: bool
+    tolerance: float
 
-    # Fill parameters
-    client.set_fill_params(fill_id, interval=20, angle=30, thickness=2)
-    params = client.get_fill_params(fill_id)
+@dataclass
+class FillNode:
+    xml_tag: str            # e.g. "LinearStrokesTmpl"
+    caption: str
+    params: FillParams
+    object_id: int | None
 
-    # Masks (SVG paths in pixel coordinates)
-    client.set_layer_mask(layer_id, paths=["M 100 200 C 150 100 250 100 300 200 Z"])
+@dataclass
+class LayerInfo:
+    caption: str
+    object_id: int | None
+    visible: bool
+    mask: MaskInfo | None
+    fills: list[FillNode]
+    grid_edges: list[dict]  # Raw grid data for mesh warp
 
-    # Render and export
-    client.render_all()
-    client.export_document("/path/to/output.pdf")
-    client.save_document()
+@dataclass
+class GroupInfo:
+    caption: str
+    object_id: int | None
+    expanded: bool
+    children: list[GroupInfo | LayerInfo]
+
+@dataclass
+class DocumentProps:
+    width_mm: float
+    height_mm: float
+    dpi: int
+    thickness_min: float
+    thickness_max: float
+    interval_min: float
+    interval_max: float
+
+@dataclass
+class LinesDocument:
+    """Complete parsed representation of a .lines file."""
+    caption: str
+    version: str
+    dpi: int
+    props: DocumentProps
+    groups: list[GroupInfo]   # Top-level structure from <Objects>
+    source_image: bytes | None  # Decoded JPEG bytes
+    preview_image: bytes | None # Decoded PNG bytes
+    raw_xml: ET.Element         # Preserved for round-trip
+```
+
+#### Functions
+
+```python
+def parse(path: str | Path) -> LinesDocument
+def extract_source_image(path: str | Path, output: str | Path) -> Path
+def extract_preview_image(path: str | Path, output: str | Path) -> Path
+def get_style(doc: LinesDocument) -> list[GroupInfo]  # Just the structure
 ```
 
 ### Tasks
-- Create `src/vexy_lines_utils/mcp/` package
-- Implement `client.py` with TCP connection, JSON-RPC framing, initialize handshake
-- Implement `types.py` with dataclasses for DocumentInfo, LayerNode, FillParams, RenderStatus
-- Implement `tools.py` with typed methods for all 25 MCP tools
-- Write unit tests (mock TCP socket) for client connect/disconnect/send/receive
-- Write unit tests for each tool wrapper method
-- Write integration test script (requires running Vexy Lines app)
+- Define all dataclasses in `parser.py`
+- Implement XML parsing: `<Objects>` → recursive `GroupInfo`/`LayerInfo`/`FillNode` tree
+- Implement `_decode_source_pict()` and `_decode_preview_doc()` (from `lines2img.py`)
+- Implement `parse()` top-level function
+- Implement `extract_source_image()` and `extract_preview_image()`
+- Map XML fill tags to MCP fill types
+- Map XML fill attributes to `FillParams` fields
+- Unit tests with real `.lines` files from `_private/lines-examples/`
 
-## Phase 3: Expand CLI
+---
 
-Add new CLI subcommands beyond `export`:
+## Phase 2: App-less Image Extraction
+
+**Goal:** Integrate `lines2img.py` functionality into the package CLI.
+
+### New CLI subcommands
+
+```bash
+# Extract source image
+vexy-lines-utils extract-source input.lines --output source.jpg
+
+# Extract preview image
+vexy-lines-utils extract-preview input.lines --output preview.png
+
+# Query .lines file metadata
+vexy-lines-utils info input.lines
+vexy-lines-utils info input.lines --json
+
+# List layer tree from file (no MCP needed)
+vexy-lines-utils file-tree input.lines
+```
+
+### Tasks
+- Add `extract_source` CLI subcommand
+- Add `extract_preview` CLI subcommand
+- Add `info` CLI subcommand (prints caption, DPI, dimensions, layer count, fill count)
+- Add `file_tree` CLI subcommand (prints layer tree from parsed file)
+- Add Pillow to optional dependencies for image conversion
+- Tests for each CLI subcommand
+
+---
+
+## Phase 3: Style Engine
+
+**Goal:** Extract style from a `.lines` file and apply it to images/video via MCP. Interpolate between two styles.
+
+### New file: `src/vexy_lines_utils/style.py`
+
+#### Core concepts
+
+- **Style** = the `list[GroupInfo]` extracted from a `.lines` file (groups → layers → fills with params)
+- **Apply style** = create a new MCP document, replicate the group/layer/fill structure, set all params
+- **Interpolate** = given Style A and Style B with compatible structures, produce Style C where all numeric `FillParams` are `lerp(a, b, t)` for `t ∈ [0, 1]`
+
+#### Functions
+
+```python
+@dataclass
+class Style:
+    groups: list[GroupInfo]
+    props: DocumentProps
+
+def extract_style(path: str | Path) -> Style
+def styles_compatible(a: Style, b: Style) -> bool
+def interpolate_style(a: Style, b: Style, t: float) -> Style
+def apply_style(client: MCPClient, style: Style, source_image: str | Path) -> str
+    """Apply style via MCP. Returns SVG string of rendered result."""
+```
+
+#### Interpolation rules
+- Two styles are "compatible" if they have the same group→layer→fill structure (same count and types at each level)
+- Numeric params interpolate linearly: `result = a + (b - a) * t`
+- String params (like color) use style A's value for `t < 0.5`, style B's for `t >= 0.5` (or hex color lerp)
+- If structures differ, fall back to style A only (no interpolation)
+
+### Tasks
+- Implement `Style` dataclass and `extract_style()`
+- Implement `styles_compatible()` — compare structure trees
+- Implement `interpolate_style()` — lerp all numeric FillParams
+- Implement color interpolation (hex RGB lerp)
+- Implement `apply_style()` — create MCP document, replicate structure, set params
+- Unit tests for extraction, compatibility check, interpolation
+- Integration test: extract style → apply to image → export SVG
+
+---
+
+## Phase 4: CustomTkinter GUI
+
+**Goal:** Port `_private/gui/style_with_vexy_lines.py` into the package with a Lines tab added.
+
+### New directory: `src/vexy_lines_utils/gui/`
+
+### Dependencies (optional `[gui]` extra)
+
+```toml
+gui = [
+    "customtkinter>=5.2.0",
+    "tkinterdnd2>=0.4.0",
+    "Pillow>=10.0.0",
+    "opencv-python>=4.8.0",
+    "CTkMenuBarPlus>=0.1.0",
+]
+```
+
+### GUI Layout (from reference + additions)
+
+```
+┌─────────────────────────────────────────────────┐
+│ Menu: File | Lines | Image | Video | Style | Export │
+├──────────────────────────┬──────────────────────┤
+│ Inputs                   │ Styles               │
+│ ┌──────┬───────┬───────┐ │ ┌───────┬──────────┐ │
+│ │Lines │Images │ Video │ │ │ Style │End Style │ │
+│ ├──────┴───────┴───────┤ │ ├───────┴──────────┤ │
+│ │                      │ │ │                  │ │
+│ │ (tab content)        │ │ │ Preview + picker │ │
+│ │                      │ │ │                  │ │
+│ │ [+] [−] [✕]         │ │ │ [+] label  [✕]  │ │
+│ └──────────────────────┘ │ └──────────────────┘ │
+├──────────────────────────┴──────────────────────┤
+│ Export as [SVG▾] [1x▾] [♪]          [Export ▶] │
+└─────────────────────────────────────────────────┘
+```
+
+### Tabs
+
+1. **Lines tab** — Drop/add `.lines` files. Style section disabled (grayed out). Export processes each `.lines` file directly.
+2. **Images tab** — Drop/add images. Style applied to each image. Preview of selected image.
+3. **Video tab** — Drop/add video. Range slider for frame selection. Style applied to each frame.
+
+### Key behaviors (from issue #201)
+
+- Lines tab active → Style/End Style section disabled (grayed out)
+- Drag-drop to tab areas works for the active tab's file type
+- Menu "File > Add Lines" → switch to Lines tab
+- Menu "Image > Add Images" → switch to Images tab
+- Menu "Video > Add Video" → switch to Video tab
+- Export button → folder picker for SVG/PNG/JPG/LINES, file picker for MP4
+- File naming automatic for folder exports
+
+### Files
+
+| File | Content |
+|------|---------|
+| `gui/__init__.py` | `launch()` function |
+| `gui/app.py` | Main `App` class (CTk + TkinterDnD) |
+| `gui/widgets.py` | `CTkRangeSlider` (copied from `ctkrangeslider.py`) |
+| `gui/panels.py` | `InputsPanel`, `StylesPanel`, `OutputsBar` |
+| `gui/processing.py` | Background export thread, progress callbacks |
+
+### Tasks
+- Copy and adapt `CTkRangeSlider` widget
+- Implement main `App` window with menu bar
+- Implement Lines input tab (file list + drag-drop)
+- Implement Images input tab (from reference)
+- Implement Video input tab (from reference)
+- Implement Style/End Style picker panel
+- Implement output bar (format, size, audio, export button)
+- Implement drag-drop for all tab areas
+- Implement menu→tab switching
+- Implement Lines tab disabling styles
+- Implement export logic (folder picker vs file picker)
+- Implement background processing thread
+- Add `gui` optional dependency group
+- Add `vexy-lines-gui` script entry point
+- Wire up style engine for actual processing
+
+---
+
+## Phase 5: Enhanced CLI
+
+**Goal:** Fire CLI mirrors all GUI operations plus file querying.
 
 ### New subcommands
-- `vexy-lines-utils mcp-status` — check if MCP server is reachable
-- `vexy-lines-utils new-document` — create a new document via MCP
-- `vexy-lines-utils open` — open a .lines file via MCP
-- `vexy-lines-utils tree` — print the layer tree of the current document
-- `vexy-lines-utils add-fill` — add a fill to a layer
-- `vexy-lines-utils render` — trigger render_all
+
+```bash
+# Style transfer: apply style to images
+vexy-lines-utils style-transfer \
+  --style style.lines \
+  --images img1.jpg img2.jpg \
+  --output-dir ./out \
+  --format png
+
+# Style transfer with interpolation between two styles
+vexy-lines-utils style-transfer \
+  --style start.lines \
+  --end-style end.lines \
+  --images img1.jpg img2.jpg img3.jpg \
+  --output-dir ./out \
+  --format png
+
+# Style transfer to video
+vexy-lines-utils style-video \
+  --style style.lines \
+  --input video.mp4 \
+  --output styled.mp4
+
+# Style video with interpolation
+vexy-lines-utils style-video \
+  --style start.lines \
+  --end-style end.lines \
+  --input video.mp4 \
+  --output styled.mp4 \
+  --start-frame 1 \
+  --end-frame 100
+
+# Batch export .lines files (no style needed)
+vexy-lines-utils batch-convert \
+  --input-dir ./lines-files \
+  --output-dir ./out \
+  --format svg
+
+# Query file info
+vexy-lines-utils info file.lines
+vexy-lines-utils info file.lines --json
+
+# Extract images
+vexy-lines-utils extract-source file.lines --output source.jpg
+vexy-lines-utils extract-preview file.lines --output preview.png
+
+# File tree
+vexy-lines-utils file-tree file.lines
+```
 
 ### Tasks
-- Add new Fire subcommands to `__main__.py`
-- Each subcommand creates an MCPClient, calls the method, prints the result
-- Add `--json` flag for machine-readable output
-- Update README with new CLI documentation
+- Add `style_transfer` subcommand (images → styled images)
+- Add `style_video` subcommand (video → styled video)
+- Add `batch_convert` subcommand (.lines → SVG/PNG/JPG)
+- Add `info` subcommand
+- Add `extract_source` / `extract_preview` subcommands
+- Add `file_tree` subcommand
+- Add `gui` subcommand (launches the GUI)
+- Support `--verbose` across all subcommands
+- Support `--json` for machine-readable output where applicable
+- Update existing `export` subcommand to support SVG/PNG/JPG (not just PDF/SVG)
 
-## Phase 4: Testing
+---
 
-### Unit tests (mock-based, cross-platform)
-- MCPClient connect/disconnect lifecycle
-- JSON-RPC message framing (newline-delimited)
-- Initialize handshake
-- Each tool wrapper: correct params sent, response parsed into dataclass
-- Error handling: connection refused, timeout, server error responses
-- PlistManager with new domain
+## Phase 6: Testing & Documentation
 
-### Integration tests (require running Vexy Lines on macOS)
-- Full MCP workflow: new_document → add_group → add_layer → add_fill → render → export
-- Export pipeline (existing tests updated for new domain)
+### Unit tests
+
+| Test file | Coverage |
+|-----------|----------|
+| `tests/test_parser.py` | `parse()`, all dataclasses, image extraction, fill mapping |
+| `tests/test_style.py` | `extract_style()`, `interpolate_style()`, `styles_compatible()` |
+| `tests/test_cli_new.py` | New CLI subcommands (info, extract, file-tree, style-transfer) |
+| `tests/test_gui.py` | GUI widget instantiation (headless where possible) |
+
+### Functional examples
+
+| Example | Purpose |
+|---------|---------|
+| `examples/parse_lines.py` | Parse and print structure of a .lines file |
+| `examples/extract_images.py` | Extract source + preview images |
+| `examples/style_transfer.py` | Apply style from one .lines to an image |
+| `examples/style_interpolation.py` | Interpolate between two styles across images |
+| `examples/style_video.py` | Style-transfer a video with interpolation |
+
+### Documentation
+- Update README.md with new capabilities
+- Update CLAUDE.md with new architecture
+- Update DEPENDENCIES.md with new packages
+- Update CHANGELOG.md for v4.0
+- Create `test.sh` script to run all tests + examples
 
 ### Tasks
-- Add `tests/test_mcp_client.py` with mocked socket tests
-- Add `tests/test_mcp_tools.py` with tool wrapper tests
-- Update `tests/test_package.py` for new plist domain
-- Add `_private/mcp/test_integration.py` for live testing (not in CI)
+- Write parser unit tests (with real .lines fixtures)
+- Write style engine unit tests
+- Write CLI subcommand tests
+- Write functional examples
+- Update all documentation files
+- Create test.sh
+- Run full test suite, fix any failures
 
-## Phase 5: Documentation and Release
-
-### Tasks
-- Update README.md with MCP API section and new CLI commands
-- Update CLAUDE.md with architecture changes
-- Update DEPENDENCIES.md (no new runtime deps expected)
-- Write CHANGELOG.md entry for v3.0
-- Tag and release v3.0.0
+---
 
 ## Dependencies
 
-**No new runtime dependencies.** The MCP client uses stdlib `socket` + `json`. This is intentional — the package stays minimal.
+### New runtime dependencies (in optional extras)
+
+| Package | Extra | Purpose |
+|---------|-------|---------|
+| `customtkinter` | `gui` | Modern tkinter widgets |
+| `tkinterdnd2` | `gui` | Drag-and-drop support |
+| `CTkMenuBarPlus` | `gui` | Menu bar widget |
+| `Pillow` | `gui`, `video` | Image handling |
+| `opencv-python` | `gui` | Video frame extraction (GUI preview) |
+
+### Existing dependencies (unchanged)
+- `fire` — CLI
+- `loguru` — logging
+
+### Existing optional dependencies (unchanged)
+- `av` — video processing
+- `resvg-py` — SVG rasterisation
+- `svglab` — SVG parsing
+
+---
 
 ## Risk Assessment
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| App not running when MCP called | Medium | Clear error message with recovery suggestion |
-| Port 47384 conflict | Low | Make port configurable |
-| Old domain users broken | High | Document breaking change, detect old domain and warn |
-| MCP protocol changes | Low | Pin protocol version "2024-11-05" |
+| XML fill tag mapping incomplete | High | Parse all attributes into `raw` dict; map known ones to typed fields |
+| Style interpolation with incompatible structures | Medium | Fall back to single style; warn user |
+| tkinterdnd2 installation issues on some platforms | Medium | GUI is optional; CLI works without it |
+| MCP server not running for style application | Medium | Clear error messages; `--dry-run` mode |
+| Large .lines files (>5MB) parse slowly | Low | XML parsing is fast; images are lazy-decoded |
 
 ## Success Criteria
 
-1. `uvx hatch test` passes with all new tests
-2. Existing export pipeline works with new plist domain
-3. MCPClient can execute full workflow: new_document → add_fill → render → export
-4. CLI has working `mcp-status` and `tree` subcommands
-5. README documents both export and MCP usage
+1. `uvx hatch test` passes with all new + existing tests
+2. `vexy-lines-utils info *.lines` prints correct metadata
+3. `vexy-lines-utils extract-source *.lines` extracts JPEG
+4. Style extracted from file A, applied via MCP, produces rendered SVG
+5. Two-style interpolation produces smooth parameter transitions
+6. GUI launches, accepts drag-drop, triggers export
+7. `vexy-lines-utils style-transfer` works end-to-end
+8. All existing 124 tests still pass

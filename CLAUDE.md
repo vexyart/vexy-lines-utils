@@ -4,14 +4,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-`vexy-lines-utils` is a macOS-only CLI tool that batch-exports Vexy Lines `.lines` vector art documents to PDF or SVG. It drives the Vexy Lines app headlessly via AppleScript and macOS preference plist injection — no GUI dialog automation.
+`vexy-lines-utils` is a Python SDK and desktop app for Vexy Lines vector art. It provides:
+1. **Batch export** of `.lines` files to PDF/SVG via plist injection and AppleScript
+2. **MCP API client** for programmatic document manipulation via the app's embedded JSON-RPC server
+3. **`.lines` file parser** — read and extract data from `.lines` files without the app
+4. **Style engine** — extract, apply, and interpolate fill styles between documents
+5. **CustomTkinter GUI** — desktop style-transfer app with drag-and-drop
+6. **Enhanced CLI** — query files, extract images, apply styles, process video
 
-**Scope:** Drive the Vexy Lines app from Python — batch export via plist/AppleScript, and programmatic document manipulation via the embedded MCP API.
+**Scope:** Full Python SDK for Vexy Lines — file parsing, style transfer, batch export, MCP automation, GUI and CLI.
 
 ## Commands
 
 ```bash
-# Run tests (79 tests, ~1.2s)
+# Run tests (174 tests, ~3.7s)
 uvx hatch test
 
 # Run tests with coverage
@@ -53,7 +59,12 @@ Discovery → Plist Injection → App Activation → Per-File Export Loop → Cl
 | `utils/file_utils.py` | `find_lines_files`, `validate_*` | File discovery (recursive `.lines` search), input validation (extension/size/emptiness), output validation (PDF header/SVG tags). |
 | `utils/interrupt.py` | `InterruptHandler` | SIGINT handler. First Ctrl+C flags graceful stop, second terminates. |
 | `utils/system.py` | `speak()` | macOS `say` command wrapper for voice feedback. |
-| `__main__.py` | `VexyLinesCLI` | Fire CLI entry point. Single `export` subcommand. |
+| `__main__.py` | `VexyLinesCLI` | Fire CLI entry point. Subcommands: export, info, file_tree, extract_source, extract_preview, style_transfer, style_video, batch_convert, gui, mcp_status, tree, new_document, open, add_fill, render. |
+| `parser.py` | `parse()`, `LinesDocument` | .lines XML parser. Extracts layer tree, fill params, source/preview images without the app. |
+| `style.py` | `extract_style()`, `apply_style()`, `interpolate_style()` | Style extraction from .lines files, application via MCP, and interpolation between two styles. |
+| `video.py` | `process_video()` | Video-to-video processing through Vexy Lines vector art fills. |
+| `gui/app.py` | `App` | CustomTkinter GUI with Lines/Images/Video input tabs, style pickers, and export controls. |
+| `gui/widgets.py` | `CTkRangeSlider` | Custom range slider widget for video frame selection. |
 
 ### Key Design Decisions
 

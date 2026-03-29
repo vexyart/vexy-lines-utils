@@ -98,6 +98,11 @@ docs = [
     "myst-parser>=3.0.0", # Markdown support in Sphinx
 ]
 
+# Image extraction and conversion
+images = [
+    "Pillow>=10.0.0",
+]
+
 # SVG parsing and manipulation
 svg = [
     "svglab>=0.1.0",
@@ -111,12 +116,25 @@ video = [
     "svglab>=0.1.0",
 ]
 
+# GUI (CustomTkinter desktop application)
+gui = [
+    "customtkinter>=5.2.0",
+    "tkinterdnd2>=0.4.0",
+    "Pillow>=10.0.0",
+    "opencv-python>=4.8.0",
+    "CTkMenuBarPlus>=0.1.0",
+]
+
 # All optional dependencies combined
 all = [
     "av>=12.0.0",
     "resvg-py>=0.2.0",
     "Pillow>=10.0.0",
     "svglab>=0.1.0",
+    "customtkinter>=5.2.0",
+    "tkinterdnd2>=0.4.0",
+    "opencv-python>=4.8.0",
+    "CTkMenuBarPlus>=0.1.0",
 ]
 
 #------------------------------------------------------------------------------
@@ -125,6 +143,7 @@ all = [
 #------------------------------------------------------------------------------
 [project.scripts]
 vexy-lines-utils = "vexy_lines_utils.__main__:main"
+vexy-lines-gui = "vexy_lines_utils.gui:launch"
 
 #------------------------------------------------------------------------------
 # BUILD SYSTEM CONFIGURATION

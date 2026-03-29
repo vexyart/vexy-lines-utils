@@ -14,15 +14,21 @@ Usage:
 
 from __future__ import annotations
 
+import contextlib
 import json
 import socket
 import subprocess
 import sys
 import time
 from pathlib import Path
-from types import TracebackType
+from typing import TYPE_CHECKING
+
+from typing_extensions import Self
 
 from vexy_lines_utils.mcp.types import DocumentInfo, LayerNode, NewDocumentResult, RenderStatus
+
+if TYPE_CHECKING:
+    from types import TracebackType
 
 APP_NAME = "Vexy Lines"
 MCP_PORT = 47384
@@ -46,7 +52,9 @@ class MCPClient:
         timeout: Socket timeout in seconds (default 30).
     """
 
-    def __init__(self, host: str = "127.0.0.1", port: int = MCP_PORT, timeout: float = 30.0, *, auto_launch: bool = True) -> None:
+    def __init__(
+        self, host: str = "127.0.0.1", port: int = MCP_PORT, timeout: float = 30.0, *, auto_launch: bool = True
+    ) -> None:
         self._host = host
         self._port = port
         self._timeout = timeout
@@ -57,7 +65,7 @@ class MCPClient:
 
     # -- context manager --------------------------------------------------
 
-    def __enter__(self) -> MCPClient:
+    def __enter__(self) -> Self:
         self._connect()
         self._handshake()
         return self
@@ -91,9 +99,8 @@ class MCPClient:
         except OSError as exc:
             self._sock.close()
             self._sock = None
-            raise MCPError(
-                f"Cannot connect to {APP_NAME} MCP server at {self._host}:{self._port}: {exc}"
-            ) from exc
+            msg = f"Cannot connect to {APP_NAME} MCP server at {self._host}:{self._port}: {exc}"
+            raise MCPError(msg) from exc
 
     def _launch_app(self) -> None:
         """Launch Vexy Lines on the current platform."""
@@ -115,12 +122,12 @@ class MCPClient:
                     app_path = candidate
                     break
             if app_path is None:
-                raise MCPError(
-                    f"{APP_NAME} not found. Install it or pass auto_launch=False and start it manually."
-                )
+                msg = f"{APP_NAME} not found. Install it or pass auto_launch=False and start it manually."
+                raise MCPError(msg)
             subprocess.Popen([str(app_path)])  # noqa: S603
         else:
-            raise MCPError(f"Auto-launch not supported on {sys.platform}. Start {APP_NAME} manually.")
+            msg = f"Auto-launch not supported on {sys.platform}. Start {APP_NAME} manually."
+            raise MCPError(msg)
 
     def _wait_for_server(self, max_wait: float = 30.0) -> None:
         """Poll until the MCP server accepts connections."""
@@ -135,33 +142,31 @@ class MCPClient:
                 last_error = exc
                 time.sleep(interval)
                 interval = min(interval * 1.2, 2.0)  # gentle backoff
-        raise MCPError(
-            f"{APP_NAME} launched but MCP server not ready after {max_wait:.0f}s. "
-            f"Last error: {last_error}"
-        )
+        msg = f"{APP_NAME} launched but MCP server not ready after {max_wait:.0f}s. Last error: {last_error}"
+        raise MCPError(msg)
 
     def _close(self) -> None:
         """Close the TCP socket."""
         if self._sock is not None:
-            try:
+            with contextlib.suppress(OSError):
                 self._sock.shutdown(socket.SHUT_RDWR)
-            except OSError:
-                pass
             self._sock.close()
             self._sock = None
 
     def _handshake(self) -> None:
         """Run the MCP initialize / initialized handshake."""
-        result = self._send_request("initialize", {
-            "protocolVersion": PROTOCOL_VERSION,
-            "capabilities": {},
-            "clientInfo": {"name": "vexy-lines-utils", "version": "1.0.0"},
-        })
+        result = self._send_request(
+            "initialize",
+            {
+                "protocolVersion": PROTOCOL_VERSION,
+                "capabilities": {},
+                "clientInfo": {"name": "vexy-lines-utils", "version": "1.0.0"},
+            },
+        )
         server_version = result.get("protocolVersion", "")
         if server_version != PROTOCOL_VERSION:
-            raise MCPError(
-                f"Protocol mismatch: client={PROTOCOL_VERSION}, server={server_version}"
-            )
+            msg = f"Protocol mismatch: client={PROTOCOL_VERSION}, server={server_version}"
+            raise MCPError(msg)
         self._send_notification("notifications/initialized")
 
     # -- low-level transport ----------------------------------------------
@@ -195,36 +200,41 @@ class MCPClient:
     def _send_bytes(self, msg: dict) -> None:
         """Serialize and send a newline-delimited JSON message."""
         if self._sock is None:
-            raise MCPError("Not connected")
+            msg = "Not connected"
+            raise MCPError(msg)
         data = json.dumps(msg, separators=(",", ":")) + "\n"
         self._sock.sendall(data.encode("utf-8"))
 
     def _recv_response(self) -> dict:
         """Read next newline-delimited JSON-RPC response from the buffer."""
         if self._sock is None:
-            raise MCPError("Not connected")
+            msg = "Not connected"
+            raise MCPError(msg)
 
         while True:
             newline_pos = self._buffer.find(b"\n")
             if newline_pos != -1:
                 line = self._buffer[:newline_pos]
-                self._buffer = self._buffer[newline_pos + 1:]
+                self._buffer = self._buffer[newline_pos + 1 :]
                 break
             chunk = self._sock.recv(4096)
             if not chunk:
-                raise MCPError("Connection closed by server")
+                msg = "Connection closed by server"
+                raise MCPError(msg)
             self._buffer += chunk
 
         try:
             response = json.loads(line)
         except json.JSONDecodeError as exc:
-            raise MCPError(f"Invalid JSON from server: {exc}") from exc
+            msg = f"Invalid JSON from server: {exc}"
+            raise MCPError(msg) from exc
 
         if "error" in response:
             err = response["error"]
             code = err.get("code", -1)
             message = err.get("message", "Unknown error")
-            raise MCPError(f"MCP error {code}: {message}")
+            msg = f"MCP error {code}: {message}"
+            raise MCPError(msg)
 
         return response.get("result", {})
 
@@ -272,7 +282,8 @@ class MCPClient:
             args["source_image"] = str(Path(source_image).expanduser().resolve())
         data = self.call_tool("new_document", args)
         if isinstance(data, str):
-            raise MCPError(f"Unexpected response from new_document: {data}")
+            msg = f"Unexpected response from new_document: {data}"
+            raise MCPError(msg)
         return NewDocumentResult(
             status=data.get("status", ""),
             width=data.get("width", 0),
@@ -313,7 +324,8 @@ class MCPClient:
         """Get metadata about the current document."""
         data = self.call_tool("get_document_info")
         if isinstance(data, str):
-            raise MCPError(f"Unexpected response from get_document_info: {data}")
+            msg = f"Unexpected response from get_document_info: {data}"
+            raise MCPError(msg)
         return DocumentInfo(
             width_mm=data.get("width_mm", 0),
             height_mm=data.get("height_mm", 0),
@@ -328,7 +340,8 @@ class MCPClient:
         """Get the full document layer tree."""
         data = self.call_tool("get_layer_tree")
         if isinstance(data, str):
-            raise MCPError(f"Unexpected response from get_layer_tree: {data}")
+            msg = f"Unexpected response from get_layer_tree: {data}"
+            raise MCPError(msg)
         return LayerNode.from_dict(data)
 
     def add_group(
@@ -412,11 +425,14 @@ class MCPClient:
 
     def set_layer_mask(self, layer_id: int, paths: list[str], mode: str = "create") -> str:
         """Set a vector mask on a layer."""
-        result = self.call_tool("set_layer_mask", {
-            "layer_id": layer_id,
-            "paths": paths,
-            "mode": mode,
-        })
+        result = self.call_tool(
+            "set_layer_mask",
+            {
+                "layer_id": layer_id,
+                "paths": paths,
+                "mode": mode,
+            },
+        )
         return result if isinstance(result, str) else str(result)
 
     def get_layer_mask(self, layer_id: int) -> dict:
@@ -434,14 +450,17 @@ class MCPClient:
         scale_y: float = 1,
     ) -> str:
         """Apply a 2D transform to a layer."""
-        result = self.call_tool("transform_layer", {
-            "layer_id": layer_id,
-            "translate_x": translate_x,
-            "translate_y": translate_y,
-            "rotate_deg": rotate_deg,
-            "scale_x": scale_x,
-            "scale_y": scale_y,
-        })
+        result = self.call_tool(
+            "transform_layer",
+            {
+                "layer_id": layer_id,
+                "translate_x": translate_x,
+                "translate_y": translate_y,
+                "rotate_deg": rotate_deg,
+                "scale_x": scale_x,
+                "scale_y": scale_y,
+            },
+        )
         return result if isinstance(result, str) else str(result)
 
     def set_layer_warp(
@@ -453,13 +472,16 @@ class MCPClient:
         bottom_left: list[float],
     ) -> str:
         """Set perspective warp corners on a layer."""
-        result = self.call_tool("set_layer_warp", {
-            "layer_id": layer_id,
-            "top_left": top_left,
-            "top_right": top_right,
-            "bottom_right": bottom_right,
-            "bottom_left": bottom_left,
-        })
+        result = self.call_tool(
+            "set_layer_warp",
+            {
+                "layer_id": layer_id,
+                "top_left": top_left,
+                "top_right": top_right,
+                "bottom_right": bottom_right,
+                "bottom_left": bottom_left,
+            },
+        )
         return result if isinstance(result, str) else str(result)
 
     # -- control ----------------------------------------------------------
@@ -511,7 +533,8 @@ class MCPClient:
         """Check whether the document is currently rendering."""
         data = self.call_tool("get_render_status")
         if isinstance(data, str):
-            raise MCPError(f"Unexpected response from get_render_status: {data}")
+            msg = f"Unexpected response from get_render_status: {data}"
+            raise MCPError(msg)
         return RenderStatus(rendering=data.get("rendering", False))
 
     # -- high-level export API --------------------------------------------
@@ -604,6 +627,7 @@ class MCPClient:
         Useful for piping SVG into other tools or embedding in web pages.
         """
         import tempfile
+
         with tempfile.NamedTemporaryFile(suffix=".svg", delete=False) as f:
             tmp_path = Path(f.name)
         try:
@@ -626,10 +650,7 @@ class MCPClient:
         try:
             from svglab import parse_svg
         except ImportError:
-            msg = (
-                "'svglab' is required for SVG parsing. "
-                "Install with: pip install vexy-lines-utils[svg]"
-            )
+            msg = "'svglab' is required for SVG parsing. Install with: pip install vexy-lines-utils[svg]"
             raise ImportError(msg) from None
         svg_string = self.svg()
         return parse_svg(svg_string)

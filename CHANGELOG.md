@@ -4,6 +4,50 @@ this_file: CHANGELOG.md
 
 # Changelog
 
+## [4.0.0-dev] - 2026-03-30
+
+### Added
+
+- **`.lines` parser module** (`parser.py`): Parse .lines XML files without the Vexy Lines app
+  - Typed dataclasses: `LinesDocument`, `GroupInfo`, `LayerInfo`, `FillNode`, `FillParams`, `DocumentProps`, `MaskInfo`
+  - Source image extraction (base64 → zlib → JPEG) and preview extraction (base64 → PNG)
+  - Full layer tree parsing: groups (`LrSection`), layers (`FreeMesh`), fills (14 fill types recognised)
+  - `FILL_TAG_MAP` mapping XML tags to human-readable fill types
+  - `NUMERIC_PARAMS` list of interpolatable fill parameters
+- **Style engine** (`style.py`): Extract, apply, and interpolate fill styles
+  - `extract_style()` — pulls group→layer→fill structure from a .lines file
+  - `styles_compatible()` — checks if two styles have matching tree structures
+  - `interpolate_style()` — linear interpolation of all numeric fill params between two styles
+  - `apply_style()` — applies a style to an image via MCP (creates document, replicates structure, renders)
+  - Color interpolation (hex RGB lerp)
+- **CustomTkinter GUI** (`gui/`): Desktop style-transfer application
+  - Lines / Images / Video input tabs with drag-and-drop support
+  - Style and End Style picker panels with .lines preview
+  - Lines tab disables style panels (processes .lines files directly)
+  - Output formats: SVG, PNG, JPG, MP4, LINES
+  - Range slider for video frame selection
+  - Menu bar with File, Lines, Image, Video, Style, Export menus
+  - `vexy-lines-gui` entry point
+- **8 new CLI subcommands**:
+  - `info` — show .lines file metadata (no app needed)
+  - `file_tree` — print layer tree from file (no MCP needed)
+  - `extract_source` — extract source JPEG from .lines file
+  - `extract_preview` — extract preview PNG from .lines file
+  - `style_transfer` — apply .lines style to images via MCP, with optional two-style interpolation
+  - `style_video` — style-transfer a video frame-by-frame via MCP
+  - `batch_convert` — batch extract source/preview images from .lines files
+  - `gui` — launch the CustomTkinter GUI
+- **4 example scripts**: `parse_lines.py`, `extract_images.py`, `style_transfer.py`, `style_interpolation.py`
+- **Optional dependency groups**: `[images]`, `[gui]` added to `[video]` and `[all]`
+- 40+ new unit tests (parser, style engine, CLI subcommands)
+
+### Technical
+
+- **Test count:** 170+ tests passing (124 existing + 21 parser + 19 style + 10 CLI)
+- **Test duration:** ~3.5s
+- **New files:** `parser.py`, `style.py`, `gui/{__init__,app,widgets}.py`, `tests/{test_parser,test_style,test_cli_new}.py`, `examples/{parse_lines,extract_images,style_transfer,style_interpolation}.py`
+- **New optional deps:** customtkinter, tkinterdnd2, CTkMenuBarPlus, opencv-python (all in `[gui]` extra)
+
 ## [3.0.0-dev] - 2026-03-27
 
 ### Added

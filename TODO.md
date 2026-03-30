@@ -49,8 +49,8 @@ this_file: TODO.md
 - [x] Implement menu→tab switching (File>Add Lines→Lines tab, Image>Add Images→Images tab, etc.)
 - [x] Implement Lines tab disabling Style/End Style section
 - [x] Implement export dialog (folder picker for SVG/PNG/JPG/LINES, file picker for MP4)
-- [ ] Implement background processing thread with progress
-- [ ] Wire up style engine for actual processing
+- [x] Implement background processing thread with progress
+- [x] Wire up style engine for actual processing
 - [x] Add vexy-lines-gui script entry point in pyproject.toml
 
 ## Phase 5: Enhanced CLI
@@ -59,7 +59,7 @@ this_file: TODO.md
 - [x] Add batch_convert subcommand (--input-dir, --output-dir, --format for .lines→SVG/PNG/JPG)
 - [x] Add gui subcommand (launches the CustomTkinter GUI)
 - [x] Support --verbose and --json across all new subcommands
-- [ ] Update video.py to use style engine instead of hardcoded fill params
+- [x] Update video.py to use style engine instead of hardcoded fill params
 
 ## Phase 6: Testing & Documentation
 - [x] Write tests/test_parser.py (parse, dataclasses, image extraction, fill mapping)
@@ -70,7 +70,7 @@ this_file: TODO.md
 - [x] Write examples/style_transfer.py
 - [x] Write examples/style_interpolation.py
 - [x] Create test.sh script
-- [ ] Update README.md
+- [x] Update README.md
 - [x] Update CLAUDE.md (architecture section)
 - [x] Update DEPENDENCIES.md
 - [x] Update CHANGELOG.md for v4.0

@@ -13,7 +13,7 @@
 name = 'vexy-lines-utils' # Package name on PyPI
 description = 'Command-line automation for batch exporting Vexy Lines vector art documents to PDF on macOS' # Short description
 readme = 'README.md' # Path to README file
-requires-python = '>=3.10' # Minimum Python version
+requires-python = '>=3.11' # Minimum Python version
 keywords = [
     'vexy-lines',
     'vector-art',
@@ -217,7 +217,7 @@ fix = ["ruff check --fix --unsafe-fixes src/vexy_lines_utils tests", "ruff forma
 # Matrix configuration to test across multiple Python versions
 
 [[tool.hatch.envs.all.matrix]]
-python = ["3.10", "3.11", "3.12"]
+python = ["3.11", "3.12"]
 
 #------------------------------------------------------------------------------
 # SPECIALIZED ENVIRONMENTS
@@ -318,7 +318,7 @@ omit = [
 #------------------------------------------------------------------------------
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -395,7 +395,7 @@ compare = [
 
 # Ruff linter and formatter configuration
 [tool.ruff]
-target-version = "py310"
+target-version = "py311"
 line-length = 120
 
 # Linting rules configuration

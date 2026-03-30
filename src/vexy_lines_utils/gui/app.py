@@ -37,9 +37,10 @@ except ImportError:
     TkinterDnD = None  # type: ignore[assignment,misc]
     DND_FILES = None
 
-import contextlib
+import contextlib  # noqa: E402
+import threading  # noqa: E402
 
-from vexy_lines_utils.gui.widgets import CTkRangeSlider
+from vexy_lines_utils.gui.widgets import CTkRangeSlider  # noqa: E402
 
 # ── Constants ──────────────────────────────────────────────────────────
 
@@ -107,7 +108,7 @@ def extract_frame(video_path: str, frame_number: int) -> Image.Image | None:
         return None
 
 
-def create_placeholder_image(width: int, height: int, text: str) -> Image.Image:
+def create_placeholder_image(width: int, height: int, text: str) -> Image.Image:  # noqa: ARG001
     """Return a plain dark-grey image used as a placeholder."""
     return Image.new("RGB", (width, height), "#1d1f22")
 
@@ -190,6 +191,12 @@ class App(*_BASE_CLASSES, metaclass=_AppMeta):  # type: ignore[misc]
         self._update_audio_toggle_visibility()
         self._update_styles_panel_state()
         self.bind("<Configure>", self._on_resize)
+
+        # Bring window to foreground on start
+        self.lift()
+        self.attributes("-topmost", True)
+        self.after(200, lambda: self.attributes("-topmost", False))
+        self.focus_force()
 
     # ── Layout construction ────────────────────────────────────────────
 
@@ -277,8 +284,8 @@ class App(*_BASE_CLASSES, metaclass=_AppMeta):  # type: ignore[misc]
 
     def _menu_add_images(self) -> None:
         """Menu: Image > Add Images -- switch to Images tab and open picker."""
-        self.inputs_tabview.set("Image")
-        self._on_inputs_tab_changed("Image")
+        self.inputs_tabview.set("Images")
+        self._on_inputs_tab_changed("Images")
         self._choose_images()
 
     def _menu_add_video(self) -> None:
@@ -311,7 +318,7 @@ class App(*_BASE_CLASSES, metaclass=_AppMeta):  # type: ignore[misc]
         self.inputs_tabview.grid(row=0, column=0, sticky="nsew", padx=(0, 6), pady=(0, 10))
 
         lines_tab = self.inputs_tabview.add("Lines")
-        images_tab = self.inputs_tabview.add("Image")
+        images_tab = self.inputs_tabview.add("Images")
         video_tab = self.inputs_tabview.add("Video")
 
         self._build_lines_tab(lines_tab)
@@ -565,7 +572,7 @@ class App(*_BASE_CLASSES, metaclass=_AppMeta):  # type: ignore[misc]
                 dnd_bind("<<Drop>>", self._on_lines_drop)
 
         # Images tab drop targets
-        images_tab = self.inputs_tabview.tab("Image")
+        images_tab = self.inputs_tabview.tab("Images")
         image_targets = [images_tab, self.images_list_frame, self.images_preview_label]
         interior = getattr(self.images_list_frame, "_scrollable_frame", None)
         if interior is not None:
@@ -609,7 +616,7 @@ class App(*_BASE_CLASSES, metaclass=_AppMeta):  # type: ignore[misc]
         if event.widget is not self:
             return
         width = self.winfo_width()
-        if abs(width - self._last_width) <= 5:
+        if abs(width - self._last_width) <= 5:  # noqa: PLR2004
             return
         self._last_width = width
         if self._resize_job is not None:
@@ -657,7 +664,7 @@ class App(*_BASE_CLASSES, metaclass=_AppMeta):  # type: ignore[misc]
             tab_name = "Style" if key == "start" else "End Style"
             try:
                 tab_widget = self.styles_tabview.tab(tab_name)
-            except Exception:
+            except Exception:  # noqa: S112
                 continue
             self._set_children_state(tab_widget, state)
 
@@ -1075,20 +1082,118 @@ class App(*_BASE_CLASSES, metaclass=_AppMeta):  # type: ignore[misc]
 
     # ── Export ─────────────────────────────────────────────────────────
 
+    def _get_default_export_dir(self) -> str:
+        """Return the folder of the first input file for the active mode."""
+        mode = self._get_active_input_mode()
+        if mode == "lines" and self._lines_paths:
+            return str(Path(self._lines_paths[0]).parent)
+        if mode == "images" and self._image_paths:
+            return str(Path(self._image_paths[0]).parent)
+        if mode == "video" and self._video_path:
+            return str(Path(self._video_path).parent)
+        return ""
+
     def _do_export(self) -> None:
         fmt = self.format_var.get()
+        initial_dir = self._get_default_export_dir()
         if fmt == "MP4":
             selected = filedialog.asksaveasfilename(
                 title="Export as MP4",
                 defaultextension=".mp4",
                 filetypes=[("MP4 files", "*.mp4"), ("All files", "*.*")],
+                initialdir=initial_dir or None,
             )
         else:
-            selected = filedialog.askdirectory(title=f"Export {fmt} to folder")
+            selected = filedialog.askdirectory(
+                title=f"Export {fmt} to folder",
+                initialdir=initial_dir or None,
+            )
         if not selected:
             return
         self._output_path = selected
-        # TODO: trigger actual export pipeline here
+
+        # Gather state
+        mode = self._get_active_input_mode()
+        input_paths = self._get_input_paths()
+        style_path = self._style_paths.get("start")
+        end_style_path = self._style_paths.get("end")
+
+        # Disable export button during processing
+        self.convert_button.configure(state="disabled", text="Exporting\u2026")
+
+        # Run in background thread
+        thread = threading.Thread(
+            target=self._run_export,
+            args=(mode, input_paths, style_path, end_style_path),
+            daemon=True,
+        )
+        thread.start()
+
+    def _run_export(
+        self,
+        mode: str,
+        input_paths: list[str],
+        style_path: str | None,
+        end_style_path: str | None,
+    ) -> None:
+        """Background thread entry point for the export pipeline."""
+        try:
+            from vexy_lines_utils.gui.processing import process_export  # noqa: PLC0415
+
+            process_export(
+                mode=mode,
+                input_paths=input_paths,
+                style_path=style_path,
+                end_style_path=end_style_path,
+                output_path=self._output_path,
+                fmt=self.format_var.get(),
+                size=self.size_var.get(),
+                audio=self.audio_var.get(),
+                frame_range=self._video_range if mode == "video" else None,
+                on_progress=lambda cur, tot, msg: self.after(0, self._update_progress, cur, tot, msg),
+                on_complete=lambda msg: self.after(0, self._export_complete, msg),
+                on_error=lambda msg: self.after(0, self._export_error, msg),
+            )
+        except Exception as exc:
+            self.after(0, self._export_error, str(exc))
+
+    def _get_active_input_mode(self) -> str:
+        """Return the active input mode based on the selected tab."""
+        tab = self.inputs_tabview.get()
+        if tab == "Lines":
+            return "lines"
+        if tab == "Video":
+            return "video"
+        return "images"
+
+    def _get_input_paths(self) -> list[str]:
+        """Return the list of input file paths for the active mode."""
+        mode = self._get_active_input_mode()
+        if mode == "lines":
+            return list(self._lines_paths)
+        if mode == "images":
+            return list(self._image_paths)
+        if mode == "video":
+            return [self._video_path] if self._video_path else []
+        return []
+
+    def _update_progress(self, current: int, total: int, message: str) -> None:
+        """Update the export button text with progress (called on main thread)."""
+        if total > 0:
+            pct = int(current / total * 100)
+            self.convert_button.configure(text=f"{pct}% {message}")
+        else:
+            self.convert_button.configure(text=message)
+
+    def _export_complete(self, message: str) -> None:  # noqa: ARG002
+        """Re-enable the export button and show success (called on main thread)."""
+        self.convert_button.configure(state="normal", text="Export \u25b6")
+
+    def _export_error(self, message: str) -> None:
+        """Re-enable the export button and show error (called on main thread)."""
+        self.convert_button.configure(state="normal", text="Export \u25b6")
+        # Show error in a simple top-level dialog
+        _show_error_dialog(self, message)
 
     def _choose_output_path(self) -> None:
         self._do_export()
@@ -1098,6 +1203,24 @@ class App(*_BASE_CLASSES, metaclass=_AppMeta):  # type: ignore[misc]
     def _on_inputs_tab_changed(self, _tab_name: str) -> None:
         self._update_audio_toggle_visibility()
         self._update_styles_panel_state()
+
+
+# ── Error dialog ──────────────────────────────────────────────────────
+
+
+def _show_error_dialog(parent: tk.Tk, message: str) -> None:
+    """Display a simple error dialog using a customtkinter top-level window."""
+    dialog = customtkinter.CTkToplevel(parent)
+    dialog.title("Export Error")
+    dialog.geometry("420x200")
+    dialog.resizable(False, False)
+    dialog.transient(parent)
+    dialog.grab_set()
+
+    label = customtkinter.CTkLabel(dialog, text=message, wraplength=380, justify="left")
+    label.pack(padx=20, pady=(20, 10), fill="both", expand=True)
+
+    customtkinter.CTkButton(dialog, text="OK", width=80, command=dialog.destroy).pack(pady=(0, 16))
 
 
 # ── Launch function ────────────────────────────────────────────────────

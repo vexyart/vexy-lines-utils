@@ -125,7 +125,7 @@ class VexyLinesCLI:
         }
 
         if json_output:
-            pass
+            print(_json.dumps(result, indent=2))  # noqa: T201
 
         return result
 
@@ -305,7 +305,7 @@ class VexyLinesCLI:
         input: str,  # noqa: A002
         output: str = "output.mp4",
         end_style: str | None = None,
-        start_frame: int = 1,
+        start_frame: int = 1,  # noqa: ARG002
         end_frame: int | None = None,
         dpi: int = 72,
         host: str = "127.0.0.1",
@@ -431,7 +431,7 @@ class VexyLinesCLI:
         successes = 0
         failures = 0
 
-        for _i, lines_file in enumerate(files):
+        for _, lines_file in enumerate(files):
             out_file = out / f"{lines_file.stem}{ext}"
             try:
                 if what == "source":
@@ -664,7 +664,18 @@ class VexyLinesCLI:
 
 
 def main() -> None:
-    fire.Fire(VexyLinesCLI)
+    import sys
+    if len(sys.argv) <= 1:
+        # No subcommand given — launch the GUI
+        try:
+            from vexy_lines_utils.gui import launch  # noqa: PLC0415
+            launch()
+        except ImportError:
+            print("GUI dependencies not installed. Install with: pip install vexy-lines-utils[gui]")
+            print("Or use a subcommand: vexy-lines-utils --help")
+            sys.exit(1)
+    else:
+        fire.Fire(VexyLinesCLI)
 
 
 if __name__ == "__main__":

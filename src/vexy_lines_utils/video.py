@@ -33,6 +33,8 @@ if TYPE_CHECKING:
 
     from PIL import Image as _Image
 
+    from vexy_lines_utils.style import Style
+
 
 def _require(package: str, pip_name: str | None = None) -> None:
     """Raise ImportError with install instructions if a package is missing."""
@@ -322,4 +324,183 @@ def process_video(
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
     logger.info("Processed {} frames → {}", frame_index, output_path)
+    return info
+
+
+def process_video_with_style(
+    input_path: str | Path,
+    output_path: str | Path,
+    *,
+    style: Style,
+    end_style: Style | None = None,
+    dpi: int = 72,
+    max_frames: int | None = None,
+    start_frame: int = 0,
+    end_frame: int | None = None,
+    on_progress: Callable[[int, int], None] | None = None,
+    host: str = "127.0.0.1",
+    port: int = 47384,
+    timeout: float = 60.0,
+) -> VideoInfo:
+    """Process video using Style objects with optional interpolation.
+
+    Like process_video() but uses extracted Style objects instead of
+    hardcoded fill parameters. If end_style is provided, interpolates
+    between style and end_style across frames.
+
+    Args:
+        input_path: Input video file (MP4, MOV, AVI, WebM, etc.).
+        output_path: Output video file path.
+        style: Style to apply to every frame (or start style when end_style given).
+        end_style: Optional end style. When provided, interpolates between
+            style (t=0) and end_style (t=1) across the processed frame range.
+        dpi: Document DPI. Lower = faster. 72 is good for video.
+        max_frames: Process only the first N frames from start_frame (testing).
+        start_frame: Index of the first frame to process (0-based, inclusive).
+        end_frame: Index of the last frame to process (0-based, exclusive).
+            When None, processes to the last frame in the video.
+        on_progress: Optional callback ``(frame_index, total_frames) -> None``
+            called after each frame is processed. frame_index is relative to
+            the full video frame count.
+        host: MCP server address.
+        port: MCP server port.
+        timeout: Render timeout per frame in seconds.
+
+    Returns:
+        VideoInfo of the input video.
+
+    Raises:
+        ImportError: If av, resvg-py (or svglab), or Pillow are not installed.
+        MCPError: If the MCP server is unreachable or a tool call fails.
+    """
+    # Runtime import to avoid circular dependency at module load time
+    from vexy_lines_utils.style import apply_style, interpolate_style  # noqa: PLC0415
+
+    _require("av")
+    _require("PIL", "Pillow")
+    try:
+        _require("svglab")
+    except ImportError:
+        _require("resvg_py", "resvg-py")
+    import av  # noqa: PLC0415
+
+    input_path = Path(input_path)
+    output_path = Path(output_path)
+
+    # Probe the input video
+    info = probe(input_path)
+
+    # Determine the frame window to process
+    frame_start = start_frame
+    frame_end = end_frame if end_frame is not None else info.total_frames
+    if max_frames is not None:
+        frame_end = min(frame_end, frame_start + max_frames)
+    total_to_process = max(frame_end - frame_start, 1)
+
+    from fractions import Fraction  # noqa: PLC0415
+
+    tmp_dir = Path(tempfile.mkdtemp(prefix="vexy_video_style_"))
+    video_only = tmp_dir / "video_only.mp4"
+    frame_index = 0  # absolute frame counter (within the full video decode)
+    processed = 0   # frames actually encoded to output
+
+    try:
+        in_ctr = av.open(str(input_path))
+        out_ctr = av.open(str(video_only), mode="w")
+
+        in_video = in_ctr.streams.video[0]
+        out_video = out_ctr.add_stream("libx264", rate=Fraction(info.fps).limit_denominator(10000))
+        out_video.width = info.width
+        out_video.height = info.height
+        out_video.pix_fmt = "yuv420p"
+
+        with MCPClient(host=host, port=port, timeout=timeout) as vl:
+            for packet in in_ctr.demux(in_video):
+                for frame in packet.decode():
+                    if frame_index < frame_start:
+                        frame_index += 1
+                        continue
+                    if frame_index >= frame_end:
+                        break
+
+                    # Determine the style for this frame
+                    if end_style is not None:
+                        t = (frame_index - frame_start) / max(total_to_process - 1, 1)
+                        current_style = interpolate_style(style, end_style, t)
+                    else:
+                        current_style = style
+
+                    # Frame → temp PNG
+                    tmp_png = tmp_dir / f"f{frame_index:06d}.png"
+                    frame.to_image().save(str(tmp_png))
+
+                    # Apply style via MCP → SVG string
+                    svg_string = apply_style(vl, current_style, tmp_png, dpi=dpi)
+
+                    # SVG → PIL → output frame
+                    pil_img = _svg_to_pil(svg_string, info.width, info.height).convert("RGB")
+                    out_frame = av.VideoFrame.from_image(pil_img)
+                    out_frame.pts = processed
+                    for out_pkt in out_video.encode(out_frame):
+                        out_ctr.mux(out_pkt)
+
+                    tmp_png.unlink()
+                    frame_index += 1
+                    processed += 1
+
+                    if on_progress:
+                        on_progress(frame_index, info.total_frames)
+                    logger.debug(
+                        "Frame {}/{} (video frame {}): style={}",
+                        processed,
+                        total_to_process,
+                        frame_index,
+                        current_style.source_path,
+                    )
+
+                if frame_index >= frame_end:
+                    break
+
+        # Flush encoder
+        for pkt in out_video.encode():
+            out_ctr.mux(pkt)
+        out_ctr.close()
+        in_ctr.close()
+
+        # Merge audio from original if present
+        if info.has_audio:
+            import subprocess  # noqa: PLC0415
+
+            merged = tmp_dir / "merged.mp4"
+            subprocess.run(  # noqa: S603
+                [  # noqa: S607
+                    "ffmpeg",
+                    "-y",
+                    "-i",
+                    str(video_only),
+                    "-i",
+                    str(input_path),
+                    "-c:v",
+                    "copy",
+                    "-c:a",
+                    "aac",
+                    "-map",
+                    "0:v:0",
+                    "-map",
+                    "1:a:0",
+                    "-shortest",
+                    str(merged),
+                ],
+                capture_output=True,
+                timeout=120,
+                check=True,
+            )
+            shutil.move(str(merged), str(output_path))
+        else:
+            shutil.move(str(video_only), str(output_path))
+
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    logger.info("Processed {} frames ({}-{}) → {}", processed, frame_start, frame_end, output_path)
     return info

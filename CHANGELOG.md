@@ -27,7 +27,7 @@ this_file: CHANGELOG.md
   - Output formats: SVG, PNG, JPG, MP4, LINES
   - Range slider for video frame selection
   - Menu bar with File, Lines, Image, Video, Style, Export menus
-  - `vexy-lines-gui` entry point
+  - `vexy-lines-run` entry point
 - **8 new CLI subcommands**:
   - `info` — show .lines file metadata (no app needed)
   - `file_tree` — print layer tree from file (no MCP needed)

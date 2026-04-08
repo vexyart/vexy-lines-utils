@@ -235,7 +235,7 @@ Launch a drag-and-drop desktop app with three input modes: Lines files, Images, 
 vexy-lines-utils gui
 
 # Or use the dedicated entry point
-vexy-lines-gui
+vexy-lines-run
 ```
 
 **Features:**

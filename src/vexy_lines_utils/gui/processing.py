@@ -282,17 +282,23 @@ def _process_video_to_mp4(
 ) -> None:
     """Render video frames through the style engine and reassemble as MP4."""
     import tempfile  # noqa: PLC0415
-    from fractions import Fraction  # noqa: PLC0415
 
     from vexy_lines_utils.mcp.client import MCPClient, MCPError  # noqa: PLC0415
     from vexy_lines_utils.style import apply_style, interpolate_style  # noqa: PLC0415
     from vexy_lines_utils.video import _svg_to_pil, probe  # noqa: PLC0415
 
     try:
-        import av  # noqa: PLC0415
+        import cv2  # noqa: PLC0415
+        import numpy as np  # noqa: PLC0415
     except ImportError:
-        _report_error(on_error, "PyAV is required for MP4 export. Install with: pip install av")
+        _report_error(
+            on_error,
+            "opencv-python-headless is required for MP4 export. "
+            "Install with: pip install opencv-python-headless",
+        )
         return
+
+    from PIL import Image  # noqa: PLC0415
 
     info = probe(video_path)
     start_frame = frame_range[0] if frame_range else 1
@@ -307,58 +313,47 @@ def _process_video_to_mp4(
     video_only = tmp_dir / "video_only.mp4"
     processed = 0
 
+    cap = cv2.VideoCapture(str(video_path))
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    writer = cv2.VideoWriter(str(video_only), fourcc, info.fps, (out_w, out_h))
+
     try:
-        in_ctr = av.open(str(video_path))
-        out_ctr = av.open(str(video_only), mode="w")
-
-        in_video = in_ctr.streams.video[0]
-        out_video = out_ctr.add_stream(
-            "libx264", rate=Fraction(info.fps).limit_denominator(10000),
-        )
-        out_video.width = out_w
-        out_video.height = out_h
-        out_video.pix_fmt = "yuv420p"
-
         frame_index = 0
 
         with MCPClient() as client:
-            for packet in in_ctr.demux(in_video):
-                for frame in packet.decode():
-                    frame_index += 1
-                    if frame_index < start_frame:
-                        continue
-                    if frame_index > end_frame:
-                        break
-
-                    _report_progress(on_progress, processed, total, f"Frame {processed + 1}/{total}")
-
-                    tmp_png = tmp_dir / f"f{processed:06d}.png"
-                    frame.to_image().save(str(tmp_png))
-
-                    if end_style is not None and total > 1:
-                        t = processed / max(total - 1, 1)
-                        style = interpolate_style(start_style, end_style, t)
-                    else:
-                        style = start_style
-
-                    svg_string = apply_style(client, style, str(tmp_png))
-                    pil_img = _svg_to_pil(svg_string, out_w, out_h).convert("RGB")
-
-                    out_frame = av.VideoFrame.from_image(pil_img)
-                    out_frame.pts = processed
-                    for out_pkt in out_video.encode(out_frame):
-                        out_ctr.mux(out_pkt)
-
-                    tmp_png.unlink(missing_ok=True)
-                    processed += 1
-
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                frame_index += 1
+                if frame_index < start_frame:
+                    continue
                 if frame_index > end_frame:
                     break
 
-        for pkt in out_video.encode():
-            out_ctr.mux(pkt)
-        out_ctr.close()
-        in_ctr.close()
+                _report_progress(on_progress, processed, total, f"Frame {processed + 1}/{total}")
+
+                tmp_png = tmp_dir / f"f{processed:06d}.png"
+                pil_img = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+                pil_img.save(str(tmp_png))
+
+                if end_style is not None and total > 1:
+                    t = processed / max(total - 1, 1)
+                    style = interpolate_style(start_style, end_style, t)
+                else:
+                    style = start_style
+
+                svg_string = apply_style(client, style, str(tmp_png))
+                pil_result = _svg_to_pil(svg_string, out_w, out_h).convert("RGB")
+
+                out_bgr = cv2.cvtColor(np.array(pil_result), cv2.COLOR_RGB2BGR)
+                writer.write(out_bgr)
+
+                tmp_png.unlink(missing_ok=True)
+                processed += 1
+
+        cap.release()
+        writer.release()
 
         output = Path(output_path)
         if audio and info.has_audio and frame_range == (1, info.total_frames):
@@ -384,6 +379,8 @@ def _process_video_to_mp4(
         _report_error(on_error, f"MCP error: {exc.message}\n\nMake sure Vexy Lines is running.")
         return
     finally:
+        cap.release()
+        writer.release()
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
     _report_progress(on_progress, total, total, "Done")
@@ -411,10 +408,16 @@ def _process_video_to_frames(
     from vexy_lines_utils.video import probe  # noqa: PLC0415
 
     try:
-        import av  # noqa: PLC0415
+        import cv2  # noqa: PLC0415
     except ImportError:
-        _report_error(on_error, "PyAV is required for video frame extraction. Install with: pip install av")
+        _report_error(
+            on_error,
+            "opencv-python-headless is required for video frame extraction. "
+            "Install with: pip install opencv-python-headless",
+        )
         return
+
+    from PIL import Image  # noqa: PLC0415
 
     info = probe(video_path)
     start_frame = frame_range[0] if frame_range else 1
@@ -430,55 +433,56 @@ def _process_video_to_frames(
     tmp_dir = Path(tempfile.mkdtemp(prefix="vexy_gui_frames_"))
     processed = 0
 
+    cap = cv2.VideoCapture(str(video_path))
+
     try:
-        in_ctr = av.open(str(video_path))
-        in_video = in_ctr.streams.video[0]
         frame_index = 0
 
         with MCPClient() as client:
-            for packet in in_ctr.demux(in_video):
-                for frame in packet.decode():
-                    frame_index += 1
-                    if frame_index < start_frame:
-                        continue
-                    if frame_index > end_frame:
-                        break
-
-                    _report_progress(on_progress, processed, total, f"Frame {processed + 1}/{total}")
-
-                    tmp_png = tmp_dir / f"f{processed:06d}.png"
-                    frame.to_image().save(str(tmp_png))
-
-                    if end_style is not None and total > 1:
-                        t = processed / max(total - 1, 1)
-                        style = interpolate_style(start_style, end_style, t)
-                    else:
-                        style = start_style
-
-                    svg_string = apply_style(client, style, str(tmp_png))
-
-                    name = f"frame_{processed:06d}"
-                    if fmt == "SVG":
-                        dest = out_dir / f"{name}.svg"
-                        dest.write_text(svg_string, encoding="utf-8")
-                    elif fmt in ("PNG", "JPG"):
-                        _save_svg_as_image(
-                            svg_string, out_dir / f"{name}.{fmt.lower()}",
-                            fmt, size, out_w, out_h,
-                        )
-
-                    tmp_png.unlink(missing_ok=True)
-                    processed += 1
-
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                frame_index += 1
+                if frame_index < start_frame:
+                    continue
                 if frame_index > end_frame:
                     break
 
-        in_ctr.close()
+                _report_progress(on_progress, processed, total, f"Frame {processed + 1}/{total}")
+
+                tmp_png = tmp_dir / f"f{processed:06d}.png"
+                pil_img = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+                pil_img.save(str(tmp_png))
+
+                if end_style is not None and total > 1:
+                    t = processed / max(total - 1, 1)
+                    style = interpolate_style(start_style, end_style, t)
+                else:
+                    style = start_style
+
+                svg_string = apply_style(client, style, str(tmp_png))
+
+                name = f"frame_{processed:06d}"
+                if fmt == "SVG":
+                    dest = out_dir / f"{name}.svg"
+                    dest.write_text(svg_string, encoding="utf-8")
+                elif fmt in ("PNG", "JPG"):
+                    _save_svg_as_image(
+                        svg_string, out_dir / f"{name}.{fmt.lower()}",
+                        fmt, size, out_w, out_h,
+                    )
+
+                tmp_png.unlink(missing_ok=True)
+                processed += 1
+
+        cap.release()
 
     except MCPError as exc:
         _report_error(on_error, f"MCP error: {exc.message}\n\nMake sure Vexy Lines is running.")
         return
     finally:
+        cap.release()
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
     _report_progress(on_progress, total, total, "Done")

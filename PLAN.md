@@ -338,7 +338,7 @@ gui = [
 - Implement export logic (folder picker vs file picker)
 - Implement background processing thread
 - Add `gui` optional dependency group
-- Add `vexy-lines-gui` script entry point
+- Add `vexy-lines-run` script entry point
 - Wire up style engine for actual processing
 
 ---

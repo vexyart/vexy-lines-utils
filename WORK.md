@@ -33,7 +33,7 @@ this_file: WORK.md
 - Style / End Style picker panels with .lines preview
 - Lines tab disables style panels
 - Output bar: SVG/PNG/JPG/MP4/LINES format, size, audio toggle, Export button
-- `vexy-lines-gui` entry point
+- `vexy-lines-run` entry point
 
 **Phase 5: Enhanced CLI** — `src/vexy_lines_utils/__main__.py` (720 lines)
 - 8 new subcommands added (info, file_tree, extract_source, extract_preview, style_transfer, style_video, batch_convert, gui)

@@ -7,13 +7,13 @@ render, export SVG), converts SVG to PNG via resvg, and reassembles into
 a new video preserving fps and audio.
 
 Requires optional dependencies: pip install vexy-lines-utils[video]
-    - av (PyAV): video frame extraction and assembly
+    - opencv-python-headless (cv2): video frame extraction and assembly
     - resvg-py: fast SVG-to-PNG rasterisation
     - Pillow: image format bridging
 
 Pipeline per frame:
     video frame -> temp PNG -> Vexy Lines MCP (fill + render) -> SVG string
-    -> resvg (SVG -> RGBA pixels) -> PIL Image -> PyAV frame -> output video
+    -> resvg (SVG -> RGBA pixels) -> PIL Image -> cv2 frame -> output video
 """
 
 from __future__ import annotations
@@ -64,6 +64,25 @@ class VideoInfo:
     has_audio: bool
 
 
+def _detect_audio(path: str) -> bool:
+    """Detect audio stream via ffprobe (best-effort)."""
+    import shutil as _shutil  # noqa: PLC0415
+    import subprocess  # noqa: PLC0415
+
+    ffprobe = _shutil.which("ffprobe")
+    if ffprobe is None:
+        return False
+    try:
+        result = subprocess.run(
+            [ffprobe, "-v", "quiet", "-select_streams", "a",
+             "-show_entries", "stream=index", "-of", "csv=p=0", path],
+            capture_output=True, text=True, timeout=10,
+        )  # noqa: S603
+        return bool(result.stdout.strip())
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def probe(path: str | Path) -> VideoInfo:
     """Get video metadata without decoding frames.
 
@@ -73,20 +92,25 @@ def probe(path: str | Path) -> VideoInfo:
     Returns:
         VideoInfo with dimensions, fps, frame count, duration, audio flag.
     """
-    _require("av")
-    import av  # noqa: PLC0415
+    _require("cv2", "opencv-python-headless")
+    import cv2  # noqa: PLC0415
 
-    container = av.open(str(path))
-    vs = container.streams.video[0]
-    info = VideoInfo(
-        width=vs.codec_context.width,
-        height=vs.codec_context.height,
-        fps=float(vs.average_rate or vs.guessed_rate or 24),
-        total_frames=vs.frames or 0,
-        duration=float(vs.duration * vs.time_base) if vs.duration else 0,
-        has_audio=len(container.streams.audio) > 0,
-    )
-    container.close()
+    cap = cv2.VideoCapture(str(path))
+    if not cap.isOpened():
+        msg = f"Cannot open video file: {path}"
+        raise RuntimeError(msg)
+    try:
+        info = VideoInfo(
+            width=int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
+            height=int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
+            fps=float(cap.get(cv2.CAP_PROP_FPS) or 24),
+            total_frames=int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 0,
+            duration=0,
+            has_audio=_detect_audio(str(path)),
+        )
+        info.duration = info.total_frames / info.fps if info.fps > 0 else 0
+    finally:
+        cap.release()
     return info
 
 
@@ -188,17 +212,18 @@ def process_video(
         VideoInfo of the input video.
 
     Raises:
-        ImportError: If av, resvg-py, or Pillow are not installed.
+        ImportError: If opencv-python-headless, resvg-py, or Pillow are not installed.
         MCPError: If the MCP server is unreachable or a tool call fails.
     """
-    _require("av")
+    _require("cv2", "opencv-python-headless")
     _require("PIL", "Pillow")
     # Either svglab or resvg-py is needed for SVG→PNG
     try:
         _require("svglab")
     except ImportError:
         _require("resvg_py", "resvg-py")
-    import av  # noqa: PLC0415
+    import cv2  # noqa: PLC0415
+    import numpy as np  # noqa: PLC0415
 
     input_path = Path(input_path)
     output_path = Path(output_path)
@@ -215,82 +240,72 @@ def process_video(
         "thickness_min": thickness_min,
     }
 
-    from fractions import Fraction
-
     tmp_dir = Path(tempfile.mkdtemp(prefix="vexy_video_"))
     # Write video-only first, then merge audio in a second pass
     video_only = tmp_dir / "video_only.mp4"
     frame_index = 0
 
+    cap = cv2.VideoCapture(str(input_path))
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    writer = cv2.VideoWriter(str(video_only), fourcc, info.fps, (info.width, info.height))
+
     try:
         # Pass 1: decode frames, process through Vexy Lines, write video
-        in_ctr = av.open(str(input_path))
-        out_ctr = av.open(str(video_only), mode="w")
-
-        in_video = in_ctr.streams.video[0]
-        out_video = out_ctr.add_stream("libx264", rate=Fraction(info.fps).limit_denominator(10000))
-        out_video.width = info.width
-        out_video.height = info.height
-        out_video.pix_fmt = "yuv420p"
-
         with MCPClient(host=host, port=port, timeout=timeout) as vl:
-            for packet in in_ctr.demux(in_video):
-                for frame in packet.decode():
-                    if max_frames and frame_index >= max_frames:
-                        break
-
-                    # Frame → temp PNG
-                    tmp_png = tmp_dir / f"f{frame_index:06d}.png"
-                    frame.to_image().save(str(tmp_png))
-
-                    # Load into Vexy Lines
-                    vl.new_document(
-                        width=info.width,
-                        height=info.height,
-                        dpi=dpi,
-                        source_image=str(tmp_png),
-                    )
-
-                    # Add fill with per-frame params
-                    tree = vl.get_layer_tree()
-                    layer = vl.add_layer(group_id=tree.id)
-                    params = {**base_params, **frame_params(frame_index, total or 1)}
-                    vl.add_fill(
-                        layer_id=layer["id"],
-                        fill_type=fill_type,
-                        color=color,
-                        params=params,
-                    )
-
-                    # Render → SVG → PNG → output frame
-                    vl.render(timeout=timeout)
-                    svg_string = vl.svg()
-                    pil_img = _svg_to_pil(svg_string, info.width, info.height).convert("RGB")
-
-                    out_frame = av.VideoFrame.from_image(pil_img)
-                    out_frame.pts = frame_index
-                    for out_pkt in out_video.encode(out_frame):
-                        out_ctr.mux(out_pkt)
-
-                    tmp_png.unlink()
-                    frame_index += 1
-
-                    if on_progress:
-                        on_progress(frame_index, total or 0)
-                    logger.debug("Frame {}/{}: params={}", frame_index, total, params)
-
+            while True:
                 if max_frames and frame_index >= max_frames:
                     break
+                ret, frame = cap.read()
+                if not ret:
+                    break
 
-        # Flush encoder
-        for pkt in out_video.encode():
-            out_ctr.mux(pkt)
-        out_ctr.close()
-        in_ctr.close()
+                # Frame → temp PNG
+                tmp_png = tmp_dir / f"f{frame_index:06d}.png"
+                from PIL import Image  # noqa: PLC0415
+
+                pil_img = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+                pil_img.save(str(tmp_png))
+
+                # Load into Vexy Lines
+                vl.new_document(
+                    width=info.width,
+                    height=info.height,
+                    dpi=dpi,
+                    source_image=str(tmp_png),
+                )
+
+                # Add fill with per-frame params
+                tree = vl.get_layer_tree()
+                layer = vl.add_layer(group_id=tree.id)
+                params = {**base_params, **frame_params(frame_index, total or 1)}
+                vl.add_fill(
+                    layer_id=layer["id"],
+                    fill_type=fill_type,
+                    color=color,
+                    params=params,
+                )
+
+                # Render → SVG → PNG → output frame
+                vl.render(timeout=timeout)
+                svg_string = vl.svg()
+                pil_result = _svg_to_pil(svg_string, info.width, info.height).convert("RGB")
+
+                out_bgr = cv2.cvtColor(np.array(pil_result), cv2.COLOR_RGB2BGR)
+                writer.write(out_bgr)
+
+                tmp_png.unlink()
+                frame_index += 1
+
+                if on_progress:
+                    on_progress(frame_index, total or 0)
+                logger.debug("Frame {}/{}: params={}", frame_index, total, params)
+
+        cap.release()
+        writer.release()
 
         # Pass 2: merge audio from original via ffmpeg
         if info.has_audio:
-            import subprocess
+            import subprocess  # noqa: PLC0415
 
             merged = tmp_dir / "merged.mp4"
             subprocess.run(  # noqa: S603
@@ -321,6 +336,8 @@ def process_video(
             shutil.move(str(video_only), str(output_path))
 
     finally:
+        cap.release()
+        writer.release()
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
     logger.info("Processed {} frames → {}", frame_index, output_path)
@@ -370,19 +387,20 @@ def process_video_with_style(
         VideoInfo of the input video.
 
     Raises:
-        ImportError: If av, resvg-py (or svglab), or Pillow are not installed.
+        ImportError: If opencv-python-headless, resvg-py (or svglab), or Pillow are not installed.
         MCPError: If the MCP server is unreachable or a tool call fails.
     """
     # Runtime import to avoid circular dependency at module load time
     from vexy_lines_utils.style import apply_style, interpolate_style  # noqa: PLC0415
 
-    _require("av")
+    _require("cv2", "opencv-python-headless")
     _require("PIL", "Pillow")
     try:
         _require("svglab")
     except ImportError:
         _require("resvg_py", "resvg-py")
-    import av  # noqa: PLC0415
+    import cv2  # noqa: PLC0415
+    import numpy as np  # noqa: PLC0415
 
     input_path = Path(input_path)
     output_path = Path(output_path)
@@ -397,75 +415,66 @@ def process_video_with_style(
         frame_end = min(frame_end, frame_start + max_frames)
     total_to_process = max(frame_end - frame_start, 1)
 
-    from fractions import Fraction  # noqa: PLC0415
-
     tmp_dir = Path(tempfile.mkdtemp(prefix="vexy_video_style_"))
     video_only = tmp_dir / "video_only.mp4"
     frame_index = 0  # absolute frame counter (within the full video decode)
     processed = 0   # frames actually encoded to output
 
+    cap = cv2.VideoCapture(str(input_path))
+    if frame_start > 0:
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_start)
+        frame_index = frame_start
+
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    writer = cv2.VideoWriter(str(video_only), fourcc, info.fps, (info.width, info.height))
+
     try:
-        in_ctr = av.open(str(input_path))
-        out_ctr = av.open(str(video_only), mode="w")
-
-        in_video = in_ctr.streams.video[0]
-        out_video = out_ctr.add_stream("libx264", rate=Fraction(info.fps).limit_denominator(10000))
-        out_video.width = info.width
-        out_video.height = info.height
-        out_video.pix_fmt = "yuv420p"
-
         with MCPClient(host=host, port=port, timeout=timeout) as vl:
-            for packet in in_ctr.demux(in_video):
-                for frame in packet.decode():
-                    if frame_index < frame_start:
-                        frame_index += 1
-                        continue
-                    if frame_index >= frame_end:
-                        break
-
-                    # Determine the style for this frame
-                    if end_style is not None:
-                        t = (frame_index - frame_start) / max(total_to_process - 1, 1)
-                        current_style = interpolate_style(style, end_style, t)
-                    else:
-                        current_style = style
-
-                    # Frame → temp PNG
-                    tmp_png = tmp_dir / f"f{frame_index:06d}.png"
-                    frame.to_image().save(str(tmp_png))
-
-                    # Apply style via MCP → SVG string
-                    svg_string = apply_style(vl, current_style, tmp_png, dpi=dpi)
-
-                    # SVG → PIL → output frame
-                    pil_img = _svg_to_pil(svg_string, info.width, info.height).convert("RGB")
-                    out_frame = av.VideoFrame.from_image(pil_img)
-                    out_frame.pts = processed
-                    for out_pkt in out_video.encode(out_frame):
-                        out_ctr.mux(out_pkt)
-
-                    tmp_png.unlink()
-                    frame_index += 1
-                    processed += 1
-
-                    if on_progress:
-                        on_progress(frame_index, info.total_frames)
-                    logger.debug(
-                        "Frame {}/{} (video frame {}): style={}",
-                        processed,
-                        total_to_process,
-                        frame_index,
-                        current_style.source_path,
-                    )
-
+            while True:
                 if frame_index >= frame_end:
                     break
+                ret, frame = cap.read()
+                if not ret:
+                    break
 
-        # Flush encoder
-        for pkt in out_video.encode():
-            out_ctr.mux(pkt)
-        out_ctr.close()
-        in_ctr.close()
+                # Determine the style for this frame
+                if end_style is not None:
+                    t = (frame_index - frame_start) / max(total_to_process - 1, 1)
+                    current_style = interpolate_style(style, end_style, t)
+                else:
+                    current_style = style
+
+                # Frame → temp PNG
+                tmp_png = tmp_dir / f"f{frame_index:06d}.png"
+                from PIL import Image  # noqa: PLC0415
+
+                pil_img = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+                pil_img.save(str(tmp_png))
+
+                # Apply style via MCP → SVG string
+                svg_string = apply_style(vl, current_style, tmp_png, dpi=dpi)
+
+                # SVG → PIL → output frame
+                pil_result = _svg_to_pil(svg_string, info.width, info.height).convert("RGB")
+                out_bgr = cv2.cvtColor(np.array(pil_result), cv2.COLOR_RGB2BGR)
+                writer.write(out_bgr)
+
+                tmp_png.unlink()
+                frame_index += 1
+                processed += 1
+
+                if on_progress:
+                    on_progress(frame_index, info.total_frames)
+                logger.debug(
+                    "Frame {}/{} (video frame {}): style={}",
+                    processed,
+                    total_to_process,
+                    frame_index,
+                    current_style.source_path,
+                )
+
+        cap.release()
+        writer.release()
 
         # Merge audio from original if present
         if info.has_audio:
@@ -500,6 +509,8 @@ def process_video_with_style(
             shutil.move(str(video_only), str(output_path))
 
     finally:
+        cap.release()
+        writer.release()
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
     logger.info("Processed {} frames ({}-{}) → {}", processed, frame_start, frame_end, output_path)

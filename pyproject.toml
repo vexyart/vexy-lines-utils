@@ -110,7 +110,7 @@ svg = [
 
 # Video processing (frame-by-frame Vexy Lines pipeline)
 video = [
-    "av>=12.0.0",
+    "opencv-python-headless>=4.8.0",
     "resvg-py>=0.2.0",
     "Pillow>=10.0.0",
     "svglab>=0.1.0",
@@ -121,19 +121,18 @@ gui = [
     "customtkinter>=5.2.0",
     "tkinterdnd2>=0.4.0",
     "Pillow>=10.0.0",
-    "opencv-python>=4.8.0",
+    "opencv-python-headless>=4.8.0",
     "CTkMenuBarPlus>=0.1.0",
 ]
 
 # All optional dependencies combined
 all = [
-    "av>=12.0.0",
+    "opencv-python-headless>=4.8.0",
     "resvg-py>=0.2.0",
     "Pillow>=10.0.0",
     "svglab>=0.1.0",
     "customtkinter>=5.2.0",
     "tkinterdnd2>=0.4.0",
-    "opencv-python>=4.8.0",
     "CTkMenuBarPlus>=0.1.0",
 ]
 
@@ -143,7 +142,7 @@ all = [
 #------------------------------------------------------------------------------
 [project.scripts]
 vexy-lines-utils = "vexy_lines_utils.__main__:main"
-vexy-lines-gui = "vexy_lines_utils.gui:launch"
+vexy-lines-run = "vexy_lines_utils.gui:launch"
 
 #------------------------------------------------------------------------------
 # BUILD SYSTEM CONFIGURATION

@@ -1101,7 +1101,7 @@ this_file: CHANGELOG.md
   - Output formats: SVG, PNG, JPG, MP4, LINES
   - Range slider for video frame selection
   - Menu bar with File, Lines, Image, Video, Style, Export menus
-  - `vexy-lines-gui` entry point
+  - `vexy-lines-run` entry point
 - **8 new CLI subcommands**:
   - `info` — show .lines file metadata (no app needed)
   - `file_tree` — print layer tree from file (no MCP needed)
@@ -2195,7 +2195,7 @@ gui = [
 - Implement export logic (folder picker vs file picker)
 - Implement background processing thread
 - Add `gui` optional dependency group
-- Add `vexy-lines-gui` script entry point
+- Add `vexy-lines-run` script entry point
 - Wire up style engine for actual processing
 
 ---
@@ -3746,7 +3746,7 @@ this_file: TODO.md
 - [x] Implement export dialog (folder picker for SVG/PNG/JPG/LINES, file picker for MP4)
 - [ ] Implement background processing thread with progress
 - [ ] Wire up style engine for actual processing
-- [x] Add vexy-lines-gui script entry point in pyproject.toml
+- [x] Add vexy-lines-run script entry point in pyproject.toml
 
 ## Phase 5: Enhanced CLI
 - [x] Add style_transfer subcommand (--style, --end-style, --images, --output-dir, --format)
@@ -3811,7 +3811,7 @@ this_file: WORK.md
 - Style / End Style picker panels with .lines preview
 - Lines tab disables style panels
 - Output bar: SVG/PNG/JPG/MP4/LINES format, size, audio toggle, Export button
-- `vexy-lines-gui` entry point
+- `vexy-lines-run` entry point
 
 **Phase 5: Enhanced CLI** — `src/vexy_lines_utils/__main__.py` (720 lines)
 - 8 new subcommands added (info, file_tree, extract_source, extract_preview, style_transfer, style_video, batch_convert, gui)
@@ -5322,7 +5322,7 @@ all = [
 #------------------------------------------------------------------------------
 [project.scripts]
 vexy-lines-utils = "vexy_lines_utils.__main__:main"
-vexy-lines-gui = "vexy_lines_utils.gui:launch"
+vexy-lines-run = "vexy_lines_utils.gui:launch"
 
 #------------------------------------------------------------------------------
 # BUILD SYSTEM CONFIGURATION

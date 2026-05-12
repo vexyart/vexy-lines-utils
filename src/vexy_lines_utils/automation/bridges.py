@@ -1,6 +1,23 @@
 #!/usr/bin/env python3
 # this_file: src/vexy_lines_utils/automation/bridges.py
-"""Application bridge for AppleScript-based automation."""
+"""AppleScript bridge for automating the Vexy Lines macOS app.
+
+Pipeline position: stage 3 of 5 (App Activation) and stage 4 (Export Loop).
+
+``AppleScriptBridge`` wraps ``osascript`` calls to:
+- bring the app to the foreground (``activate``)
+- open a specific ``.lines`` file
+- click menu items (e.g. ``File > Export``)
+- query window titles so ``WindowWatcher`` can detect readiness
+- quit the app cleanly after the export loop
+
+``ApplicationBridge`` is a ``Protocol`` so tests can inject a mock without
+subclassing.  Any object implementing the same method signatures works.
+
+All ``osascript`` calls are fire-and-forget with a configurable timeout;
+failures raise ``AutomationError`` with an ``error_code`` string that maps to
+a human-readable recovery hint via ``AutomationError.get_error_suggestion()``.
+"""
 
 from __future__ import annotations
 

@@ -1,6 +1,35 @@
 #!/usr/bin/env python3
 # this_file: src/vexy_lines_utils/__init__.py
-"""Public package interface for vexy_lines_utils."""
+"""vexy-lines-utils: batch export, MCP client, and style engine for Vexy Lines.
+
+Five capabilities in one package:
+
+1. **Batch export** — inject settings into macOS prefs, trigger ``File > Export``
+   via AppleScript, and collect PDF/SVG output without touching any dialog.
+   Pipeline: Discovery → Plist Injection → App Activation → Export Loop → Cleanup.
+
+2. **MCP client** — TCP JSON-RPC 2.0 client for the server embedded in the
+   Vexy Lines app (``localhost:47384``). 25 tools across 5 groups: Document,
+   Structure, Fill Params, Visual, Control.
+
+3. **Parser** — read ``.lines`` XML files and walk the group→layer→fill tree
+   without launching the app. Works on any platform.
+
+4. **Style engine** — extract a fill structure from a ``.lines`` file, apply it
+   to any source image, or interpolate between two styles at an arbitrary ratio.
+
+5. **GUI / CLI** — CustomTkinter desktop app and ``fire``-based CLI exposing all
+   of the above as commands.
+
+Quick export example::
+
+    from vexy_lines_utils import VexyLinesExporter, ExportConfig
+
+    config = ExportConfig(format="pdf")
+    exporter = VexyLinesExporter(config)
+    stats = exporter.export("./art/")
+    print(stats.summary())
+"""
 
 from __future__ import annotations
 

@@ -1,5 +1,25 @@
 #!/usr/bin/env python3
 # this_file: src/vexy_lines_utils/core/plist.py
+"""macOS preference injection for dialog-less Vexy Lines export.
+
+Vexy Lines reads its export preferences from the macOS preference domain
+``com.fontlab.vexy-lines`` at startup. This module snapshots those prefs,
+overwrites the export-relevant keys via the ``defaults`` CLI, and restores
+the originals on exit — even after exceptions or Ctrl+C.
+
+Pipeline position: stage 2 of 5 (between Discovery and App Activation).
+
+Usage::
+
+    with PlistManager("pdf") as pm:
+        # App now launches with PDF export settings baked in.
+        bridge.activate()
+        bridge.click_menu_item("File", "Export")
+    # Original preferences are restored here.
+
+Preference keys use the middle-dot separator (``·``, U+00B7) as macOS
+stores them, e.g. ``export·dlg·format``.
+"""
 
 from __future__ import annotations
 

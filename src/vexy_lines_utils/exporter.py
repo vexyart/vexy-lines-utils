@@ -1,6 +1,26 @@
 #!/usr/bin/env python3
 # this_file: src/vexy_lines_utils/exporter.py
-"""Single concrete exporter for Vexy Lines dialog-less export."""
+"""Dialog-less batch exporter for Vexy Lines documents.
+
+Drives the 5-stage export pipeline without any GUI interaction:
+
+1. **Discovery** — ``find_lines_files()`` collects every ``.lines`` file under
+   the input path (single file or directory, recursive).
+2. **Plist Injection** — ``PlistManager`` snapshots the app's macOS preference
+   domain (``com.fontlab.vexy-lines``), writes export format/quality settings
+   via ``defaults write``, and restores the original prefs on exit.
+3. **App Activation** — ``AppleScriptBridge.activate()`` brings Vexy Lines to
+   the foreground. ``WindowWatcher`` polls until a document window appears.
+4. **Export Loop** — for each file: open via AppleScript, trigger
+   ``File > Export`` (menu click), then poll the output file until its size
+   stabilises across two consecutive checks (file-size polling avoids
+   reading a partially-written file).
+5. **Cleanup** — ``PlistManager.__exit__`` restores preferences;
+   ``AppleScriptBridge.quit_app()`` closes the app.
+
+Retry strategy: three attempts with escalating delays (0.5 s → 2.0 s → 5.0 s)
+because render time varies with document complexity.
+"""
 
 from __future__ import annotations
 

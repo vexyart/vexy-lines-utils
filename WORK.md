@@ -4,6 +4,23 @@ this_file: WORK.md
 
 # Work Progress: v4.0 — .lines Parser, Style Engine, GUI & CLI
 
+## Session: 2026-06-11
+
+### Completed
+
+**Upstream image-filter chain support**
+- Audited upstream Vectools changes from `33061f4f` (2026-03-09) to `496f23d` (2026-06-08).
+- Added parser support for per-fill `<image_filters>` chains, preserving unknown filter types and typed parameter values.
+- Added MCP client helpers for `get_image_filters`, `set_image_filters`, `add_image_filter`, and `remove_image_filter`.
+- Updated style compatibility, interpolation, and application so matching filter chains are preserved and interpolated.
+- Updated README coverage for parser and style engine behavior.
+
+### Test Results
+
+```
+153 passed, 30 skipped
+```
+
 ## Session: 2026-03-30
 
 ### Completed

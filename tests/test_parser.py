@@ -11,11 +11,13 @@ import pytest
 from vexy_lines_utils.parser import (
     FILL_TAG_MAP,
     FILL_TAGS,
+    IMAGE_FILTER_TYPE_MAP,
     NUMERIC_PARAMS,
     DocumentProps,
     FillNode,
     FillParams,
     GroupInfo,
+    ImageFilterEntry,
     LayerInfo,
     LinesDocument,
     MaskInfo,
@@ -48,6 +50,39 @@ _MINIMAL_NO_SOURCE = textwrap.dedent("""\
       <PreviewDoc pict_format="png" width="100" height="100" pict_compressed="0">iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==</PreviewDoc>
     </Project>
 """)
+
+_MINIMAL_WITH_IMAGE_FILTERS = textwrap.dedent("""\
+    <Project app="vexylines" dpi="300" caption="filters-doc" version="3.0.1">
+      <Objects>
+        <FreeMesh caption="Layer 1" object_id="10" visible="1">
+          <Objects>
+            <LinearStrokesTmpl caption="Linear Fill" object_id="100" color_name="#ff112233">
+              <image_filters>
+                <filter type="0" value="25.5"/>
+                <filter type="4" left="10" right="240"/>
+                <filter type="6" inverted="true"/>
+                <filter type="8" color="#00ff00" tolerance="12.5"/>
+                <filter type="99" custom="abc" value="3.5"/>
+              </image_filters>
+            </LinearStrokesTmpl>
+          </Objects>
+        </FreeMesh>
+      </Objects>
+      <Document width_mm="100.0" height_mm="100.0" dpi="300"
+                thicknessMin="0" thicknessMax="2.8" intervalMin="0.24" intervalMax="2.8"/>
+    </Project>
+""")
+
+
+def _find_first_fill(nodes: list[GroupInfo | LayerInfo]) -> FillNode | None:
+    for node in nodes:
+        if isinstance(node, GroupInfo):
+            found = _find_first_fill(node.children)
+            if found:
+                return found
+        elif isinstance(node, LayerInfo) and node.fills:
+            return node.fills[0]
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -188,6 +223,38 @@ def test_parse_source_image_none_for_empty_when_no_source_pict(tmp_path: Path):
     assert doc.source_image_data is None
 
 
+def test_parse_preserves_image_filter_chain_when_present(tmp_path: Path):
+    f = tmp_path / "filters.lines"
+    f.write_text(_MINIMAL_WITH_IMAGE_FILTERS)
+
+    doc = parse(f)
+    fill = _find_first_fill(doc.groups)
+
+    assert fill is not None
+    assert fill.image_filters == [
+        ImageFilterEntry(type_id=0, name="brightness", params={"value": 25.5}, raw={"type": "0", "value": "25.5"}),
+        ImageFilterEntry(
+            type_id=4,
+            name="levels",
+            params={"left": 10, "right": 240},
+            raw={"type": "4", "left": "10", "right": "240"},
+        ),
+        ImageFilterEntry(type_id=6, name="invert", params={"inverted": True}, raw={"type": "6", "inverted": "true"}),
+        ImageFilterEntry(
+            type_id=8,
+            name="color",
+            params={"color": "#00ff00", "tolerance": 12.5},
+            raw={"type": "8", "color": "#00ff00", "tolerance": "12.5"},
+        ),
+        ImageFilterEntry(
+            type_id=99,
+            name="unknown_99",
+            params={"custom": "abc", "value": 3.5},
+            raw={"type": "99", "custom": "abc", "value": "3.5"},
+        ),
+    ]
+
+
 # ---------------------------------------------------------------------------
 # 9 & 10. extract_source_image / extract_preview_image
 # ---------------------------------------------------------------------------
@@ -223,6 +290,21 @@ def test_fill_tag_map_has_known_types_when_checking_constants():
     assert "linear" in values
     assert "trace" in values
     assert "circular" in values
+
+
+def test_image_filter_type_map_matches_upstream_order():
+    assert IMAGE_FILTER_TYPE_MAP == {
+        0: "brightness",
+        1: "contrast",
+        2: "blur",
+        3: "sharpen",
+        4: "levels",
+        5: "shadows_highlights",
+        6: "invert",
+        7: "remove_background",
+        8: "color",
+        9: "gradient",
+    }
 
 
 # ---------------------------------------------------------------------------

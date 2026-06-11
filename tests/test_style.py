@@ -4,14 +4,16 @@
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 
-from vexy_lines_utils.parser import DocumentProps, FillNode, GroupInfo, LayerInfo
+from vexy_lines_utils.parser import DocumentProps, FillNode, FillParams, GroupInfo, ImageFilterEntry, LayerInfo
 from vexy_lines_utils.style import (
     Style,
     _lerp,
     _lerp_color,
+    apply_style,
     extract_style,
     interpolate_style,
     styles_compatible,
@@ -45,6 +47,14 @@ def _find_any_fill(nodes: list[GroupInfo | LayerInfo]) -> FillNode | None:
             if node.fills:
                 return node.fills[0]
     return None
+
+
+def _make_fill(fill_type: str = "linear") -> FillNode:
+    return FillNode(
+        xml_tag="LinearStrokesTmpl",
+        caption=f"{fill_type} fill",
+        params=FillParams(fill_type=fill_type, color="#000000", interval=1.0),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -110,6 +120,18 @@ def test_styles_not_compatible_when_different_structure():
     a = extract_style(CHAMELEON)
     b = extract_style(GIRL_LINEAR)
     # Chameleon and girl-linear have different group/layer/fill structures
+    assert styles_compatible(a, b) is False
+
+
+def test_styles_not_compatible_when_image_filter_types_differ():
+    a_fill = _make_fill("linear")
+    b_fill = _make_fill("linear")
+    a_fill.image_filters = [ImageFilterEntry(type_id=0, name="brightness")]
+    b_fill.image_filters = [ImageFilterEntry(type_id=1, name="contrast")]
+
+    a = Style(groups=[LayerInfo(caption="Layer", fills=[a_fill])], props=DocumentProps())
+    b = Style(groups=[LayerInfo(caption="Layer", fills=[b_fill])], props=DocumentProps())
+
     assert styles_compatible(a, b) is False
 
 
@@ -237,6 +259,56 @@ def test_lerp_color_at_one_returns_end():
 def test_lerp_color_same_color():
     result = _lerp_color("#ff0000", "#ff0000", 0.5)
     assert result == "#ff0000"
+
+
+def test_interpolate_style_interpolates_matching_image_filters():
+    a_fill = _make_fill("linear")
+    b_fill = _make_fill("linear")
+    a_fill.image_filters = [
+        ImageFilterEntry(type_id=0, name="brightness", params={"value": 0.0}, raw={"type": "0"}),
+        ImageFilterEntry(type_id=4, name="levels", params={"left": 10, "right": 200}, raw={"type": "4"}),
+        ImageFilterEntry(type_id=8, name="color", params={"color": "#000000", "tolerance": 0.0}, raw={"type": "8"}),
+    ]
+    b_fill.image_filters = [
+        ImageFilterEntry(type_id=0, name="brightness", params={"value": 100.0}, raw={"type": "0"}),
+        ImageFilterEntry(type_id=4, name="levels", params={"left": 20, "right": 240}, raw={"type": "4"}),
+        ImageFilterEntry(type_id=8, name="color", params={"color": "#ffffff", "tolerance": 10.0}, raw={"type": "8"}),
+    ]
+    a = Style(groups=[LayerInfo(caption="Layer", fills=[a_fill])], props=DocumentProps())
+    b = Style(groups=[LayerInfo(caption="Layer", fills=[b_fill])], props=DocumentProps())
+
+    result = interpolate_style(a, b, 0.5)
+    fill = result.groups[0].fills[0]
+
+    assert fill.image_filters[0].params == {"value": 50.0}
+    assert fill.image_filters[1].params == {"left": 15, "right": 220}
+    assert fill.image_filters[2].params == {"color": "#808080", "tolerance": 5.0}
+
+
+def test_apply_style_sets_image_filters_on_created_fill():
+    mock_client = MagicMock()
+    mock_client.new_document.return_value = MagicMock(root_id=1, width=100, height=100, dpi=72)
+    mock_client.add_layer.return_value = {"id": 20}
+    mock_client.add_fill.return_value = {"id": 30}
+    mock_client.render.return_value = True
+    mock_client.svg.return_value = "<svg/>"
+
+    fill = _make_fill("linear")
+    fill.image_filters = [
+        ImageFilterEntry(type_id=0, name="brightness", params={"value": 25.0}, raw={"type": "0"}),
+        ImageFilterEntry(type_id=6, name="invert", params={"inverted": True}, raw={"type": "6"}),
+    ]
+    style = Style(groups=[LayerInfo(caption="Layer", fills=[fill])], props=DocumentProps())
+
+    apply_style(mock_client, style, "/fake.png")
+
+    mock_client.set_image_filters.assert_called_once_with(
+        30,
+        [
+            {"type": "brightness", "params": {"value": 25.0}},
+            {"type": "invert", "params": {"inverted": True}},
+        ],
+    )
 
 
 def test_lerp_color_same_color_blue():

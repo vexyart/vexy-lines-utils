@@ -341,6 +341,53 @@ class TestSetFillParams:
         assert args["opacity"] == 0.5
 
 
+class TestImageFilters:
+    def test_get_image_filters_when_called_then_sends_id(self):
+        mock_sock = MagicMock()
+        client = _make_client_with_socket(mock_sock)
+        client._buffer = _tool_response(json.dumps({"count": 0, "filters": []}), req_id=1)
+        result = client.get_image_filters(42)
+        sent = json.loads(mock_sock.sendall.call_args[0][0])
+        args = sent["params"]["arguments"]
+        assert sent["params"]["name"] == "get_image_filters"
+        assert args == {"id": 42}
+        assert result == {"count": 0, "filters": []}
+
+    def test_set_image_filters_when_called_then_sends_filter_chain(self):
+        mock_sock = MagicMock()
+        client = _make_client_with_socket(mock_sock)
+        client._buffer = _tool_response(json.dumps({"status": "ok"}), req_id=1)
+        filters = [{"type": "brightness", "params": {"value": 25.0}}]
+        result = client.set_image_filters(42, filters)
+        sent = json.loads(mock_sock.sendall.call_args[0][0])
+        args = sent["params"]["arguments"]
+        assert sent["params"]["name"] == "set_image_filters"
+        assert args == {"id": 42, "filters": filters}
+        assert result == {"status": "ok"}
+
+    def test_add_image_filter_when_called_then_sends_type_params_and_index(self):
+        mock_sock = MagicMock()
+        client = _make_client_with_socket(mock_sock)
+        client._buffer = _tool_response(json.dumps({"status": "ok"}), req_id=1)
+        result = client.add_image_filter(42, "levels", {"left": 10, "right": 240}, index=0)
+        sent = json.loads(mock_sock.sendall.call_args[0][0])
+        args = sent["params"]["arguments"]
+        assert sent["params"]["name"] == "add_image_filter"
+        assert args == {"id": 42, "type": "levels", "params": {"left": 10, "right": 240}, "index": 0}
+        assert result == {"status": "ok"}
+
+    def test_remove_image_filter_when_called_then_sends_index(self):
+        mock_sock = MagicMock()
+        client = _make_client_with_socket(mock_sock)
+        client._buffer = _tool_response(json.dumps({"status": "ok", "count": 0}), req_id=1)
+        result = client.remove_image_filter(42, 0)
+        sent = json.loads(mock_sock.sendall.call_args[0][0])
+        args = sent["params"]["arguments"]
+        assert sent["params"]["name"] == "remove_image_filter"
+        assert args == {"id": 42, "index": 0}
+        assert result == {"status": "ok", "count": 0}
+
+
 class TestRenderAll:
     def test_render_all_when_called_then_returns_text_string(self):
         mock_sock = MagicMock()

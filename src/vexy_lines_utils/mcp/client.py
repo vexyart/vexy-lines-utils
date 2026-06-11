@@ -21,9 +21,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING
-
-from typing_extensions import Self
+from typing import TYPE_CHECKING, Self
 
 from vexy_lines_utils.mcp.types import DocumentInfo, LayerNode, NewDocumentResult, RenderStatus
 
@@ -402,6 +400,37 @@ class MCPClient:
         args: dict = {"fill_id": fill_id, **params}
         result = self.call_tool("set_fill_params", args)
         return result if isinstance(result, str) else str(result)
+
+    def get_image_filters(self, fill_id: int) -> dict:
+        """Get the image-filter chain attached to a fill."""
+        data = self.call_tool("get_image_filters", {"id": fill_id})
+        return data if isinstance(data, dict) else {"result": data}
+
+    def set_image_filters(self, fill_id: int, filters: list[dict[str, object]]) -> dict:
+        """Replace the image-filter chain attached to a fill."""
+        data = self.call_tool("set_image_filters", {"id": fill_id, "filters": filters})
+        return data if isinstance(data, dict) else {"result": data}
+
+    def add_image_filter(
+        self,
+        fill_id: int,
+        filter_type: str,
+        params: dict[str, object] | None = None,
+        index: int | None = None,
+    ) -> dict:
+        """Add one image filter to a fill's filter chain."""
+        args: dict[str, object] = {"id": fill_id, "type": filter_type}
+        if params is not None:
+            args["params"] = params
+        if index is not None:
+            args["index"] = index
+        data = self.call_tool("add_image_filter", args)
+        return data if isinstance(data, dict) else {"result": data}
+
+    def remove_image_filter(self, fill_id: int, index: int) -> dict:
+        """Remove an image filter from a fill's filter chain."""
+        data = self.call_tool("remove_image_filter", {"id": fill_id, "index": index})
+        return data if isinstance(data, dict) else {"result": data}
 
     # -- visual -----------------------------------------------------------
 

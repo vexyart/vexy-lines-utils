@@ -126,6 +126,8 @@ for group in doc.groups:
         if hasattr(layer, 'fills'):
             for fill in layer.fills:
                 print(f"  Layer: {layer.caption}, Fill: {fill.params.fill_type}")
+                for image_filter in fill.image_filters:
+                    print(f"    Filter: {image_filter.name} {image_filter.params}")
 
 # Extract source image
 extract_source_image("drawing.lines", "source.jpg")
@@ -148,7 +150,7 @@ vexy-lines-utils extract-preview drawing.lines --output preview.png
 
 ### Extract & Apply Styles
 
-A "style" is the group→layer→fill structure from a `.lines` file. Extract it and apply to images via the Vexy Lines MCP API.
+A "style" is the group→layer→fill structure from a `.lines` file, including per-fill image-filter chains. Extract it and apply to images via the Vexy Lines MCP API.
 
 ```python
 from vexy_lines_utils.mcp import MCPClient
@@ -176,7 +178,7 @@ vexy-lines-utils style-transfer \
 
 ### Interpolate Between Two Styles
 
-Smoothly blend numeric parameters between two compatible styles across a sequence of images or video frames.
+Smoothly blend numeric parameters and matching image-filter chains between two compatible styles across a sequence of images or video frames.
 
 ```python
 from vexy_lines_utils.style import extract_style, interpolate_style, apply_style
@@ -332,7 +334,7 @@ with MCPClient() as client:
     client.export_document(doc_id, format="SVG", output_path="result.svg")
 ```
 
-**25 MCP tools available:** document ops, layer structure, fill parameters, masks, transforms, and rendering. See `src/vexy_lines_utils/mcp/client.py` for the full API.
+**29 MCP tools available:** document ops, layer structure, fill parameters, image filters, masks, transforms, and rendering. See `src/vexy_lines_utils/mcp/client.py` for the full API.
 
 ---
 

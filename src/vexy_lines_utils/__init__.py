@@ -9,7 +9,7 @@ Five capabilities in one package:
    Pipeline: Discovery → Plist Injection → App Activation → Export Loop → Cleanup.
 
 2. **MCP client** — TCP JSON-RPC 2.0 client for the server embedded in the
-   Vexy Lines app (``localhost:47384``). 25 tools across 5 groups: Document,
+   Vexy Lines app (``localhost:47384``). 29 tools across 5 groups: Document,
    Structure, Fill Params, Visual, Control.
 
 3. **Parser** — read ``.lines`` XML files and walk the group→layer→fill tree

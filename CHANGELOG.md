@@ -4,6 +4,24 @@ this_file: CHANGELOG.md
 
 # Changelog
 
+## [4.1.0-dev] - 2026-06-11
+
+### Added
+
+- `.lines` parser support for per-fill `<image_filters>` chains introduced upstream in spring 2026.
+- Typed `ImageFilterEntry` parsing with known filter names for brightness, contrast, blur, sharpen, levels, shadows/highlights, invert, remove background, color, and gradient filters.
+- MCP client methods for `get_image_filters`, `set_image_filters`, `add_image_filter`, and `remove_image_filter`.
+- Style engine preservation, compatibility checks, and interpolation for matching image-filter chains.
+
+### Fixed
+
+- Replaced the obsolete `typing_extensions.Self` import in the MCP client with stdlib `typing.Self`.
+
+### Technical
+
+- **Test count:** 153 passed, 30 skipped.
+- **Runtime dependencies:** no new dependencies.
+
 ## [4.0.0-dev] - 2026-03-30
 
 ### Added

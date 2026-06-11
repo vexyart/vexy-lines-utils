@@ -1,5 +1,6 @@
 *_autogen/
 .DS_Store
+dist/
 __version__.py
 __pycache__/
 _Chutzpah*

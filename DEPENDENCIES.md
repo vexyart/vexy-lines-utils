@@ -67,6 +67,9 @@ The parser (`vexy_lines_utils.parser`) and style engine (`vexy_lines_utils.style
 
 No additional runtime dependencies were added.
 
+The v4.1 image-filter chain update also uses only the standard library. Filter
+metadata is parsed from XML attributes and sent through the existing MCP client.
+
 ## Optional: Image Extraction [images]
 
 - **Pillow** (>=10.0.0): Image format conversion when extracting source/preview from .lines files

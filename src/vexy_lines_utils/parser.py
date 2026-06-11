@@ -62,6 +62,23 @@ NUMERIC_PARAMS: list[str] = [
 ]
 """Fill attributes that are numeric and can be interpolated between values."""
 
+IMAGE_FILTER_TYPE_MAP: dict[int, str] = {
+    0: "brightness",
+    1: "contrast",
+    2: "blur",
+    3: "sharpen",
+    4: "levels",
+    5: "shadows_highlights",
+    6: "invert",
+    7: "remove_background",
+    8: "color",
+    9: "gradient",
+}
+"""Upstream image-filter type ID -> MCP filter name."""
+
+IMAGE_FILTER_NAME_MAP: dict[str, int] = {name: type_id for type_id, name in IMAGE_FILTER_TYPE_MAP.items()}
+"""MCP image-filter name -> upstream numeric type ID."""
+
 # Type code used by the app to identify FreeMesh (layer) elements.
 _TYPE_FREEMESH = "16793857"
 # Type code for LrSection (group) elements.
@@ -77,6 +94,10 @@ _TYPE_CONV_TRACE = 9
 # Minimum byte count for a valid base64-decoded SourcePict payload
 # (4-byte size header + at least 1 byte of zlib data).
 _MIN_SOURCE_PICT_BYTES = 5
+
+_IMAGE_FILTER_BOOL_PARAMS = frozenset({"inverted"})
+_IMAGE_FILTER_INT_PARAMS = frozenset({"left", "right", "direction"})
+_IMAGE_FILTER_STRING_PARAMS = frozenset({"color"})
 
 
 # ---------------------------------------------------------------------------
@@ -121,6 +142,20 @@ class FillParams:
     raw: dict[str, str] = field(default_factory=dict)
 
 
+ImageFilterParamValue = bool | int | float | str
+"""Parsed value type for image-filter parameters."""
+
+
+@dataclass
+class ImageFilterEntry:
+    """One image-filter entry attached to a fill."""
+
+    type_id: int
+    name: str
+    params: dict[str, ImageFilterParamValue] = field(default_factory=dict)
+    raw: dict[str, str] = field(default_factory=dict)
+
+
 @dataclass
 class MaskInfo:
     """Layer mask metadata.
@@ -145,12 +180,14 @@ class FillNode:
         caption: User-visible fill name.
         params: Parsed fill parameters.
         object_id: Unique object identifier, or ``None`` for href references.
+        image_filters: Ordered image-filter chain applied before stroke rendering.
     """
 
     xml_tag: str
     caption: str
     params: FillParams
     object_id: int | None = None
+    image_filters: list[ImageFilterEntry] = field(default_factory=list)
 
 
 @dataclass
@@ -346,6 +383,46 @@ def _resolve_fill_type(xml_tag: str, attrib: dict[str, str]) -> str:
     return base
 
 
+def _parse_image_filter_param(key: str, value: str) -> ImageFilterParamValue:
+    """Parse an image-filter XML attribute value using upstream type rules."""
+    if key in _IMAGE_FILTER_BOOL_PARAMS:
+        return value.lower() in {"true", "1"}
+    if key in _IMAGE_FILTER_STRING_PARAMS:
+        return value
+    if key in _IMAGE_FILTER_INT_PARAMS:
+        try:
+            return int(value)
+        except ValueError:
+            try:
+                return int(float(value))
+            except ValueError:
+                return 0
+    try:
+        return float(value)
+    except ValueError:
+        return value
+
+
+def _parse_image_filter(elem: ET.Element) -> ImageFilterEntry:
+    """Parse one ``<filter>`` child of an ``<image_filters>`` element."""
+    raw = dict(elem.attrib)
+    type_id = _get_int(raw, "type")
+    return ImageFilterEntry(
+        type_id=type_id,
+        name=IMAGE_FILTER_TYPE_MAP.get(type_id, f"unknown_{type_id}"),
+        params={key: _parse_image_filter_param(key, value) for key, value in raw.items() if key != "type"},
+        raw=raw,
+    )
+
+
+def _parse_image_filters(elem: ET.Element) -> list[ImageFilterEntry]:
+    """Parse the ordered image-filter chain attached to a fill element."""
+    filters_elem = elem.find("image_filters")
+    if filters_elem is None:
+        return []
+    return [_parse_image_filter(filter_elem) for filter_elem in filters_elem if filter_elem.tag == "filter"]
+
+
 # ---------------------------------------------------------------------------
 # Binary decoders
 # ---------------------------------------------------------------------------
@@ -432,6 +509,7 @@ def _parse_fill(elem: ET.Element) -> FillNode:
         xml_tag=xml_tag,
         caption=attrib.get("caption", ""),
         params=params,
+        image_filters=_parse_image_filters(elem),
         object_id=_get_int(attrib, "object_id") if "object_id" in attrib else None,
     )
 

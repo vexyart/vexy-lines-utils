@@ -11,12 +11,15 @@
 #------------------------------------------------------------------------------
 [project]
 name = 'vexy-lines-utils' # Package name on PyPI
-description = 'Command-line automation for batch exporting Vexy Lines vector art documents to PDF on macOS' # Short description
+description = 'Parser, style engine, MCP client, GUI, and batch export utilities for Vexy Lines' # Short description
 readme = 'README.md' # Path to README file
 requires-python = '>=3.11' # Minimum Python version
 keywords = [
     'vexy-lines',
     'vector-art',
+    'parser',
+    'style-transfer',
+    'mcp',
     'automation',
     'pdf-export',
     'batch-processing',
@@ -30,7 +33,6 @@ dynamic = ["version"] # Fields set dynamically at build time
 classifiers = [
     'Development Status :: 4 - Beta', # Package maturity level
     'Programming Language :: Python',
-    'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
     'Programming Language :: Python :: Implementation :: CPython',
@@ -40,6 +42,7 @@ classifiers = [
     'Intended Audience :: Developers',
     'Intended Audience :: End Users/Desktop',
     'Topic :: Multimedia :: Graphics :: Graphics Conversion',
+    'Topic :: Multimedia :: Graphics :: Editors :: Vector-Based',
     'Topic :: Utilities',
     'Environment :: Console',
     'Natural Language :: English',
@@ -483,4 +486,3 @@ ban-relative-imports = 'all' # Ban all relative imports for consistency
     'TID252'
     # Allow relative imports in tests for convenience
 ]
-

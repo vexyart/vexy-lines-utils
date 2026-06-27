@@ -4,6 +4,17 @@ this_file: CHANGELOG.md
 
 # Changelog
 
+## [4.1.0-dev] - 2026-06-16
+
+### Documentation
+
+- Rewrote README coverage to match the current parser, style engine, MCP client, GUI, video, and legacy PDF/SVG export surface.
+- Updated agent guidance files to describe the current multi-tool package instead of the old exporter-only scope.
+- Refreshed dependency, plan, TODO, and package metadata notes for Python 3.11+ and the implemented optional extras.
+- Fixed a stale package docstring example that called `ExportStats.summary()` instead of `human_summary()`.
+- Removed obsolete generated `llms.txt` prompt snapshot that no longer matched the current package layout.
+- Added a source-checkout fallback for the hatch-vcs generated `__version__.py` file so tests pass after cleanup.
+
 ## [4.1.0-dev] - 2026-06-11
 
 ### Added

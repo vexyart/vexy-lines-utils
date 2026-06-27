@@ -28,13 +28,14 @@ Quick export example::
     config = ExportConfig(format="pdf")
     exporter = VexyLinesExporter(config)
     stats = exporter.export("./art/")
-    print(stats.summary())
+    print(stats.human_summary())
 """
 
 from __future__ import annotations
 
+from importlib.metadata import PackageNotFoundError, version
+
 from vexy_lines_utils.__main__ import VexyLinesCLI, main
-from vexy_lines_utils.__version__ import __version__
 from vexy_lines_utils.automation.bridges import AppleScriptBridge, ApplicationBridge
 from vexy_lines_utils.automation.window_watcher import WindowWatcher
 from vexy_lines_utils.core.config import ExportConfig
@@ -60,6 +61,15 @@ from vexy_lines_utils.style import (
 from vexy_lines_utils.utils.file_utils import find_lines_files, validate_lines_file, validate_pdf, validate_svg
 from vexy_lines_utils.utils.interrupt import InterruptHandler
 from vexy_lines_utils.utils.system import speak
+
+try:
+    from vexy_lines_utils.__version__ import __version__
+except ModuleNotFoundError:
+    # hatch-vcs writes this file during builds; source checkouts may not have it.
+    try:
+        __version__ = version("vexy-lines-utils")
+    except PackageNotFoundError:
+        __version__ = "0.0.0"
 
 __all__ = [
     "AppleScriptBridge",

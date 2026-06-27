@@ -4,6 +4,24 @@ this_file: WORK.md
 
 # Work Progress: v4.0 — .lines Parser, Style Engine, GUI & CLI
 
+## Session: 2026-06-16
+
+### Completed
+
+**Documentation alignment and artifact cleanup prep**
+- Rewrote README to reflect the current parser/style/MCP/GUI/video/export package surface.
+- Replaced stale exporter-only agent guidance with current `AGENTS.md` guidance plus short pointers from agent-specific docs.
+- Updated dependency and metadata notes for Python 3.11+, optional extras, and current installed scripts.
+- Replaced the completed v4 implementation plan with a maintenance plan and actionable TODO list.
+- Removed obsolete generated `llms.txt`.
+- Added a source-checkout fallback for missing hatch-vcs generated `__version__.py`.
+
+### Verification
+
+- `uvx hatch test`: 153 passed, 30 skipped.
+- `uvx hatch run lint:style src/vexy_lines_utils/__init__.py`: passed.
+- Workspace `git diff --check` for `vexy-lines-utils`: passed.
+
 ## Session: 2026-06-11
 
 ### Completed

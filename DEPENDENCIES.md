@@ -9,7 +9,7 @@ this_file: DEPENDENCIES.md
 ### fire (>=0.6.0)
 - **Purpose**: Command-line interface framework
 - **Why chosen**: Automatically generates CLIs from Python objects with no argparse boilerplate
-- **Usage**: Powers `vexy-lines export` command and all argument parsing
+- **Usage**: Powers `vexy-lines-utils` subcommands and argument parsing
 
 ### loguru (>=0.7.2)
 - **Purpose**: Structured logging with automatic colors
@@ -39,9 +39,10 @@ this_file: DEPENDENCIES.md
 
 ## Platform Requirements
 
-- **Python**: 3.10+
-- **macOS**: required (plist files, AppleScript, `osascript`, `open -a`)
-- **Vexy Lines**: Desktop application must be installed
+- **Python**: 3.11+
+- **macOS**: required for plist-driven batch export (`defaults`, AppleScript, `osascript`, `open -a`)
+- **Cross-platform**: parser, source/preview extraction, and pure data-model helpers
+- **Vexy Lines**: desktop application required for MCP, style transfer, GUI processing, and export
 
 ## Removed Dependencies (v2.0.0)
 
@@ -55,9 +56,9 @@ The MCP client module (`vexy_lines_utils.mcp`) uses only Python standard library
 - `socket` — TCP connection to the embedded MCP server
 - `json` — JSON-RPC 2.0 message serialization
 
-No additional runtime dependencies were added.
+No additional base runtime dependencies were added.
 
-## .lines Parser & Style Engine (v4.0)
+## .lines Parser & Style Engine (v4.0+)
 
 The parser (`vexy_lines_utils.parser`) and style engine (`vexy_lines_utils.style`) use only Python standard library:
 - `xml.etree.ElementTree` — XML parsing of .lines files
@@ -65,26 +66,34 @@ The parser (`vexy_lines_utils.parser`) and style engine (`vexy_lines_utils.style
 - `dataclasses` — typed result structures
 - `copy` — deep-copying styles for interpolation
 
-No additional runtime dependencies were added.
+No additional base runtime dependencies were added.
 
 The v4.1 image-filter chain update also uses only the standard library. Filter
 metadata is parsed from XML attributes and sent through the existing MCP client.
 
-## Optional: Image Extraction [images]
+## Optional: Image Extraction `[images]`
 
 - **Pillow** (>=10.0.0): Image format conversion when extracting source/preview from .lines files
 
-## Optional: Video Processing [video]
+## Optional: Video Processing `[video]`
 
 - **av** (>=12.0.0): PyAV for video frame extraction and assembly
 - **resvg-py** (>=0.2.0): Fast SVG-to-PNG rasterisation
 - **Pillow** (>=10.0.0): Image format bridging
 - **svglab** (>=0.1.0): SVG parsing with native mm dimension handling
 
-## Optional: GUI [gui]
+## Optional: GUI `[gui]`
 
 - **customtkinter** (>=5.2.0): Modern themed tkinter widgets
 - **tkinterdnd2** (>=0.4.0): Drag-and-drop file support
 - **CTkMenuBarPlus** (>=0.1.0): Menu bar widget for customtkinter
 - **Pillow** (>=10.0.0): Image preview display
 - **opencv-python** (>=4.8.0): Video frame extraction for GUI previews
+
+## Optional: SVG `[svg]`
+
+- **svglab** (>=0.1.0): SVG parsing and manipulation helpers
+
+## Optional: All `[all]`
+
+Combines Pillow, OpenCV headless, resvg-py, svglab, CustomTkinter, tkinterdnd2, and CTkMenuBarPlus for GUI, image, SVG, and video workflows.

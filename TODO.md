@@ -2,16 +2,10 @@
 this_file: TODO.md
 ---
 
-# TODO: vexy-lines-utils v4.0
+# TODO
 
-## Phase 1: .lines Parser Module
-
-## Phase 2: App-less Image Extraction CLI
-
-## Phase 3: Style Engine
-
-## Phase 4: CustomTkinter GUI
-
-## Phase 5: Enhanced CLI
-
-## Phase 6: Testing & Documentation
+- [ ] Keep README and agent guidance aligned with current CLI commands and `pyproject.toml`.
+- [ ] Add or remove `style-video --start-frame` support so docs and behavior match.
+- [ ] Decide whether MCP image-filter helpers need CLI subcommands in `vexy-lines-utils`.
+- [x] Re-run `uvx hatch test` after doc/cleanup work.
+- [x] Remove generated artifacts before release: `dist/`, caches, `__pycache__/`, generated version files, and stale `llms.txt`.

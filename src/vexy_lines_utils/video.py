@@ -77,9 +77,9 @@ def _detect_audio(path: str) -> bool:
             [ffprobe, "-v", "quiet", "-select_streams", "a",
              "-show_entries", "stream=index", "-of", "csv=p=0", path],
             capture_output=True, text=True, timeout=10,
-        )  # noqa: S603
+        )
         return bool(result.stdout.strip())
-    except Exception:  # noqa: BLE001
+    except Exception:
         return False
 
 

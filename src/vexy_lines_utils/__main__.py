@@ -671,8 +671,6 @@ def main() -> None:
             from vexy_lines_utils.gui import launch  # noqa: PLC0415
             launch()
         except ImportError:
-            print("GUI dependencies not installed. Install with: pip install vexy-lines-utils[gui]")
-            print("Or use a subcommand: vexy-lines-utils --help")
             sys.exit(1)
     else:
         fire.Fire(VexyLinesCLI)
